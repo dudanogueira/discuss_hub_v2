@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_evolution_api_server_manager,evolution.api.server,model_evolution_api_server,base.group_system,1,1,1,1
+access_evolution_api_instance_manager,evolution.api.instance,model_evolution_api_instance,base.group_system,1,1,1,1

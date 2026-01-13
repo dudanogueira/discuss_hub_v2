@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <record id="mail_discuss_team_view_form_inherit_crm_link" model="ir.ui.view">
+        <field name="name">mail.discuss.team.form.inherit.crm.link</field>
+        <field name="model">mail.discuss.team</field>
+        <field name="inherit_id" ref="mail_discuss_hub.mail_discuss_team_view_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='integrations']" position="inside">
+                <group>
+                    <field
+                        name="crm_team_id"
+                        options="{'no_create': True}"
+                        domain="[('company_id', '=', company_id), '|', ('discuss_team_id', '=', False), ('discuss_team_id', '=', id)]"
+                    />
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

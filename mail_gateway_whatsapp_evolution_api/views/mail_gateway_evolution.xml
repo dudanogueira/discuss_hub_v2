@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="mail_gateway_form_view_evolution" model="ir.ui.view">
+        <field name="name">mail.gateway.form.evolution</field>
+        <field name="model">mail.gateway</field>
+        <field name="inherit_id" ref="mail_gateway.mail_gateway_form_view" />
+        <field name="arch" type="xml">
+            <field name="token" position="after">
+                <field
+                    name="evolution_api_url"
+                    invisible="gateway_type != 'whatsapp_evolution_api'"
+                />
+                <field
+                    name="evolution_instance"
+                    invisible="gateway_type != 'whatsapp_evolution_api'"
+                />
+                <field
+                    name="evolution_base64_webhook"
+                    invisible="gateway_type != 'whatsapp_evolution_api'"
+                />
+            </field>
+        </field>
+    </record>
+</odoo>

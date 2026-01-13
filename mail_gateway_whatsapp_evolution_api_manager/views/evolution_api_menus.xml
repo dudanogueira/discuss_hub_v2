@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <data>
+        <menuitem
+            id="mail_discuss_hub_menu_evolution_api_manager"
+            name="EvolutionAPI Manager"
+            parent="mail.menu_configuration"
+            sequence="75"
+            groups="base.group_system"
+        />
+        <menuitem
+            id="mail_discuss_hub_menu_evolution_api_manager_servers"
+            name="Servers"
+            parent="mail_discuss_hub_menu_evolution_api_manager"
+            action="mail_gateway_whatsapp_evolution_api_manager.action_evolution_api_server"
+            sequence="10"
+            groups="base.group_system"
+        />
+        <menuitem
+            id="mail_discuss_hub_menu_evolution_api_manager_instances"
+            name="Instances"
+            parent="mail_discuss_hub_menu_evolution_api_manager"
+            action="mail_gateway_whatsapp_evolution_api_manager.action_evolution_api_instance"
+            sequence="20"
+            groups="base.group_system"
+        />
+    </data>
+</odoo>

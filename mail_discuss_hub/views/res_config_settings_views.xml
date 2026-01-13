@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_inherit_discuss_hub" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.discuss.hub</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority">90</field>
+        <field name="inherit_id" ref="base_setup.res_config_settings_view_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Discuss" string="Discuss" name="mail_discuss_hub" logo="/mail/static/description/icon.png">
+                    <block title="Discuss Hub" id="discuss_hub">
+                        <setting id="discuss_hub_integrate_crm" string="Integrate with CRM" help="Install the Discuss Hub CRM integration (syncs Discuss Teams with CRM Teams).">
+                            <field name="module_mail_discuss_hub_crm"/>
+                            <div class="content-group" invisible="not module_mail_discuss_hub_crm" id="discuss_hub_msg_module_mail_discuss_hub_crm">
+                                <div class="mt16 text-warning"><strong>Save</strong> this page and come back here to set up the feature.</div>
+                            </div>
+                        </setting>
+                        <setting id="discuss_hub_integrate_helpdesk" string="Integrate with Helpdesk" help="Install the Discuss Hub Helpdesk integration (syncs Discuss Teams with Helpdesk Teams).">
+                            <field name="module_mail_discuss_hub_helpdesk_mgmt"/>
+                            <div class="content-group" invisible="not module_mail_discuss_hub_helpdesk_mgmt" id="discuss_hub_msg_module_mail_discuss_hub_helpdesk_mgmt">
+                                <div class="mt16 text-warning"><strong>Save</strong> this page and come back here to set up the feature.</div>
+                            </div>
+                        </setting>
+                    </block>
+                    <block title="Messages" id="discuss_messages">
+                        <setting id="discuss_activities_setting" string="Activities" help="Configure your activity types">
+                            <div class="content-group">
+                                <div class="mt8">
+                                    <button name="%(mail.mail_activity_type_action)d" string="Activity Types" type="action" class="oe_link" icon="oi-arrow-right"/>
+                                </div>
+                            </div>
+                        </setting>
+                        <setting help="Add your Twilio credentials for ICE servers">
+                            <field name="use_twilio_rtc_servers"/>
+                            <div class="content-group" invisible="not use_twilio_rtc_servers">
+                                <div class="row mt16" id="discuss_twilio_sid">
+                                    <label for="twilio_account_sid" class="col-lg-3"/>
+                                    <field name="twilio_account_sid" placeholder="e.g. ACd5543a0b450ar4c7t95f1b6e8a39t543"/>
+                                </div>
+                                <div class="row mt16" id="discuss_twilio_auth_token">
+                                    <label for="twilio_account_token" class="col-lg-3"/>
+                                    <field name="twilio_account_token" placeholder="e.g. 65ea4f9e948b693N5156F350256bd152"/>
+                                </div>
+                            </div>
+                        </setting>
+                        <setting string="SFU Server">
+                            <div class="content-group">
+                                <div class="row mt16">
+                                    <label for="sfu_server_url" string="URL" class="col-lg-3"/>
+                                    <field name="sfu_server_url"/>
+                                </div>
+                                <div class="row mt16">
+                                    <label for="sfu_server_key" string="Key" class="col-lg-3"/>
+                                    <field name="sfu_server_key"/>
+                                </div>
+                            </div>
+                        </setting>
+                        <setting string="Custom ICE server list" help="Configure your ICE server list for webRTC">
+                            <div class="content-group">
+                                <div class="row col-lg-4">
+                                    <button type="action" name="%(mail.action_ice_servers)d" string="ICE Servers" icon="oi-arrow-right" class="btn-link"/>
+                                </div>
+                            </div>
+                        </setting>
+                        <setting id="discuss_tenor_api_key" string="Tenor GIF API key" help="Add a Tenor GIF API key to enable GIFs support." documentation="https://developers.google.com/tenor/guides/quickstart#setup">
+                            <field name="tenor_api_key" placeholder="Paste your API key"/>
+                        </setting>
+                        <setting id="discuss_tenor_content_filter" string="Tenor GIF content filter" help="Select the content filter used for filtering GIFs" documentation="https://developers.google.com/tenor/guides/content-filtering">
+                            <field name="tenor_content_filter"/>
+                        </setting>
+                        <setting id="discuss_tenor_gif_limit" string="Tenor GIF limits" help="Fetch up to the specified number of GIFs.">
+                            <field name="tenor_gif_limit"/>
+                        </setting>
+                        <setting string="Message Translation" help="Google Translate Integration" id="discuss_message_translation_setting" documentation="https://cloud.google.com/translate/docs/setup">
+                            <field name="google_translate_api_key" placeholder="Paste your API key"/>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_discuss_hub_config_settings" model="ir.actions.act_window">
+        <field name="name">Settings</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{'module': 'mail_discuss_hub', 'bin_size': False}</field>
+    </record>
+
+    <menuitem
+        id="menu_discuss_hub_settings"
+        name="Settings"
+        parent="mail.menu_configuration"
+        action="action_discuss_hub_config_settings"
+        sequence="0"
+        groups="base.group_system"
+    />
+</odoo>

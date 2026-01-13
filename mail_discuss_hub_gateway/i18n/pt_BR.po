@@ -1,0 +1,92 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* mail_discuss_hub_gateway
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 18.0\n"
+"POT-Creation-Date: 2026-01-13 00:00+0000\n"
+"PO-Revision-Date: 2026-01-13 00:00+0000\n"
+"Language-Team: \n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#. module: mail_discuss_hub_gateway
+#: model:ir.ui.menu,name:mail_discuss_hub_gateway.mail_discuss_hub_gateway_menu_gateway
+msgid "Gateway"
+msgstr "Gateway"
+
+#. module: mail_discuss_hub_gateway
+#: model:ir.ui.menu,name:mail_discuss_hub_gateway.mail_discuss_hub_gateway_menu_partner_channels
+msgid "Gateway Partner Channels"
+msgstr "Canais do Parceiro (Gateway)"
+
+#. module: mail_discuss_hub_gateway
+#: model:ir.ui.menu,name:mail_discuss_hub_gateway.mail_discuss_hub_gateway_menu_webhook_logs
+#: model:ir.actions.act_window,name:mail_discuss_hub_gateway.mail_gateway_webhook_log_action
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub_gateway.mail_gateway_webhook_log_view_tree
+msgid "Webhook Logs"
+msgstr "Logs de Webhook"
+
+#. module: mail_discuss_hub_gateway
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub_gateway.mail_gateway_webhook_log_view_form
+msgid "Webhook Log"
+msgstr "Log de Webhook"
+
+#. module: mail_discuss_hub_gateway
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub_gateway.mail_gateway_webhook_log_view_form
+msgid "Request"
+msgstr "Requisição"
+
+#. module: mail_discuss_hub_gateway
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub_gateway.mail_gateway_webhook_log_view_form
+msgid "Response"
+msgstr "Resposta"
+
+#. module: mail_discuss_hub_gateway
+#: model:ir.model,name:mail_discuss_hub_gateway.model_mail_gateway_webhook_log
+msgid "Gateway Webhook Log"
+msgstr "Log de Webhook do Gateway"
+
+#. module: mail_discuss_hub_gateway
+#: model:ir.model.fields.selection,name:mail_discuss_hub_gateway.selection__mail_gateway_webhook_log__direction__in
+msgid "Inbound"
+msgstr "Entrada"
+
+#. module: mail_discuss_hub_gateway
+#: model:ir.model.fields.selection,name:mail_discuss_hub_gateway.selection__mail_gateway_webhook_log__direction__out
+msgid "Outbound"
+msgstr "Saída"
+
+#. module: mail_discuss_hub_gateway
+#: model:ir.model.fields.selection,name:mail_discuss_hub_gateway.selection__mail_gateway_webhook_log__status__received
+msgid "Received"
+msgstr "Recebido"
+
+#. module: mail_discuss_hub_gateway
+#: model:ir.model.fields.selection,name:mail_discuss_hub_gateway.selection__mail_gateway_webhook_log__status__processed
+msgid "Processed"
+msgstr "Processado"
+
+#. module: mail_discuss_hub_gateway
+#: model:ir.model.fields.selection,name:mail_discuss_hub_gateway.selection__mail_gateway_webhook_log__status__rejected
+msgid "Rejected"
+msgstr "Rejeitado"
+
+#. module: mail_discuss_hub_gateway
+#: model:ir.model.fields.selection,name:mail_discuss_hub_gateway.selection__mail_gateway_webhook_log__status__sending
+msgid "Sending"
+msgstr "Enviando"
+
+#. module: mail_discuss_hub_gateway
+#: model:ir.model.fields.selection,name:mail_discuss_hub_gateway.selection__mail_gateway_webhook_log__status__sent
+msgid "Sent"
+msgstr "Enviado"
+
+#. module: mail_discuss_hub_gateway
+#: model:ir.model.fields.selection,name:mail_discuss_hub_gateway.selection__mail_gateway_webhook_log__status__error
+msgid "Error"
+msgstr "Erro"

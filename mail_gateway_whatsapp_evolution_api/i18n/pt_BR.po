@@ -1,0 +1,60 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* mail_gateway_whatsapp_evolution_api
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 18.0\n"
+"POT-Creation-Date: 2026-01-13 00:00+0000\n"
+"PO-Revision-Date: 2026-01-13 00:00+0000\n"
+"Language-Team: \n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#. module: mail_gateway_whatsapp_evolution_api
+#: model:ir.model.fields.selection,name:mail_gateway_whatsapp_evolution_api.selection__mail_gateway__gateway_type__whatsapp_evolution_api
+msgid "WhatsApp (Evolution API)"
+msgstr "WhatsApp (Evolution API)"
+
+#. module: mail_gateway_whatsapp_evolution_api
+#: model:ir.model.fields,field_description:mail_gateway_whatsapp_evolution_api.field_mail_gateway__evolution_api_url
+msgid "Evolution API URL"
+msgstr "URL da Evolution API"
+
+#. module: mail_gateway_whatsapp_evolution_api
+#: model:ir.model.fields,help:mail_gateway_whatsapp_evolution_api.field_mail_gateway__evolution_api_url
+msgid "Base URL of the Evolution API server (ex: https://evolution.example.com)"
+msgstr "URL base do servidor Evolution API (ex: https://evolution.example.com)"
+
+#. module: mail_gateway_whatsapp_evolution_api
+#: model:ir.model.fields,field_description:mail_gateway_whatsapp_evolution_api.field_mail_gateway__evolution_instance
+msgid "Evolution Instance"
+msgstr "Instância Evolution"
+
+#. module: mail_gateway_whatsapp_evolution_api
+#: model:ir.model.fields,help:mail_gateway_whatsapp_evolution_api.field_mail_gateway__evolution_instance
+msgid "Technical instance name in Evolution API. Defaults to the gateway name."
+msgstr "Nome técnico da instância na Evolution API. Por padrão, usa o nome do gateway."
+
+#. module: mail_gateway_whatsapp_evolution_api
+#: model:ir.model.fields,field_description:mail_gateway_whatsapp_evolution_api.field_mail_gateway__evolution_base64_webhook
+msgid "Webhook Base64"
+msgstr "Webhook Base64"
+
+#. module: mail_gateway_whatsapp_evolution_api
+#: model:ir.model.fields,help:mail_gateway_whatsapp_evolution_api.field_mail_gateway__evolution_base64_webhook
+msgid "When enabled, Evolution will send media as base64 in webhooks."
+msgstr "Quando habilitado, a Evolution enviará mídias em base64 nos webhooks."
+
+#. module: mail_gateway_whatsapp_evolution_api
+#: model:ir.model.fields,field_description:mail_gateway_whatsapp_evolution_api.field_mail_gateway__evolution_webhook_events
+msgid "Webhook Events"
+msgstr "Eventos do Webhook"
+
+#. module: mail_gateway_whatsapp_evolution_api
+#: model:ir.model.fields,help:mail_gateway_whatsapp_evolution_api.field_mail_gateway__evolution_webhook_events
+msgid "Comma-separated list of Evolution webhook events to subscribe."
+msgstr "Lista separada por vírgula dos eventos de webhook da Evolution para assinar."

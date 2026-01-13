@@ -1,0 +1,225 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* mail_discuss_hub
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 18.0\n"
+"POT-Creation-Date: 2026-01-13 00:00+0000\n"
+"PO-Revision-Date: 2026-01-13 00:00+0000\n"
+"Language-Team: \n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#. module: mail_discuss_hub
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.res_config_settings_view_form_inherit_discuss_hub
+msgid "Messages"
+msgstr "Mensagens"
+
+#. module: mail_discuss_hub
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.res_config_settings_view_form_inherit_discuss_hub
+msgid "Activities"
+msgstr "Atividades"
+
+#. module: mail_discuss_hub
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.res_config_settings_view_form_inherit_discuss_hub
+msgid "Configure your activity types"
+msgstr "Configure seus tipos de atividades"
+
+#. module: mail_discuss_hub
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.res_config_settings_view_form_inherit_discuss_hub
+msgid "Activity Types"
+msgstr "Tipos de atividades"
+
+#. module: mail_discuss_hub
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.res_config_settings_view_form_inherit_discuss_hub
+msgid "Add your Twilio credentials for ICE servers"
+msgstr "Adicione suas credenciais do Twilio para servidores ICE"
+
+#. module: mail_discuss_hub
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.res_config_settings_view_form_inherit_discuss_hub
+msgid "SFU Server"
+msgstr "Servidor SFU"
+
+#. module: mail_discuss_hub
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.res_config_settings_view_form_inherit_discuss_hub
+msgid "URL"
+msgstr "URL"
+
+#. module: mail_discuss_hub
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.res_config_settings_view_form_inherit_discuss_hub
+msgid "Key"
+msgstr "Chave"
+
+#. module: mail_discuss_hub
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.res_config_settings_view_form_inherit_discuss_hub
+msgid "Custom ICE server list"
+msgstr "Lista de servidor ICE personalizada"
+
+#. module: mail_discuss_hub
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.res_config_settings_view_form_inherit_discuss_hub
+msgid "Configure your ICE server list for webRTC"
+msgstr "Configure sua lista de servidor ICE para WebRTC"
+
+#. module: mail_discuss_hub
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.res_config_settings_view_form_inherit_discuss_hub
+msgid "ICE Servers"
+msgstr "Servidores ICE"
+
+#. module: mail_discuss_hub
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.res_config_settings_view_form_inherit_discuss_hub
+msgid "Tenor GIF API key"
+msgstr "Chave de API do GIF do Tenor"
+
+#. module: mail_discuss_hub
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.res_config_settings_view_form_inherit_discuss_hub
+msgid "Add a Tenor GIF API key to enable GIFs support."
+msgstr "Adicione uma chave de API do GIF do Tenor para habilitar o suporte a GIFs."
+
+#. module: mail_discuss_hub
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.res_config_settings_view_form_inherit_discuss_hub
+msgid "Paste your API key"
+msgstr "Cole sua chave de API"
+
+#. module: mail_discuss_hub
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.res_config_settings_view_form_inherit_discuss_hub
+msgid "Tenor GIF content filter"
+msgstr "Filtro de conteúdo do GIF do Tenor"
+
+#. module: mail_discuss_hub
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.res_config_settings_view_form_inherit_discuss_hub
+msgid "Select the content filter used for filtering GIFs"
+msgstr "Selecione o filtro de conteúdo usado para filtrar GIFs"
+
+#. module: mail_discuss_hub
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.res_config_settings_view_form_inherit_discuss_hub
+msgid "Tenor GIF limits"
+msgstr "Limites de GIF do Tenor"
+
+#. module: mail_discuss_hub
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.res_config_settings_view_form_inherit_discuss_hub
+msgid "Fetch up to the specified number of GIFs."
+msgstr "Buscar até o número especificado de GIFs."
+
+#. module: mail_discuss_hub
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.res_config_settings_view_form_inherit_discuss_hub
+msgid "Message Translation"
+msgstr "Tradução da mensagem"
+
+#. module: mail_discuss_hub
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.res_config_settings_view_form_inherit_discuss_hub
+msgid "Google Translate Integration"
+msgstr "Integração com o Google Translate"
+
+#. module: mail_discuss_hub
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.res_config_settings_view_form_inherit_discuss_hub
+msgid "Settings"
+msgstr "Definições"
+
+#. module: mail_discuss_hub
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.res_config_settings_view_form_inherit_discuss_hub
+msgid "Discuss"
+msgstr "Mensagens"
+
+#. module: mail_discuss_hub
+#: model:ir.ui.menu,name:mail_discuss_hub.menu_discuss_hub_settings
+msgid "Settings"
+msgstr "Definições"
+
+#. module: mail_discuss_hub
+#: model:ir.ui.menu,name:mail_discuss_hub.mail_discuss_hub_menu_messages_config
+#: model:ir.ui.menu,name:mail_discuss_hub.mail_discuss_hub_menu_mail_message
+msgid "Messages"
+msgstr "Mensagens"
+
+#. module: mail_discuss_hub
+#: model:ir.ui.menu,name:mail_discuss_hub.mail_discuss_hub_menu_message_schedule
+msgid "Scheduled Messages"
+msgstr "Mensagens Agendadas"
+
+#. module: mail_discuss_hub
+#: model:ir.ui.menu,name:mail_discuss_hub.mail_discuss_hub_menu_message_subtype
+msgid "Subtypes"
+msgstr "Subtipos"
+
+#. module: mail_discuss_hub
+#: model:ir.ui.menu,name:mail_discuss_hub.mail_discuss_hub_menu_message_reactions
+msgid "Message Reactions"
+msgstr "Reações de Mensagens"
+
+#. module: mail_discuss_hub
+#: model:ir.ui.menu,name:mail_discuss_hub.mail_discuss_hub_menu_user_settings
+msgid "User Settings"
+msgstr "Configurações do Usuário"
+
+#. module: mail_discuss_hub
+#: model:ir.ui.menu,name:mail_discuss_hub.mail_discuss_hub_menu_teams
+msgid "Teams"
+msgstr "Equipes"
+
+#. module: mail_discuss_hub
+#: model:ir.ui.menu,name:mail_discuss_hub.mail_discuss_hub_menu_guests
+msgid "Guests"
+msgstr "Convidados"
+
+#. module: mail_discuss_hub
+#: model:ir.ui.menu,name:mail_discuss_hub.mail_discuss_hub_menu_channels
+msgid "Channels"
+msgstr "Canais"
+
+#. module: mail_discuss_hub
+#: model:ir.ui.menu,name:mail_discuss_hub.mail_discuss_hub_menu_channels_members
+msgid "Channels/Members"
+msgstr "Canais/Membros"
+
+#. module: mail_discuss_hub
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.mail_discuss_team_view_form
+msgid "Discuss Team"
+msgstr "Equipe do Discuss"
+
+#. module: mail_discuss_hub
+#: model:ir.actions.act_window,name:mail_discuss_hub.mail_discuss_team_action
+msgid "Discuss Teams"
+msgstr "Equipes do Discuss"
+
+#. module: mail_discuss_hub
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.mail_discuss_team_view_form
+msgid "Members"
+msgstr "Membros"
+
+#. module: mail_discuss_hub
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.mail_discuss_team_view_form
+msgid "Description"
+msgstr "Descrição"
+
+#. module: mail_discuss_hub
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.res_config_settings_view_form_inherit_discuss_hub
+msgid "Discuss Hub"
+msgstr "Discuss Hub"
+
+#. module: mail_discuss_hub
+#: model:ir.model.fields,field_description:mail_discuss_hub.field_res_config_settings__module_mail_discuss_hub_crm
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.res_config_settings_view_form_inherit_discuss_hub
+msgid "Integrate with CRM"
+msgstr "Integrar com CRM"
+
+#. module: mail_discuss_hub
+#: model:ir.model.fields,help:mail_discuss_hub.field_res_config_settings__module_mail_discuss_hub_crm
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.res_config_settings_view_form_inherit_discuss_hub
+msgid "Install the Discuss Hub CRM integration (syncs Discuss Teams with CRM Teams)."
+msgstr "Instala a integração do Discuss Hub com o CRM (sincroniza Equipes do Discuss com Equipes do CRM)."
+
+#. module: mail_discuss_hub
+#: model:ir.model.fields,field_description:mail_discuss_hub.field_res_config_settings__module_mail_discuss_hub_helpdesk_mgmt
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.res_config_settings_view_form_inherit_discuss_hub
+msgid "Integrate with Helpdesk"
+msgstr "Integrar com Central de Ajuda"
+
+#. module: mail_discuss_hub
+#: model:ir.model.fields,help:mail_discuss_hub.field_res_config_settings__module_mail_discuss_hub_helpdesk_mgmt
+#: model_terms:ir.ui.view,arch_db:mail_discuss_hub.res_config_settings_view_form_inherit_discuss_hub
+msgid "Install the Discuss Hub Helpdesk integration (syncs Discuss Teams with Helpdesk Teams)."
+msgstr "Instala a integração do Discuss Hub com a Central de Ajuda (sincroniza Equipes do Discuss com Equipes da Central de Ajuda)."

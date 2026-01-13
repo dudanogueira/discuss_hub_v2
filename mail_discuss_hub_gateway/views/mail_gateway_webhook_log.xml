@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <record id="mail_gateway_webhook_log_view_tree" model="ir.ui.view">
+        <field name="name">mail.gateway.webhook.log.tree</field>
+        <field name="model">mail.gateway.webhook.log</field>
+        <field name="arch" type="xml">
+            <list string="Webhook Logs">
+                <field name="create_date" />
+                <field name="gateway_id" />
+                <field name="direction" />
+                <field name="event" />
+                <field name="status" />
+                <field name="http_status" />
+            </list>
+        </field>
+    </record>
+
+    <record id="mail_gateway_webhook_log_view_form" model="ir.ui.view">
+        <field name="name">mail.gateway.webhook.log.form</field>
+        <field name="model">mail.gateway.webhook.log</field>
+        <field name="arch" type="xml">
+            <form string="Webhook Log">
+                <sheet>
+                    <group>
+                        <field name="gateway_id" />
+                        <field name="gateway_type" readonly="1" />
+                        <field name="direction" />
+                        <field name="event" />
+                        <field name="status" />
+                        <field name="http_status" />
+                        <field name="endpoint" />
+                    </group>
+                    <notebook>
+                        <page string="Request">
+                            <field name="request_payload" nolabel="1" widget="text" />
+                        </page>
+                        <page string="Response">
+                            <field name="response_payload" nolabel="1" widget="text" />
+                            <field name="error_message" nolabel="1" widget="text" />
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="mail_gateway_webhook_log_action" model="ir.actions.act_window">
+        <field name="name">Webhook Logs</field>
+        <field name="res_model">mail.gateway.webhook.log</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

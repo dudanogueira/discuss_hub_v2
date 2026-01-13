@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<odoo>
+    <data>
+        <menuitem
+            id="mail_discuss_hub_gateway_menu_gateway"
+            name="Gateway"
+            parent="mail_discuss_hub.mail_discuss_hub_menu_messages_config"
+            action="mail_gateway.mail_gateway_act_window"
+            sequence="80"
+            groups="base.group_system"
+        />
+        <menuitem
+            id="mail_discuss_hub_gateway_menu_partner_channels"
+            name="Gateway Partner Channels"
+            parent="mail_discuss_hub.mail_discuss_hub_menu_messages_config"
+            action="mail_gateway.res_partner_gateway_channel_act_window"
+            sequence="90"
+            groups="base.group_system"
+        />
+        <menuitem
+            id="mail_discuss_hub_gateway_menu_webhook_logs"
+            name="Webhook Logs"
+            parent="mail_discuss_hub.mail_discuss_hub_menu_messages_config"
+            action="mail_discuss_hub_gateway.mail_gateway_webhook_log_action"
+            sequence="100"
+            groups="base.group_system"
+        />
+    </data>
+</odoo>

@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <record id="evolution_api_instance_view_list" model="ir.ui.view">
+        <field name="name">evolution.api.instance.list</field>
+        <field name="model">evolution.api.instance</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name" />
+                <field name="server_id" />
+                <field name="status" />
+                <field name="connection_status" />
+                <field name="profile_name" />
+                <field name="phone_number" />
+                <field name="last_sync" />
+            </list>
+        </field>
+    </record>
+
+    <record id="evolution_api_instance_view_kanban" model="ir.ui.view">
+        <field name="name">evolution.api.instance.kanban</field>
+        <field name="model">evolution.api.instance</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_small_column">
+                <field name="name" />
+                <field name="server_id" />
+                <field name="status" />
+                <field name="profile_name" />
+                <field name="phone_number" />
+                <field name="last_sync" />
+                <templates>
+                    <t t-name="card">
+                        <div class="o_kanban_record">
+                            <div class="o_kanban_record_top">
+                                <strong class="o_text_overflow">
+                                    <field name="name" />
+                                </strong>
+                                <span class="o_tag o_tag_secondary">
+                                    <field name="status" />
+                                </span>
+                            </div>
+                            <div class="o_kanban_record_body">
+                                <div class="o_text_overflow">
+                                    <field name="profile_name" placeholder="-" />
+                                </div>
+                                <div class="o_text_overflow">
+                                    <field name="phone_number" placeholder="-" />
+                                </div>
+                                <div class="text-muted o_text_overflow">
+                                    <field name="server_id" />
+                                </div>
+                            </div>
+                            <div class="o_kanban_record_bottom text-muted">
+                                <field name="last_sync" />
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="evolution_api_instance_view_form" model="ir.ui.view">
+        <field name="name">evolution.api.instance.form</field>
+        <field name="model">evolution.api.instance</field>
+        <field name="arch" type="xml">
+            <form string="Evolution API Instance">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name" />
+                            <field name="server_id" />
+                            <field name="status" />
+                            <field name="connection_status" />
+                        </group>
+                        <group>
+                            <field name="profile_name" />
+                            <field name="phone_number" />
+                            <field name="last_sync" />
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Settings">
+                            <group>
+                                <group>
+                                    <field name="reject_calls" />
+                                    <field name="ignore_groups" />
+                                    <field name="always_online" />
+                                </group>
+                                <group>
+                                    <field name="read_messages" />
+                                    <field name="sync_full_history" />
+                                    <field name="read_status" />
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Raw Payload">
+                            <field name="raw_payload" nolabel="1" />
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_evolution_api_instance" model="ir.actions.act_window">
+        <field name="name">Evolution API Instances</field>
+        <field name="res_model">evolution.api.instance</field>
+        <field name="view_mode">kanban,list,form</field>
+    </record>
+</odoo>
