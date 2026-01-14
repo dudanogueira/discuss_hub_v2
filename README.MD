@@ -1,0 +1,50 @@
+# Discuss Hub (Odoo 18)
+
+Addons locais para Odoo 18 focados em Discuss + integrações (Gateway, WhatsApp Evolution API, CRM, Helpdesk).
+
+## Usage
+
+- Copie/monte este diretório em um `addons_path` do Odoo.
+- No Odoo: `Apps` → `Update Apps List`.
+- Instale os módulos desejados.
+
+### Integrações (CRM / Helpdesk)
+
+Os módulos de integração foram desenhados para **link manual** entre equipes (sem criar automaticamente durante o uso normal).
+
+Exceção (bootstrap na instalação):
+
+- Ao **instalar** o addon [mail_discuss_hub_crm](mail_discuss_hub_crm/), se já existirem equipes em `CRM → Teams`, o módulo cria automaticamente uma equipe equivalente em `Discuss Hub → Discuss Teams` e faz o vínculo.
+- Ao **instalar** o addon [mail_discuss_hub_helpdesk_mgmt](mail_discuss_hub_helpdesk_mgmt/), se já existirem equipes em `Helpdesk → Teams`, o módulo cria automaticamente uma equipe equivalente em `Discuss Hub → Discuss Teams` e faz o vínculo.
+
+Notas:
+
+- Essa rotina roda **uma única vez** no momento da instalação (post-init hook). Ela **não** roda em upgrade.
+- Ao adicionar novos campos Python, é necessário **reiniciar o serviço do Odoo** para o registry carregar o código antes de atualizar/instalar o módulo.
+
+## Addons
+
+<!-- /!\ do not modify below this line -->
+
+<!-- prettier-ignore-start -->
+
+[//]: # (addons)
+
+Available addons
+----------------
+
+addon | version | summary
+----- | ------- | -------
+[mail_discuss_hub](mail_discuss_hub/) | 18.0.1.0.0 | Discuss configuration menus for message administration
+[mail_discuss_hub_gateway](mail_discuss_hub_gateway/) | 18.0.1.0.0 | Discuss gateway extensions and sidebar grouping utilities
+[mail_gateway_whatsapp_evolution_api](mail_gateway_whatsapp_evolution_api/) | 18.0.1.0.0 | Gateway integration for WhatsApp via Evolution API
+[mail_gateway_whatsapp_evolution_api_manager](mail_gateway_whatsapp_evolution_api_manager/) | 18.0.1.0.0 | Manage Evolution API servers and instances
+[mail_discuss_hub_crm](mail_discuss_hub_crm/) | 18.0.1.0.0 | CRM integration for Discuss Teams
+[mail_discuss_hub_helpdesk_mgmt](mail_discuss_hub_helpdesk_mgmt/) | 18.0.1.0.0 | Helpdesk Mgmt integration for Discuss Teams
+
+[//]: # (end addons)
+
+
+## License
+
+AGPL-3 (veja o `__manifest__.py` de cada addon).

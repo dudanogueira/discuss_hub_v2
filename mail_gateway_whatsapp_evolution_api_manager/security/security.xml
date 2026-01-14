@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Multi-company isolation
+
+        Notes:
+        - Servers and Instances are company-scoped via server_id.company_id.
+        - We allow company_id = False (shared) just in case, but by default
+          servers are created with env.company.
+    -->
+
+    <record id="rule_evolution_api_server_multicompany" model="ir.rule">
+        <field name="name">Evolution API Server: multi-company</field>
+        <field name="model_id" ref="model_evolution_api_server" />
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        <field name="global" eval="True" />
+    </record>
+
+    <record id="rule_evolution_api_instance_multicompany" model="ir.rule">
+        <field name="name">Evolution API Instance: multi-company</field>
+        <field name="model_id" ref="model_evolution_api_instance" />
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        <field name="global" eval="True" />
+    </record>
+</odoo>

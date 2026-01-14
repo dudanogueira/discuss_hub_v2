@@ -8,8 +8,15 @@
     "author": "Soloz Technologies",
     "website": "https://github.com/lcsztl/discuss_hub",
     "depends": ["mail_gateway_whatsapp_evolution_api"],
+    "assets": {
+        "web.assets_backend": [
+            "mail_gateway_whatsapp_evolution_api_manager/static/src/js/evolution_qr_code.esm.js",
+            "mail_gateway_whatsapp_evolution_api_manager/static/src/xml/evolution_qr_code.xml",
+        ],
+    },
     "data": [
         "security/ir.model.access.csv",
+        "security/security.xml",
         "views/evolution_api_server_views.xml",
         "views/evolution_api_instance_views.xml",
         "views/evolution_api_menus.xml",

@@ -27,6 +27,18 @@ class MailDiscussTeam(models.Model):
     color = fields.Integer(default=0)
     description = fields.Text()
 
+    has_integrations = fields.Boolean(
+        compute="_compute_has_integrations",
+        help="Technical flag used to show/hide the Integrations tab.",
+    )
+
+    def _compute_has_integrations(self):
+        for team in self:
+            team.has_integrations = any(
+                field_name in team._fields
+                for field_name in ("crm_team_id", "helpdesk_team_id")
+            )
+
     @api.model_create_multi
     def create(self, vals_list):
         teams = super().create(vals_list)

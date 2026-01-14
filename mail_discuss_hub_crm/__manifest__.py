@@ -8,6 +8,7 @@
     "author": "Soloz Technologies",
     "website": "https://github.com/lcsztl/discuss_hub",
     "depends": ["mail_discuss_hub", "crm"],
+    "post_init_hook": "post_init_hook",
     "data": [
         "views/crm_team_views.xml",
         "views/mail_discuss_team_views.xml",

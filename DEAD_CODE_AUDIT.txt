@@ -1,0 +1,140 @@
+Dead/Unused Code & Configuration Audit (read-only)
+Scope: extra-addons/discuss-hub only
+Date: 2026-01-13
+
+This document lists code/paths that appear unused ("dead") or effectively inert in the current Docker-based runtime, plus items that are not strictly dead but are currently non-functional options, stale artifacts, or high-maintenance surfaces.
+
+================================================================================
+1) ADDONS COVERED
+================================================================================
+
+This audit covers only these addons under extra-addons/discuss-hub:
+- mail_discuss_hub
+- mail_discuss_hub_crm
+- mail_discuss_hub_gateway
+- mail_discuss_hub_helpdesk_mgmt
+- mail_gateway_whatsapp_evolution_api
+- mail_gateway_whatsapp_evolution_api_manager
+
+================================================================================
+2) PROBABLY UNUSED / STALE ARTIFACTS
+================================================================================
+
+These are under ./extra-addons (so they *are* reachable), but they look unused or stale.
+
+2.1) Empty static directory (likely leftover scaffold)
+Module: mail_gateway_whatsapp_evolution_api
+Path:
+- extra-addons/discuss-hub/mail_gateway_whatsapp_evolution_api/static/src/js/
+
+Finding:
+- Directory exists but is empty.
+- The module’s purpose is server-side gateway integration; it does not declare any web assets.
+
+Impact:
+- Minor (clutter only), but it suggests unfinished or removed frontend work.
+
+Suggested action (NOT DONE):
+- Remove empty folder if you want a cleaner tree.
+
+2.2) Stale i18n entries referencing a removed field
+Module: mail_gateway_whatsapp_evolution_api
+File:
+- extra-addons/discuss-hub/mail_gateway_whatsapp_evolution_api/i18n/pt_BR.po
+
+Finding:
+- Contains translations for the field:
+  - field_mail_gateway__evolution_webhook_events
+  That field does not exist in the current model; it was replaced by:
+  - evolution_webhook_event_ids (Many2many)
+
+Impact:
+- Can cause translation warnings or simply create confusion when maintaining translations.
+
+Suggested action (NOT DONE):
+- Regenerate/update translations so only existing field names appear.
+
+================================================================================
+3) OPTIONS THAT ARE EFFECTIVELY DEAD (present but not practically usable)
+================================================================================
+
+3.1) evolution_webhook_by_events is effectively disabled
+Module: mail_gateway_whatsapp_evolution_api
+UI view:
+- extra-addons/discuss-hub/mail_gateway_whatsapp_evolution_api/views/mail_gateway_evolution.xml
+
+Finding:
+- Field evolution_webhook_by_events is shown as readonly="1" (always read-only).
+- The webhook receiver route used by OCA mail_gateway is /gateway/<usage>/<token>/update (single endpoint).
+- Evolution “byEvents” mode typically implies the event name becomes part of the URL (multiple routes), which is not supported by the existing controller route.
+
+Net result:
+- This option is present in the model and included in the outbound payload ("byEvents": bool(field)), but the UI prevents changing it and the server routing does not support it anyway.
+
+Suggested action (NOT DONE):
+- Either fully support byEvents routing (controller/routes) OR remove/lock it consistently (e.g., hardcode False + hide field).
+
+================================================================================
+4) LARGE SURFACES THAT ARE “NOT DEAD” BUT CURRENTLY UNDERUSED
+================================================================================
+
+These are implemented and reachable, but only a small slice is exercised by current runtime behavior.
+
+4.1) Huge webhook event catalog vs limited webhook processing
+Module: mail_gateway_whatsapp_evolution_api
+Files:
+- extra-addons/discuss-hub/mail_gateway_whatsapp_evolution_api/models/evolution_webhook_event.py
+- extra-addons/discuss-hub/mail_gateway_whatsapp_evolution_api/data/evolution_webhook_event.xml
+- extra-addons/discuss-hub/mail_gateway_whatsapp_evolution_api/models/mail_gateway_whatsapp_evolution_api.py
+
+Finding:
+- The module ships many event records (catalog) and a UI to select/mark events.
+- However, the webhook receiver logic currently processes only:
+  - messages.upsert
+  - send.message
+  Everything else is ignored early.
+
+Implications:
+- Users can subscribe to lots of events that will generate webhook traffic, but Odoo will discard them (except for any raw logging done elsewhere).
+- This is not “dead code” per se (the event selector UI is real), but it is a maintenance/UX footgun.
+
+Suggested action (NOT DONE):
+- Document clearly which events are actually handled.
+- Optionally validate selection: warn or filter unsupported events.
+- Or implement handlers for additional events.
+
+================================================================================
+5) DUPLICATION / MAINTENANCE SMELLS (not dead, but candidate refactors)
+================================================================================
+
+5.1) Duplicate HTTP request helpers
+Module: mail_gateway_whatsapp_evolution_api
+Files:
+- extra-addons/discuss-hub/mail_gateway_whatsapp_evolution_api/models/evolution_api_client.py
+- extra-addons/discuss-hub/mail_gateway_whatsapp_evolution_api/models/mail_gateway_whatsapp_evolution_api.py
+
+Finding:
+- evolution_api_client.py defines generic Evolution API request helpers (_evolution_api_request).
+- mail_gateway_whatsapp_evolution_api.py also defines a separate request helper (_send_api_request) with logging.
+
+Impact:
+- Two places to maintain timeouts, error handling, headers, response parsing.
+
+Suggested action (NOT DONE):
+- Consolidate into one request layer (probably the logging one), and keep the other as a thin wrapper.
+
+================================================================================
+6) NEGATIVE FINDINGS (good news)
+================================================================================
+
+6.1) No obvious “orphan .py” files by __init__ import scan
+Method:
+- For each addon, scanned models/controllers/wizard/report folders and checked whether every .py file is imported from that folder’s __init__.py.
+Result:
+- No missing __init__.py and no .py files detected as unimported by this heuristic.
+
+6.2) Static asset declaration looks consistent
+- Only mail_discuss_hub_gateway declares web assets (2 items in web.assets_backend).
+- No extra static files were found that look like they should be in assets but are not listed (heuristic).
+
+End of report.

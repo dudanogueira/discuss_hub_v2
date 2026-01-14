@@ -9,6 +9,8 @@
     "website": "https://github.com/lcsztl/discuss_hub",
     "depends": ["mail_gateway"],
     "data": [
+        "security/ir.model.access.csv",
+        "data/evolution_webhook_event.xml",
         "views/mail_gateway_evolution.xml",
     ],
     "installable": True,

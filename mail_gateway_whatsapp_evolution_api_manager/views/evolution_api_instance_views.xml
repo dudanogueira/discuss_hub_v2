@@ -64,10 +64,75 @@
         <field name="model">evolution.api.instance</field>
         <field name="arch" type="xml">
             <form string="Evolution API Instance">
+                <header>
+                    <button
+                        name="action_create_instance"
+                        type="object"
+                        string="Create Instance"
+                        icon="fa-plus"
+                        class="btn-primary"
+                        invisible="status != 'unknown'"
+                    />
+                    <button
+                        name="action_connect"
+                        type="object"
+                        string="Connect"
+                        icon="fa-plug"
+                        class="btn-primary"
+                        invisible="status == 'unknown' or status == 'connected' or status == 'connecting'"
+                    />
+                    <button
+                        name="action_refresh_qrcode"
+                        type="object"
+                        string="Refresh QR"
+                        icon="fa-qrcode"
+                        class="btn-info"
+                        invisible="status != 'connecting'"
+                    />
+                    <button
+                        name="action_restart"
+                        type="object"
+                        string="Restart"
+                        icon="fa-refresh"
+                        class="btn-warning"
+                        invisible="status != 'connected'"
+                    />
+                    <button
+                        name="action_disconnect"
+                        type="object"
+                        string="Disconnect"
+                        icon="fa-unlink"
+                        class="btn-secondary"
+                        invisible="status != 'connected'"
+                    />
+                    <button
+                        name="action_check_status"
+                        type="object"
+                        string="Check Status"
+                        icon="fa-info-circle"
+                        class="btn-secondary"
+                    />
+                    <button
+                        name="action_delete_instance"
+                        type="object"
+                        string="Delete Instance"
+                        icon="fa-trash"
+                        class="btn-danger"
+                        confirm="A instância será deletada diretamente no servidor da Evolution API."
+                        invisible="status != 'connected'"
+                    />
+                    <button
+                        name="action_create_gateway"
+                        type="object"
+                        string="Create Gateway"
+                        class="btn-primary"
+                        invisible="gateway_id or status != 'connected'"
+                    />
+                </header>
                 <sheet>
                     <group>
                         <group>
-                            <field name="name" />
+                            <field name="name" readonly="status != 'unknown'" />
                             <field name="server_id" />
                             <field name="status" />
                             <field name="connection_status" />
@@ -75,7 +140,13 @@
                         <group>
                             <field name="profile_name" />
                             <field name="phone_number" />
+                            <field name="gateway_id" options="{'no_create': True}" />
                             <field name="last_sync" />
+                            <field
+                                name="qr_code"
+                                widget="evolution_qr_code"
+                                invisible="status != 'connecting' and not qr_code"
+                            />
                         </group>
                     </group>
                     <notebook>
@@ -91,6 +162,27 @@
                                     <field name="sync_full_history" />
                                     <field name="read_status" />
                                 </group>
+                            </group>
+                            <group string="Webhook" invisible="not gateway_id">
+                                <group>
+                                    <field name="evolution_webhook_by_events" readonly="1" />
+                                    <field name="evolution_base64_webhook" />
+                                </group>
+                                <group>
+                                    <button
+                                        name="action_select_all_webhook_events"
+                                        type="object"
+                                        string="Mark All"
+                                        class="btn-secondary"
+                                    />
+                                    <button
+                                        name="action_clear_webhook_events"
+                                        type="object"
+                                        string="Unmark All"
+                                        class="btn-secondary"
+                                    />
+                                </group>
+                                <field name="evolution_webhook_event_ids" widget="many2many_checkboxes" />
                             </group>
                         </page>
                         <page string="Raw Payload">

@@ -11,15 +11,9 @@
                     <block title="Discuss Hub" id="discuss_hub">
                         <setting id="discuss_hub_integrate_crm" string="Integrate with CRM" help="Install the Discuss Hub CRM integration (syncs Discuss Teams with CRM Teams).">
                             <field name="module_mail_discuss_hub_crm"/>
-                            <div class="content-group" invisible="not module_mail_discuss_hub_crm" id="discuss_hub_msg_module_mail_discuss_hub_crm">
-                                <div class="mt16 text-warning"><strong>Save</strong> this page and come back here to set up the feature.</div>
-                            </div>
                         </setting>
                         <setting id="discuss_hub_integrate_helpdesk" string="Integrate with Helpdesk" help="Install the Discuss Hub Helpdesk integration (syncs Discuss Teams with Helpdesk Teams).">
                             <field name="module_mail_discuss_hub_helpdesk_mgmt"/>
-                            <div class="content-group" invisible="not module_mail_discuss_hub_helpdesk_mgmt" id="discuss_hub_msg_module_mail_discuss_hub_helpdesk_mgmt">
-                                <div class="mt16 text-warning"><strong>Save</strong> this page and come back here to set up the feature.</div>
-                            </div>
                         </setting>
                     </block>
                     <block title="Messages" id="discuss_messages">

@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <record id="evolution_webhook_event_application_startup" model="mail.gateway.whatsapp_evolution_api.webhook_event">
+        <field name="name">Application Startup</field>
+        <field name="code">APPLICATION_STARTUP</field>
+        <field name="sequence">10</field>
+    </record>
+    <record id="evolution_webhook_event_call" model="mail.gateway.whatsapp_evolution_api.webhook_event">
+        <field name="name">Call</field>
+        <field name="code">CALL</field>
+        <field name="sequence">20</field>
+    </record>
+    <record id="evolution_webhook_event_chats_delete" model="mail.gateway.whatsapp_evolution_api.webhook_event">
+        <field name="name">Chats Delete</field>
+        <field name="code">CHATS_DELETE</field>
+        <field name="sequence">30</field>
+    </record>
+    <record id="evolution_webhook_event_chats_set" model="mail.gateway.whatsapp_evolution_api.webhook_event">
+        <field name="name">Chats Set</field>
+        <field name="code">CHATS_SET</field>
+        <field name="sequence">40</field>
+    </record>
+    <record id="evolution_webhook_event_chats_update" model="mail.gateway.whatsapp_evolution_api.webhook_event">
+        <field name="name">Chats Update</field>
+        <field name="code">CHATS_UPDATE</field>
+        <field name="sequence">50</field>
+    </record>
+    <record id="evolution_webhook_event_chats_upsert" model="mail.gateway.whatsapp_evolution_api.webhook_event">
+        <field name="name">Chats Upsert</field>
+        <field name="code">CHATS_UPSERT</field>
+        <field name="sequence">60</field>
+    </record>
+    <record id="evolution_webhook_event_connection_update" model="mail.gateway.whatsapp_evolution_api.webhook_event">
+        <field name="name">Connection Update</field>
+        <field name="code">CONNECTION_UPDATE</field>
+        <field name="sequence">70</field>
+    </record>
+    <record id="evolution_webhook_event_contacts_set" model="mail.gateway.whatsapp_evolution_api.webhook_event">
+        <field name="name">Contacts Set</field>
+        <field name="code">CONTACTS_SET</field>
+        <field name="sequence">80</field>
+    </record>
+    <record id="evolution_webhook_event_contacts_update" model="mail.gateway.whatsapp_evolution_api.webhook_event">
+        <field name="name">Contacts Update</field>
+        <field name="code">CONTACTS_UPDATE</field>
+        <field name="sequence">90</field>
+    </record>
+    <record id="evolution_webhook_event_contacts_upsert" model="mail.gateway.whatsapp_evolution_api.webhook_event">
+        <field name="name">Contacts Upsert</field>
+        <field name="code">CONTACTS_UPSERT</field>
+        <field name="sequence">100</field>
+    </record>
+    <record id="evolution_webhook_event_group_participants_update" model="mail.gateway.whatsapp_evolution_api.webhook_event">
+        <field name="name">Group Participants Update</field>
+        <field name="code">GROUP_PARTICIPANTS_UPDATE</field>
+        <field name="sequence">110</field>
+    </record>
+    <record id="evolution_webhook_event_group_update" model="mail.gateway.whatsapp_evolution_api.webhook_event">
+        <field name="name">Group Update</field>
+        <field name="code">GROUP_UPDATE</field>
+        <field name="sequence">120</field>
+    </record>
+    <record id="evolution_webhook_event_groups_upsert" model="mail.gateway.whatsapp_evolution_api.webhook_event">
+        <field name="name">Groups Upsert</field>
+        <field name="code">GROUPS_UPSERT</field>
+        <field name="sequence">130</field>
+    </record>
+    <record id="evolution_webhook_event_labels_association" model="mail.gateway.whatsapp_evolution_api.webhook_event">
+        <field name="name">Labels Association</field>
+        <field name="code">LABELS_ASSOCIATION</field>
+        <field name="sequence">140</field>
+    </record>
+    <record id="evolution_webhook_event_labels_edit" model="mail.gateway.whatsapp_evolution_api.webhook_event">
+        <field name="name">Labels Edit</field>
+        <field name="code">LABELS_EDIT</field>
+        <field name="sequence">150</field>
+    </record>
+    <record id="evolution_webhook_event_logout_instance" model="mail.gateway.whatsapp_evolution_api.webhook_event">
+        <field name="name">Logout Instance</field>
+        <field name="code">LOGOUT_INSTANCE</field>
+        <field name="sequence">160</field>
+    </record>
+    <record id="evolution_webhook_event_messages_delete" model="mail.gateway.whatsapp_evolution_api.webhook_event">
+        <field name="name">Messages Delete</field>
+        <field name="code">MESSAGES_DELETE</field>
+        <field name="sequence">170</field>
+    </record>
+    <record id="evolution_webhook_event_messages_set" model="mail.gateway.whatsapp_evolution_api.webhook_event">
+        <field name="name">Messages Set</field>
+        <field name="code">MESSAGES_SET</field>
+        <field name="sequence">180</field>
+    </record>
+    <record id="evolution_webhook_event_messages_update" model="mail.gateway.whatsapp_evolution_api.webhook_event">
+        <field name="name">Messages Update</field>
+        <field name="code">MESSAGES_UPDATE</field>
+        <field name="sequence">190</field>
+    </record>
+    <record id="evolution_webhook_event_messages_upsert" model="mail.gateway.whatsapp_evolution_api.webhook_event">
+        <field name="name">Messages Upsert</field>
+        <field name="code">MESSAGES_UPSERT</field>
+        <field name="sequence">200</field>
+    </record>
+    <record id="evolution_webhook_event_presence_update" model="mail.gateway.whatsapp_evolution_api.webhook_event">
+        <field name="name">Presence Update</field>
+        <field name="code">PRESENCE_UPDATE</field>
+        <field name="sequence">210</field>
+    </record>
+    <record id="evolution_webhook_event_qrcode_updated" model="mail.gateway.whatsapp_evolution_api.webhook_event">
+        <field name="name">QR Code Updated</field>
+        <field name="code">QRCODE_UPDATED</field>
+        <field name="sequence">220</field>
+    </record>
+    <record id="evolution_webhook_event_remove_instance" model="mail.gateway.whatsapp_evolution_api.webhook_event">
+        <field name="name">Remove Instance</field>
+        <field name="code">REMOVE_INSTANCE</field>
+        <field name="sequence">230</field>
+    </record>
+    <record id="evolution_webhook_event_send_message" model="mail.gateway.whatsapp_evolution_api.webhook_event">
+        <field name="name">Send Message</field>
+        <field name="code">SEND_MESSAGE</field>
+        <field name="sequence">240</field>
+    </record>
+    <record id="evolution_webhook_event_typebot_change_status" model="mail.gateway.whatsapp_evolution_api.webhook_event">
+        <field name="name">Typebot Change Status</field>
+        <field name="code">TYPEBOT_CHANGE_STATUS</field>
+        <field name="sequence">250</field>
+    </record>
+    <record id="evolution_webhook_event_typebot_start" model="mail.gateway.whatsapp_evolution_api.webhook_event">
+        <field name="name">Typebot Start</field>
+        <field name="code">TYPEBOT_START</field>
+        <field name="sequence">260</field>
+    </record>
+</odoo>

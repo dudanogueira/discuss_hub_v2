@@ -21,23 +21,41 @@
         <field name="arch" type="xml">
             <form string="Discuss Team">
                 <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field
+                                name="name"
+                                placeholder="e.g. Sales"
+                                class="oe_inline"
+                            />
+                        </h1>
+                    </div>
+
                     <group>
                         <group>
-                            <field name="name" />
                             <field name="active" />
-                            <field name="sequence" />
+                            <field name="company_id" />
                         </group>
                         <group>
-                            <field name="company_id" />
                             <field name="user_id" />
-                            <field name="color" />
                         </group>
                     </group>
+
+                    <field name="sequence" invisible="1" />
+                    <field name="color" invisible="1" />
                     <notebook>
                         <page string="Members">
-                            <field name="member_ids" widget="many2many_tags" />
+                            <field
+                                name="member_ids"
+                                widget="many2many_avatar_user"
+                                options="{'no_create': True}"
+                            />
                         </page>
-                        <page string="Integrations" name="integrations" />
+                        <page
+                            string="Integrations"
+                            name="integrations"
+                            invisible="not has_integrations"
+                        />
                         <page string="Description">
                             <field name="description" />
                         </page>

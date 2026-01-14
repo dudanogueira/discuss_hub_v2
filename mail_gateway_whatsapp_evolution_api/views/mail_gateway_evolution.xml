@@ -14,11 +14,44 @@
                     name="evolution_instance"
                     invisible="gateway_type != 'whatsapp_evolution_api'"
                 />
-                <field
-                    name="evolution_base64_webhook"
-                    invisible="gateway_type != 'whatsapp_evolution_api'"
-                />
             </field>
+            <notebook position="inside">
+                <page string="Settings" invisible="gateway_type != 'whatsapp_evolution_api'">
+                    <group>
+                        <group>
+                            <field name="reject_calls" />
+                            <field name="ignore_groups" />
+                            <field name="always_online" />
+                        </group>
+                        <group>
+                            <field name="read_messages" />
+                            <field name="sync_full_history" />
+                            <field name="read_status" />
+                        </group>
+                    </group>
+                    <group string="Webhook">
+                        <group>
+                            <field name="evolution_webhook_by_events" readonly="1" />
+                            <field name="evolution_base64_webhook" />
+                        </group>
+                        <group>
+                            <button
+                                name="action_select_all_webhook_events"
+                                type="object"
+                                string="Mark All"
+                                class="btn-secondary"
+                            />
+                            <button
+                                name="action_clear_webhook_events"
+                                type="object"
+                                string="Unmark All"
+                                class="btn-secondary"
+                            />
+                        </group>
+                        <field name="evolution_webhook_event_ids" widget="many2many_checkboxes" />
+                    </group>
+                </page>
+            </notebook>
         </field>
     </record>
 </odoo>

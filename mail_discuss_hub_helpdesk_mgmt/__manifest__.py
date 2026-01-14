@@ -8,6 +8,7 @@
     "author": "Soloz Technologies",
     "website": "https://github.com/lcsztl/discuss_hub",
     "depends": ["mail_discuss_hub", "helpdesk_mgmt"],
+    "post_init_hook": "post_init_hook",
     "data": [
         "views/mail_discuss_team_views.xml",
         "views/helpdesk_ticket_team_views.xml",

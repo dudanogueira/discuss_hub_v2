@@ -38,7 +38,7 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             "webhook": {
                 "enabled": True,
                 "url": gateway._get_webhook_url(),
-                "byEvents": False,
+                "byEvents": bool(gateway.evolution_webhook_by_events),
                 "events": self._get_webhook_events(gateway),
                 "base64": bool(gateway.evolution_base64_webhook),
             }
@@ -395,9 +395,17 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             return None
 
     def _get_webhook_events(self, gateway):
-        if gateway.evolution_webhook_events:
-            return [e.strip() for e in gateway.evolution_webhook_events.split(",") if e.strip()]
-        return ["MESSAGES_UPSERT", "SEND_MESSAGE"]
+        if gateway.evolution_webhook_event_ids:
+            return [
+                event.code
+                for event in gateway.evolution_webhook_event_ids
+                if event.code
+            ]
+        if (
+            not self.env["mail.gateway.whatsapp_evolution_api.webhook_event"].search_count([])
+        ):
+            return ["MESSAGES_UPSERT", "CONNECTION_UPDATE", "QRCODE_UPDATED"]
+        return []
 
     def _instance_name(self, gateway):
         return gateway.evolution_instance or gateway.name
