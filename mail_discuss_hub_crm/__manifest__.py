@@ -1,4 +1,6 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
+# Based on concepts from:
+#   - https://github.com/discusshub/discuss_hub
 
 {
     "name": "Mail Discuss Hub CRM",
@@ -6,6 +8,9 @@
     "version": "18.0.1.0.0",
     "license": "AGPL-3",
     "author": "Soloz Technologies",
+    "contributors": [
+        "DiscussHub Team <https://github.com/discusshub/discuss_hub>",
+    ],
     "website": "https://github.com/lcsztl/discuss_hub",
     "depends": ["mail_discuss_hub", "crm"],
     "post_init_hook": "post_init_hook",

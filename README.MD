@@ -44,7 +44,24 @@ addon | version | summary
 
 [//]: # (end addons)
 
+## Credits
 
+### Authors
+
+- Soloz Technologies
+
+### Based on / Inspired by
+
+Este projeto foi desenvolvido com base em conceitos, código e inspiração dos seguintes projetos open-source:
+
+| Projeto | Autor | Repositório |
+| ------- | ----- | ----------- |
+| Discuss Hub | DiscussHub Team | https://github.com/discusshub/discuss_hub |
+| WA Conn | Diego Rodrigues | https://github.com/diegofrodrigues/wa_conn |
+| Odoo WhatsApp Evolution API | Gerencial P | https://github.com/gerencialp-bit/odoo-whatsapp-evolution-api |
+| Mail Gateway (OCA) | OCA / Social | https://github.com/OCA/social |
+
+Agradecemos a todos os autores e contribuidores desses projetos por disponibilizarem seu trabalho sob licenças open-source.
 ## License
 
 AGPL-3 (veja o `__manifest__.py` de cada addon).
