@@ -1,0 +1,4 @@
+[submodule "oca/social"]
+	path = oca/social
+	url = https://github.com/OCA/social.git
+	branch = 18.0
