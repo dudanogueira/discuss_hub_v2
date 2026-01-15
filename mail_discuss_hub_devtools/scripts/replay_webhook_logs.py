@@ -221,51 +221,59 @@ for log in logs:
             reported += 1
         skipped += 1
         continue
-    model_name = f"mail.gateway.{gateway.gateway_type}"
-    if model_name not in env:
-        if report_skipped and reported < max_report:
-            print(f"Skipped log {log.id}: gateway model {model_name} not installed")
-            reported += 1
-        skipped += 1
-        continue
-    if report_skipped:
-        continue
 
-    dispatcher = (
-        env[model_name]
-        .with_user(gateway.webhook_user_id.id or env.user.id)
-        .with_context(no_gateway_notification=True, gateway_webhook_log_id=log.id)
+    dispatcher = env[f"mail.gateway.{gateway.gateway_type}"].with_context(
+        mail_notrack=True,
+        tracking_disable=True,
     )
+    kwargs = dict(payload) if isinstance(payload, dict) else {}
+    kwargs["event"] = payload.get("event")
+    kwargs["data"] = payload.get("data")
+    kwargs["server_url"] = _extract_server_url(payload)
+    kwargs["instance_name"] = _extract_instance_name(payload)
+
     try:
-        dispatcher._receive_update(gateway, payload)
-    except Exception as exc:
+        dispatcher._receive_update(gateway, kwargs)
+        processed += 1
+    except Exception as exc:  # pylint: disable=broad-except
         errors += 1
-        print(f"Error on log {log.id}: {exc}")
-        continue
-
-    if update_message_date and log.create_date:
-        message = _latest_message_for_log(log.id)
-        if message:
-            message.sudo().write({"date": log.create_date})
-            if update_create_date:
-                env.cr.execute(
-                    "UPDATE mail_message SET create_date=%s WHERE id=%s",
-                    (log.create_date, message.id),
+        print(f"Error processing log {log.id}: {exc}")
+    else:
+        if update_message_date:
+            msg = _latest_message_for_log(log.id)
+            if msg:
+                msg_date = log.create_date
+                msg.write(
+                    {
+                        "date": msg_date,
+                        "write_date": msg_date,
+                    }
                 )
-
-    processed += 1
-    if commit_every and processed % commit_every == 0:
-        env.cr.commit()
-    if sleep_seconds:
-        time.sleep(sleep_seconds)
-
-env.cr.commit()
+                if update_create_date:
+                    env.cr.execute(
+                        """
+                        UPDATE mail_message
+                        SET create_date=%s
+                        WHERE id=%s
+                    """,
+                        [msg_date, msg.id],
+                    )
+                    env.cr.execute(
+                        """
+                        UPDATE mail_message_res_partner_rel
+                        SET create_date=%s
+                        WHERE mail_message_id=%s
+                    """,
+                        [msg_date, msg.id],
+                    )
+        if commit_every and processed % commit_every == 0:
+            env.cr.commit()
+        if sleep_seconds:
+            time.sleep(sleep_seconds)
 
 print(
-    "Replay summary:",
+    "Done",
     f"processed={processed}",
     f"skipped={skipped}",
     f"errors={errors}",
 )
-if report_skipped:
-    print(f"Reported skipped logs: {reported} (max_report={max_report})")

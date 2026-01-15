@@ -17,13 +17,5 @@
             sequence="90"
             groups="base.group_system"
         />
-        <menuitem
-            id="mail_discuss_hub_gateway_menu_webhook_logs"
-            name="Webhook Logs"
-            parent="mail_discuss_hub.mail_discuss_hub_menu_messages_config"
-            action="mail_discuss_hub_gateway.mail_gateway_webhook_log_action"
-            sequence="100"
-            groups="base.group_system"
-        />
     </data>
 </odoo>

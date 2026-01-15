@@ -50,11 +50,11 @@ msgid "When enabled, Evolution will send media as base64 in webhooks."
 msgstr "Quando habilitado, a Evolution enviará mídias em base64 nos webhooks."
 
 #. module: mail_gateway_whatsapp_evolution_api
-#: model:ir.model.fields,field_description:mail_gateway_whatsapp_evolution_api.field_mail_gateway__evolution_webhook_events
+#: model:ir.model.fields,field_description:mail_gateway_whatsapp_evolution_api.field_mail_gateway__evolution_webhook_event_ids
 msgid "Webhook Events"
 msgstr "Eventos do Webhook"
 
 #. module: mail_gateway_whatsapp_evolution_api
-#: model:ir.model.fields,help:mail_gateway_whatsapp_evolution_api.field_mail_gateway__evolution_webhook_events
-msgid "Comma-separated list of Evolution webhook events to subscribe."
-msgstr "Lista separada por vírgula dos eventos de webhook da Evolution para assinar."
+#: model:ir.model.fields,help:mail_gateway_whatsapp_evolution_api.field_mail_gateway__evolution_webhook_event_ids
+msgid "Events to subscribe in Evolution API."
+msgstr "Eventos para assinar na Evolution API."

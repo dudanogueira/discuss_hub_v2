@@ -54,6 +54,38 @@ Fase 1 - Modelo de dados + acesso
 - Feature flag:
   - parametro de sistema ou flag no mail.discuss.team.
 
+Nota: aproveitar a aba "Privacidade" (Odoo core)
+- Origem: padrao do Odoo (OCB) no addon `mail`, model `discuss.channel`.
+- A aba "Privacidade" no form do canal expõe 2 campos importantes (aparece como "Privacy" em ingles):
+  - `group_public_id` (Authorized Group): grupo autorizado a acessar/usar o canal do tipo `channel`.
+    - Restricoes/validacoes:
+      - So faz sentido para `channel_type = 'channel'`.
+      - Nao pode ser usado em sub-canais (threads) (`parent_channel_id`).
+    - Efeitos praticos:
+      - Filtra quem pode aparecer no autocomplete de convite (somente users desse grupo).
+      - Filtra/sinaliza sugestoes de @mention (considera tambem o grupo do canal pai quando existir).
+      - Pode ser usado como metadado consistente para indicar "este canal pertence a X (grupo)".
+  - `group_ids` (Auto Subscribe Groups): grupos cujos usuarios sao automaticamente adicionados como membros.
+    - Efeito pratico: altera membership (cria `discuss.channel.member`) e pode esconder o botao "Join" na UI.
+
+Como isso conversa com o plano Chatwoot-like
+- Nosso objetivo e **visibilidade por time sem exigir membership**. Por isso:
+  - `group_ids` tende a ser **contra o principio** (ele adiciona membros em massa). Pode ser util em casos pontuais
+    (ex.: canais internos/announcement), mas para inbox-style geralmente nao queremos.
+  - `group_public_id` e interessante como **sinalizador de privacidade/escopo**, porque ja influencia:
+    - convites
+    - sugestoes de @mention
+    - e comunica a restricao de forma padrao no Odoo
+- Ideia de reaproveitamento para routing:
+  - Mapear `mail.discuss.team` -> um `res.groups` dedicado e setar `discuss.channel.group_public_id` conforme o time.
+  - Ainda assim, manter nossa regra de visibilidade via record rules (read por time) separada do membership.
+
+Cuidados
+- Se usarmos `group_public_id` como parte do esquema de routing, precisamos garantir que:
+  - usuarios fora do grupo nao vejam/nao consigam convidar/nao consigam mencionar (comportamento padrao ajuda).
+  - nossa visibilidade por time (sem membership) nao entre em conflito com o comportamento da UI do Discuss.
+- Para inbox-style, evitar `group_ids` (auto-subscribe) para nao inflar membros e notificacoes.
+
 Fase 2 - Roteamento + workflow de atribuicao
 - Ao criar canal via gateway:
   - setar discuss_team_id pelo gateway

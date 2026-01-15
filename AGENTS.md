@@ -4,10 +4,8 @@
 
 - Leia este arquivo antes de alterar codigo.
 - Leia o `README.rst` e o `AGENTS.md` do modulo que voce vai tocar.
-- Procure por outros arquivos .md relevantes
-
-> Instrucoes de ambiente local (Docker, paths, portas, Traefik) ficam em `AGENTS.local.md`.
-> Esse arquivo eh ignorado pelo git.
+- Procure por outros arquivos .md relevantes.
+- Sempre que descobrir algo importante (regra, endpoint, bug ou fluxo), atualize este arquivo.
 
 ## Visao geral
 
@@ -19,7 +17,8 @@ nos addons do `discuss-hub` (ou novos addons locais).
 ## Modulos (mapa rapido)
 
 - `mail_discuss_hub` (core): Settings do Discuss, modelo `mail.discuss.team`, menus.
-- `mail_discuss_hub_gateway` (infra Discuss+Gateway): sidebar de instancias, logs, ajustes de autoria.
+- `mail_discuss_hub_gateway` (infra Discuss+Gateway): sidebar de instancias, ajustes de autoria.
+- `mail_discuss_hub_devtools` (dev): modelo/log de webhook e utilidades opcionais (views, replay, cleanup).
 - `mail_gateway_whatsapp_evolution_api` (gateway): integracao WhatsApp via Evolution API.
 - `mail_gateway_whatsapp_evolution_api_manager` (manager): gerencia servidores/instancias Evolution.
 - `mail_discuss_hub_crm` (integracao): link + sync bidirecional entre `mail.discuss.team` e `crm.team`.
@@ -30,9 +29,124 @@ nos addons do `discuss-hub` (ou novos addons locais).
 - Views XML: Odoo 18 nao usa `attrs`/`states`.
 - Views XML: use `<list>` no lugar de `<tree>`.
 - Padrao de entrega: mudanca pequena, upgrade do modulo e reinicio do Odoo.
+- Sempre que modificar codigo, rode a atualizacao do modulo e reinicie os containers (banco e Odoo).
 - Ao sincronizar dados entre modelos, use flags no `context` para evitar loop.
 - Se houver divergencia entre doc e comportamento real, confronte com outra fonte
   (servidor, modulos de referencia, ou teste local) e atualize `EVOLUTION_API_REFERENCE.md`.
+- Projeto greenfield: evite fallbacks e legados sem comprovacao; prefira fluxos diretos e dados canonicos.
+
+## Ambiente local (unico arquivo)
+
+Este repositorio roda Odoo 18 (OCB) via Docker em `/home/administrador/odoo18`.
+
+### Subir
+
+```bash
+cd /home/administrador/odoo18
+# se nao existir .env:
+# cp .env.example .env
+# edite o .env (POSTGRES_PASSWORD e ODOO_ADMIN_PASSWORD)
+docker compose up -d --build
+```
+
+### Containers / Bancos (exemplo)
+
+- Odoo principal (db `odoo2`) roda no service `odoo`.
+- Odoo legado (db `odoo1`) roda no service `odoo_legacy` (ou nome equivalente).
+
+> Ajuste os nomes acima de acordo com o seu `docker-compose.yml`.
+
+### Acessar
+
+- Local: `http://127.0.0.1:8069`
+- Via Traefik (se habilitado): configure `TRAEFIK_ENABLE=true` e `TRAEFIK_HOST` no `.env`.
+
+Na primeira abertura, crie a base pelo wizard do Odoo. A "master password" eh
+`ODOO_ADMIN_PASSWORD` do `.env`.
+
+### Logs e status
+
+```bash
+cd /home/administrador/odoo18
+docker compose ps
+docker compose logs -f --tail=200 odoo
+```
+
+### Rotina: upgrade / install de modulos (db principal)
+
+```bash
+cd /home/administrador/odoo18
+
+# Upgrade
+docker compose exec -T odoo /opt/venv/bin/python /opt/odoo/odoo-bin \
+  -c /etc/odoo/odoo.conf -d odoo2 -u modulo --stop-after-init
+
+# Install
+docker compose exec -T odoo /opt/venv/bin/python /opt/odoo/odoo-bin \
+  -c /etc/odoo/odoo.conf -d odoo2 -i modulo --stop-after-init
+
+# Reinicio do Odoo
+docker compose restart odoo
+```
+
+### Notas locais
+
+- Base URL (Odoo): `Settings > Technical > Parameters > System Parameters` (`web.base.url`).
+- DNS / IP / TLS: anote aqui as particularidades do seu host.
+
+## Development notes (Odoo 17+)
+
+- `attrs` e `states` nao sao suportados nas views. Use atributos diretos:
+  - `invisible="condition"`
+  - `readonly="condition"`
+  - `required="condition"`
+- Condicoes seguem o mesmo estilo de expressoes de atributos:
+  - `invisible="gateway_type != 'whatsapp_evolution_api'"`
+  - `invisible="not field_name or state == 'draft'"`
+- Em listas, use `column_invisible="condition"` quando precisar controlar colunas.
+
+## Insight: aba "Privacidade" em `discuss.channel` (Odoo core)
+
+- Origem: padrao do Odoo (OCB), addon `mail`, view `mail.discuss_channel_view_form`.
+- Campos importantes para desenho futuro de routing/inbox:
+  - `group_public_id` (Authorized Group): grupo autorizado para canais do tipo `channel`.
+    - Restricoes: so para `channel_type='channel'`; nao pode em sub-canais (`parent_channel_id`).
+    - Efeitos: restringe autocomplete de convite e influencia sugestoes de @mention (considera canal pai).
+    - Potencial: pode servir como metadado padrao de "escopo" (ex.: time) sem inventar UI nova.
+  - `group_ids` (Auto Subscribe Groups): auto-adiciona membros via grupos.
+    - Cuidado: para inbox-style (Chatwoot-like), tende a ir contra o principio de nao inflar membership.
+
+Recomendacao para inbox/routing
+- Considerar mapear `mail.discuss.team` -> `res.groups` e usar `group_public_id` como sinalizador de privacidade/escopo.
+- Manter visibilidade por time via record rules (read por time) separada do membership (nao depender de `group_ids`).
+
+## Gateway routing (mail_gateway)
+
+- Webhook URL: `/gateway/<usage>/<webhook_key>/update`
+- `usage` eh o tipo de gateway (`whatsapp_evolution_api` neste projeto).
+- `webhook_key` eh a chave publica na URL; `webhook_secret` eh o header opcional
+  para validacao.
+- Para Evolution API, nao use `?db=` na URL do webhook (a API nao preserva a querystring).
+  O database deve ser fixo no `odoo.conf`.
+
+## Evolution API references (repo)
+
+Use estes arquivos como referencia de payloads e endpoints:
+- `extra-addons-reference/discuss_hub_legacy/discuss_hub/models/plugins/evolution.py`
+- `extra-addons-reference/wa_conn_apps/wa_conn_evolution/models/wa_account_evolution.py`
+- `extra-addons-reference/odoo-whatsapp-evolution-api/whatsapp_evolution_base/models/evolution_api.py`
+- `oca/social/mail_gateway_whatsapp/models/mail_gateway_whatsapp.py`
+
+## Evolution API external references (docs incompletas)
+
+- https://docs.evoapicloud.com/api-reference/authentication
+- https://www.postman.com/agenciadgcode/evolution-api/collection/nm0wqgt/evolution-api-v2-3
+- https://doc.evolution-api.com/v2/api-reference/get-information
+
+## Evolution API (local)
+
+- A Evolution API roda no mesmo servidor via Docker.
+- Mantenha o webhook apontando para a URL do gateway no Odoo (sem `?db=`).
 
 ## Guia por addon (o que preservar)
 
@@ -52,9 +166,13 @@ nos addons do `discuss-hub` (ou novos addons locais).
 
 ### `mail_discuss_hub_gateway`
 
-- Logs de webhook ficam no modelo `mail.gateway.webhook.log`.
-- Observacao: o log eh generico, mas so aparece para gateways que escrevem nele.
-- Nao mover log para o OCA `mail_gateway`; manter extensoes aqui.
+- Logs nao sao obrigatorios em producao. O addon `mail_discuss_hub_devtools` adiciona logging quando instalado.
+- Nao mover log para o OCA `mail_gateway`; manter extensoes locais (via devtools).
+
+### `mail_discuss_hub_devtools`
+
+- Guarda o modelo `mail.gateway.webhook.log`, campos em `mail.message`, views e wizards de replay/cleanup.
+- Opcional: quando instalado, gateways passam a registrar logs; quando ausente, webhooks processam sem persistir.
 
 ### `mail_gateway_whatsapp_evolution_api`
 
@@ -69,6 +187,5 @@ nos addons do `discuss-hub` (ou novos addons locais).
 
 ## Referencias
 
-- Ambiente local e operacao: `AGENTS.local.md` (ignorado)
 - Lista de addons: `README.MD`
 - Guia Evolution API (endpoints, metodos e payloads): `EVOLUTION_API_REFERENCE.md`

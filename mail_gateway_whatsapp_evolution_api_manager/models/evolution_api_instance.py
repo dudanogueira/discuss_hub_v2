@@ -63,6 +63,15 @@ class EvolutionApiInstance(models.Model):
         readonly=True,
         ondelete="set null",
     )
+    gateway_state = fields.Selection(
+        [
+            ("with_gateway", "Com gateway"),
+            ("no_gateway", "Sem gateway"),
+        ],
+        compute="_compute_gateway_state",
+        store=True,
+        readonly=True,
+    )
     evolution_webhook_by_events = fields.Boolean(
         related="gateway_id.evolution_webhook_by_events",
         readonly=True,
@@ -351,6 +360,7 @@ class EvolutionApiInstance(models.Model):
                 % duplicate.display_name
             )
         gateway = self.env["mail.gateway"].create(self._gateway_values())
+        gateway.set_webhook()
         self.gateway_id = gateway.id
         return self._action_open_gateway(gateway)
 
@@ -402,6 +412,11 @@ class EvolutionApiInstance(models.Model):
     def _compute_status(self):
         for record in self:
             record.status = self._map_status(record.connection_status)
+
+    @api.depends("gateway_id")
+    def _compute_gateway_state(self):
+        for record in self:
+            record.gateway_state = "with_gateway" if record.gateway_id else "no_gateway"
 
     @staticmethod
     def _map_status(connection_status):

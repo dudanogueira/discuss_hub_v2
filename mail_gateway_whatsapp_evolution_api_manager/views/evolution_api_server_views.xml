@@ -54,6 +54,12 @@
                                         decoration-muted="status == 'unknown'"
                                     />
                                     <field name="connection_status" />
+                                    <field
+                                        name="gateway_state"
+                                        widget="badge"
+                                        decoration-success="gateway_state == 'with_gateway'"
+                                        decoration-muted="gateway_state == 'no_gateway'"
+                                    />
                                     <field name="profile_name" />
                                     <field name="phone_number" />
                                     <field name="last_sync" />

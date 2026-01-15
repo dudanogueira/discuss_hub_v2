@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <delete id="mail_discuss_hub_gateway.mail_message_view_form_gateway_webhook" model="ir.ui.view" />
+</odoo>

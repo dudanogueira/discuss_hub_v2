@@ -6,7 +6,7 @@
 
 ## Objetivo
 
-Extensoes do Discuss para gateways (sidebar, logs, autoria de mensagens).
+Extensoes do Discuss para gateways (sidebar, autoria de mensagens).
 
 ## Dependencias
 
@@ -15,15 +15,12 @@ Extensoes do Discuss para gateways (sidebar, logs, autoria de mensagens).
 
 ## Arquivos principais
 
-- `models/mail_gateway_webhook_log.py` (logs de webhook)
 - `models/mail_guest_manage.py` (manage guest, link com parceiro)
 - `static/src/js/gateway_instance_sidebar.esm.js` (categoria por instancia)
 - `static/src/js/message_author_fix.esm.js` (autor em mensagens de gateway)
-- `views/mail_gateway_webhook_log.xml`
 - `views/mail_discuss_hub_gateway_menus.xml`
 
 ## Regras
 
 - Nao alterar OCA diretamente.
-- Logs e UI devem ficar neste modulo.
-
+- Logging de webhook eh opcional e fornecido por `mail_discuss_hub_devtools` (modelo e UI).

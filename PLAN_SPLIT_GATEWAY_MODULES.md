@@ -11,6 +11,9 @@ Motivacao
   - UX no Discuss (sidebar, aba Messages, menus)
 - Separar reduz acoplamento e facilita manutencao.
 
+Estado atual (2026-01): o modelo/observabilidade de webhook foi movido para
+`mail_discuss_hub_devtools` para manter os modulos de producao limpos.
+
 Modulos alvo (proposta minima)
 
 1) mail_gateway_fixes
@@ -117,4 +120,3 @@ Riscos e mitigacoes
   - Manter split minimo e dependencias claras.
 - JS assets nao carregarem.
   - Garantir manifests e assets_backend corretos.
-

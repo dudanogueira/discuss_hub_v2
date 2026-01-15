@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_webhook_replay_wizard_form" model="ir.ui.view">
+        <field name="name">webhook.replay.wizard.form</field>
+        <field name="model">mail_discuss_hub_dev.webhook_replay_wizard</field>
+        <field name="arch" type="xml">
+            <form string="Replay Webhooks">
+                <group>
+                    <field name="direction"/>
+                    <field name="gateway_id"/>
+                </group>
+                <group>
+                    <field name="events"/>
+                    <field name="date_from"/>
+                    <field name="date_to"/>
+                    <field name="limit"/>
+                </group>
+                <group>
+                    <field name="dry_run"/>
+                    <field name="commit_every"/>
+                    <field name="sleep_seconds"/>
+                </group>
+                <footer>
+                    <button name="action_replay" type="object" string="Replay" class="btn-primary"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

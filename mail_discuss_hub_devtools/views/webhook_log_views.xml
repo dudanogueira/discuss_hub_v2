@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="mail_gateway_webhook_log_view_form_dev" model="ir.ui.view">
+        <field name="name">mail.gateway.webhook.log.form.dev</field>
+        <field name="model">mail.gateway.webhook.log</field>
+        <field name="inherit_id" ref="mail_discuss_hub_devtools.mail_gateway_webhook_log_view_form"/>
+        <field name="arch" type="xml">
+            <notebook position="inside">
+                <page string="Pretty (Dev)">
+                    <group>
+                        <field name="request_payload_pretty" nolabel="1" widget="text" readonly="1"/>
+                    </group>
+                    <group>
+                        <field name="response_payload_pretty" nolabel="1" widget="text" readonly="1"/>
+                    </group>
+                </page>
+            </notebook>
+        </field>
+    </record>
+</odoo>

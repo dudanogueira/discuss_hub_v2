@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_webhook_replay_wizard,access_webhook_replay_wizard,model_mail_discuss_hub_dev_webhook_replay_wizard,base.group_system,1,1,1,1
+access_cleanup_wizard,access_cleanup_wizard,model_mail_discuss_hub_dev_cleanup_wizard,base.group_system,1,1,1,1
+access_mail_gateway_webhook_log_user,mail.gateway.webhook.log,model_mail_gateway_webhook_log,mail_gateway.gateway_user,1,0,0,0

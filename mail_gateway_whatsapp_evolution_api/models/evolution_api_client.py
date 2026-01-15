@@ -19,9 +19,18 @@ class MailGatewayWhatsappEvolutionApiMixin(models.AbstractModel):
         clean_endpoint = endpoint if endpoint.startswith("/") else f"/{endpoint}"
         return f"{base_url}{clean_endpoint}"
 
-    def _evolution_api_request(self, base_url, api_key, method, endpoint, payload=None):
+    def _evolution_api_request(
+        self,
+        base_url,
+        api_key,
+        method,
+        endpoint,
+        payload=None,
+        log_record=None,
+    ):
         if not base_url or not api_key:
             raise UserError(_("Evolution API base URL and API key are required."))
+        # Keep method/payload aligned with EVOLUTION_API_REFERENCE.md.
         url = self._evolution_api_join_url(base_url, endpoint)
         headers = {
             "Content-Type": "application/json",
@@ -35,19 +44,42 @@ class MailGatewayWhatsappEvolutionApiMixin(models.AbstractModel):
                 json=payload,
                 timeout=30,
             )
+            if log_record:
+                log_record.sudo().write(
+                    {
+                        "status": "sent",
+                        "http_status": response.status_code,
+                        "response_payload": response.text,
+                    }
+                )
             response.raise_for_status()
             return response.json() if response.content else {}
         except requests.exceptions.HTTPError as exc:
             details = exc.response.text if exc.response else str(exc)
             _logger.error("Evolution API HTTP error (%s): %s", url, details)
+            if log_record:
+                log_record.sudo().write(
+                    {
+                        "status": "error",
+                        "error_message": details,
+                    }
+                )
             raise UserError(_("Evolution API error: %s") % details)
         except requests.exceptions.RequestException as exc:
             _logger.error("Evolution API connection error (%s): %s", url, exc)
+            if log_record:
+                log_record.sudo().write(
+                    {
+                        "status": "error",
+                        "error_message": str(exc),
+                    }
+                )
             raise UserError(_("Evolution API connection error: %s") % exc)
 
     def _evolution_api_set_settings(self, base_url, api_key, instance_name, payload):
         if not instance_name:
             raise UserError(_("Evolution API instance name is required."))
+        # Payload must match the server schema (see EVOLUTION_API_REFERENCE.md).
         return self._evolution_api_request(
             base_url,
             api_key,

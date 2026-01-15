@@ -277,7 +277,12 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
 
     def _get_channel_vals(self, gateway, token, update):
         result = super()._get_channel_vals(gateway, token, update)
+        remote_jid, remote_jid_alt, participant_jid = self._extract_jids(update)
         result["name"] = self._get_channel_name(update, token, gateway=gateway)
+        if remote_jid_alt:
+            result["whatsapp_remote_jid_alt"] = remote_jid_alt
+        if participant_jid:
+            result["whatsapp_participant_jid"] = participant_jid
         return result
 
     def _get_author(self, gateway, update):
@@ -285,11 +290,8 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
         key_data = data.get("key", {})
         if key_data.get("fromMe"):
             return gateway.webhook_user_id.partner_id
-        remote_jid = (
-            key_data.get("participant")
-            or key_data.get("remoteJid")
-            or data.get("remoteJid")
-        )
+        remote_jid, remote_jid_alt, participant_jid = self._extract_jids(data)
+        remote_jid = remote_jid or remote_jid_alt
         if not remote_jid:
             return gateway.webhook_user_id.partner_id
         push_name = data.get("pushName")
@@ -311,9 +313,23 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             limit=1,
         )
         if guest:
-            self._update_guest_metadata(guest, remote_jid, number, push_name)
+            self._update_guest_metadata(
+                guest,
+                remote_jid=remote_jid,
+                remote_jid_alt=remote_jid_alt,
+                participant_jid=participant_jid,
+                number=number,
+                push_name=push_name,
+            )
             return guest
-        guest = self._get_or_create_guest(gateway, remote_jid, number, push_name)
+        guest = self._get_or_create_guest(
+            gateway=gateway,
+            remote_jid=remote_jid,
+            remote_jid_alt=remote_jid_alt,
+            participant_jid=participant_jid,
+            number=number,
+            push_name=push_name,
+        )
         return guest
 
     def _find_partner_by_number(self, number):
@@ -324,7 +340,15 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             partner_domain = ["|", ("phone", "ilike", number), ("mobile", "ilike", number)]
         return self.env["res.partner"].search(partner_domain, limit=1)
 
-    def _get_or_create_guest(self, gateway, remote_jid, number, push_name):
+    def _get_or_create_guest(
+        self,
+        gateway,
+        remote_jid,
+        remote_jid_alt,
+        participant_jid,
+        number,
+        push_name,
+    ):
         display_name = self._format_contact_name(push_name, number, remote_jid)
         return self.env["mail.guest"].create(
             {
@@ -332,18 +356,32 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
                 "gateway_id": gateway.id,
                 "gateway_token": str(remote_jid or ""),
                 "whatsapp_remote_jid": remote_jid or "",
+                "whatsapp_remote_jid_alt": remote_jid_alt or "",
+                "whatsapp_participant_jid": participant_jid or "",
                 "whatsapp_number": number or "",
                 "last_push_name": push_name or False,
                 "last_seen": fields.Datetime.now(),
             }
         )
 
-    def _update_guest_metadata(self, guest, remote_jid, number, push_name):
+    def _update_guest_metadata(
+        self,
+        guest,
+        remote_jid,
+        remote_jid_alt,
+        participant_jid,
+        number,
+        push_name,
+    ):
         vals = {}
         now = fields.Datetime.now()
         vals["last_seen"] = now
         if remote_jid and guest.whatsapp_remote_jid != remote_jid:
             vals["whatsapp_remote_jid"] = remote_jid
+        if remote_jid_alt and guest.whatsapp_remote_jid_alt != remote_jid_alt:
+            vals["whatsapp_remote_jid_alt"] = remote_jid_alt
+        if participant_jid and guest.whatsapp_participant_jid != participant_jid:
+            vals["whatsapp_participant_jid"] = participant_jid
         if number and guest.whatsapp_number != number:
             vals["whatsapp_number"] = number
         if push_name and guest.last_push_name != push_name:
@@ -376,9 +414,13 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
         remote_jid = key_data.get("remoteJid") or data.get("remoteJid") or token
         push_name = data.get("pushName")
         from_me = bool(key_data.get("fromMe"))
-        group_name = self._get_group_name_from_payload(data)
         number = self._get_contact_identifier(remote_jid)
         if remote_jid and remote_jid.endswith("@g.us"):
+            group_name = (
+                (data.get("group") or {}).get("subject")
+                or (data.get("groupMetadata") or {}).get("subject")
+                or (data.get("chat") or {}).get("subject")
+            )
             if group_name:
                 return group_name
             return f"Group: {remote_jid.split('@')[0]}"
@@ -410,35 +452,44 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             return
         gateway = channel.gateway_id
         push_name = data.get("pushName")
+        guest = False
+        if gateway and token:
+            guest = self.env["mail.guest"].search(
+                [
+                    ("gateway_id", "=", gateway.id),
+                    ("gateway_token", "=", str(token)),
+                ],
+                limit=1,
+            )
         auto_names = {
             gateway.name if gateway else False,
             gateway.evolution_instance if gateway else False,
             push_name,
+            token,
         }
+        if guest:
+            auto_names.update(
+                {
+                    guest.name,
+                    guest.last_push_name,
+                    guest.whatsapp_number,
+                    guest.whatsapp_remote_jid,
+                }
+            )
         if channel.name and channel.name not in auto_names and not channel.name.startswith(
             ("WhatsApp:", "WhatsApp Group:", "Group:")
         ):
             return
         channel.sudo().write({"name": desired_name})
 
-    def _get_group_name_from_payload(self, data):
+    def _extract_jids(self, data):
         if not isinstance(data, dict):
-            return False
-        candidates = [
-            (data.get("group") or {}).get("subject"),
-            (data.get("group") or {}).get("name"),
-            (data.get("groupMetadata") or {}).get("subject"),
-            (data.get("groupMetadata") or {}).get("name"),
-            (data.get("chat") or {}).get("subject"),
-            (data.get("chat") or {}).get("name"),
-            data.get("subject"),
-            data.get("name"),
-        ]
-        for name in candidates:
-            name = (name or "").strip()
-            if name:
-                return name
-        return False
+            return False, False, False
+        key_data = data.get("key", {}) or {}
+        remote_jid = key_data.get("remoteJid")
+        remote_jid_alt = key_data.get("remoteJidAlt")
+        participant_jid = key_data.get("participant")
+        return remote_jid, remote_jid_alt, participant_jid
 
     def _get_partner_from_gateway_token(self, gateway, token):
         if not gateway or not token:
@@ -450,7 +501,7 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
         return link.partner_id if link else False
 
     def _get_chat_token(self, data):
-        remote_jid = data.get("key", {}).get("remoteJid") or data.get("remoteJid")
+        remote_jid, remote_jid_alt, _participant_jid = self._extract_jids(data)
         if not remote_jid:
             return False
         return remote_jid
@@ -458,11 +509,15 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
     def _get_contact_identifier(self, remote_jid):
         if not remote_jid:
             return False
-        if isinstance(remote_jid, str) and remote_jid.endswith("@g.us"):
+        if not isinstance(remote_jid, str):
             return False
-        whatsapp_number = remote_jid.split("@")[0].split(":")[0]
-        if whatsapp_number.startswith("55") and len(whatsapp_number) == 12:
-            whatsapp_number = f"{whatsapp_number[:4]}9{whatsapp_number[4:]}"
+        if remote_jid.endswith("@g.us"):
+            return False
+        if not remote_jid.endswith("@s.whatsapp.net"):
+            return False
+        whatsapp_number = remote_jid.split("@")[0]
+        if not whatsapp_number.isdigit():
+            return False
         return whatsapp_number
 
     def _get_attachment_name(self, message, key, data):
@@ -518,8 +573,7 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
         return f"{base_url.rstrip('/')}/{endpoint.lstrip('/')}"
 
     def _send_api_request(self, gateway, method, endpoint, payload):
-        url = self._join_url(gateway.evolution_api_url, endpoint)
-        headers = self._get_headers(gateway)
+        # Keep method/payload aligned with EVOLUTION_API_REFERENCE.md.
         log_record = self._create_webhook_log(
             gateway,
             direction="out",
@@ -527,29 +581,14 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             endpoint=endpoint,
             payload=payload,
         )
-        try:
-            response = requests.request(
-                method, url, json=payload, headers=headers, timeout=30
-            )
-            if log_record:
-                log_record.sudo().write(
-                    {
-                        "status": "sent",
-                        "http_status": response.status_code,
-                        "response_payload": response.text,
-                    }
-                )
-            response.raise_for_status()
-            return response.json() if response.content else {}
-        except Exception as exc:
-            if log_record:
-                log_record.sudo().write(
-                    {
-                        "status": "error",
-                        "error_message": str(exc),
-                    }
-                )
-            raise
+        return self._evolution_api_request(
+            gateway.evolution_api_url,
+            gateway.token,
+            method,
+            endpoint,
+            payload=payload,
+            log_record=log_record,
+        )
 
     def _create_webhook_log(
         self,

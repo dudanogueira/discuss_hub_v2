@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_cleanup_wizard_form" model="ir.ui.view">
+        <field name="name">cleanup.wizard.form</field>
+        <field name="model">mail_discuss_hub_dev.cleanup_wizard</field>
+        <field name="arch" type="xml">
+            <form string="Cleanup Discuss Data">
+                <group>
+                    <field name="clear_members"/>
+                    <field name="clear_channels"/>
+                    <field name="clear_reactions"/>
+                    <field name="clear_guests"/>
+                    <field name="clear_messages"/>
+                </group>
+                <footer>
+                    <button name="action_cleanup" type="object" string="Cleanup" class="btn-primary"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>
