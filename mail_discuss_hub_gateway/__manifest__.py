@@ -18,7 +18,6 @@
     "data": [
         "views/discuss_channel_views.xml",
         "views/mail_discuss_hub_gateway_menus.xml",
-        "data/cleanup_webhook_log_views.xml",
     ],
     "assets": {
         "web.assets_backend": [

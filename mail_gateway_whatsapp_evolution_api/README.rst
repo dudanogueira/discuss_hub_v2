@@ -36,6 +36,7 @@ Dependencies
 ============
 
 - ``mail_gateway`` (`OCA/social mail_gateway <https://github.com/OCA/social/tree/18.0/mail_gateway>`_)
+- ``mail_gateway_whatsapp_common`` (serviço/DTO compartilhado para processar mensagens/status/reactions)
 
 Configuration
 =============
@@ -54,9 +55,11 @@ Configuration
 Usage
 =====
 
-Use Discuss to send messages. Inbound messages create or reuse gateway
-channels. If ``mail_discuss_hub_gateway`` is installed, you can
-review webhook logs under Discuss configuration.
+Use Discuss to send messages. Inbound webhooks are parsed into a
+``NormalizedPayload`` and processados pelo módulo
+``mail_gateway_whatsapp_common`` (idempotência, status, reações). Se
+``mail_discuss_hub_devtools`` estiver instalado, você pode inspecionar
+logs no menu Discuss Dev.
 
 Roadmap (TODO)
 ==============

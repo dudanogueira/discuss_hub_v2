@@ -6,6 +6,7 @@
 - Leia o `README.rst` e o `AGENTS.md` do modulo que voce vai tocar.
 - Procure por outros arquivos .md relevantes.
 - Sempre que descobrir algo importante (regra, endpoint, bug ou fluxo), atualize este arquivo.
+- Regra operacional: sempre que modificar codigo, rode o upgrade do(s) modulo(s) tocado(s) e reinicie os containers (Odoo e banco, conforme rotina local).
 
 ## Visao geral
 
@@ -17,12 +18,12 @@ nos addons do `discuss-hub` (ou novos addons locais).
 ## Modulos (mapa rapido)
 
 - `mail_discuss_hub` (core): Settings do Discuss, modelo `mail.discuss.team`, menus.
-- `mail_discuss_hub_gateway` (infra Discuss+Gateway): sidebar de instancias, ajustes de autoria.
-- `mail_discuss_hub_devtools` (dev): modelo/log de webhook e utilidades opcionais (views, replay, cleanup).
-- `mail_gateway_whatsapp_evolution_api` (gateway): integracao WhatsApp via Evolution API.
+- Integracoes: `mail_discuss_hub_crm`, `mail_discuss_hub_helpdesk_mgmt` (e futuros) dependem apenas do core + modulo alvo.
+- `mail_discuss_hub_gateway` (infra Discuss+Gateway): sidebar de instancias, ajustes de autoria (sem logging obrigatorio).
+- `mail_discuss_hub_devtools` (dev): modelo/log de webhook e utilidades opcionais (views, replay, cleanup). Nao deve ser dependencia de producao.
+- `mail_gateway_whatsapp_common` (gateway core WhatsApp): DTO/servico unificado para mensagens/status/reactions.
+- `mail_gateway_whatsapp_evolution_api` (provider): integra Evolution API, delega processamento ao common.
 - `mail_gateway_whatsapp_evolution_api_manager` (manager): gerencia servidores/instancias Evolution.
-- `mail_discuss_hub_crm` (integracao): link + sync bidirecional entre `mail.discuss.team` e `crm.team`.
-- `mail_discuss_hub_helpdesk_mgmt` (integracao): link + sync bidirecional entre `mail.discuss.team` e `helpdesk.ticket.team`.
 
 ## Regras de trabalho (Odoo 18)
 
@@ -173,6 +174,18 @@ Use estes arquivos como referencia de payloads e endpoints:
 
 - Guarda o modelo `mail.gateway.webhook.log`, campos em `mail.message`, views e wizards de replay/cleanup.
 - Opcional: quando instalado, gateways passam a registrar logs; quando ausente, webhooks processam sem persistir.
+
+### `mail_gateway_whatsapp_common`
+
+- Define DTO `NormalizedPayload` e servico `_process_normalized` (message/reaction/status/delete) com idempotencia.
+- Adiciona campos em `mail.message` para id externo, chat, status, quote, reactions e payload bruto.
+- Providers apenas convertem o webhook bruto para DTO e chamam o servico.
+
+### `mail_gateway_whatsapp_evolution_api`
+
+- Usa `mail_gateway_whatsapp_common` para criar/atualizar mensagens; foca apenas em parse Evolution → DTO.
+- Webhook sem `?db=`; db fixo no `odoo.conf`.
+- Divergencias doc/servidor devem ser confrontadas e registradas em `EVOLUTION_API_REFERENCE.md`.
 
 ### `mail_gateway_whatsapp_evolution_api`
 

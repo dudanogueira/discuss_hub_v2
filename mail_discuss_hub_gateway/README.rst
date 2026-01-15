@@ -32,7 +32,8 @@ Main features:
   partner opening).
 - Extend "Manage guest" to reuse existing links, update phone, and
   rename gateway channels.
-- Add a webhook audit log model and menu.
+- Logging de webhook é opcional e fornecido pelo addon `mail_discuss_hub_devtools`
+  (fora do escopo deste módulo).
 
 Dependencies
 ============
@@ -52,7 +53,6 @@ Usage
 - Discuss > Configuration > Messages:
   - Gateway
   - Gateway Partner Channels
-  - Webhook Logs
 - Click on gateway message authors to manage guests or open partners.
 
 Roadmap (TODO)

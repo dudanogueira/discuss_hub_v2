@@ -11,11 +11,13 @@ Gateway WhatsApp via Evolution API.
 ## Dependencias
 
 - `mail_gateway` (OCA).
+- `mail_gateway_whatsapp_common` (servico/DTO compartilhado).
 
 ## Pontos importantes
 
 - O webhook URL deve ter db fixo no `odoo.conf`.
 - Nao usar `?db=` (Evolution API nao preserva querystring).
+- Parseia o payload bruto em `NormalizedPayload` e delega a `mail_gateway_whatsapp_common` para criar/atualizar mensagens.
 - Consulte `EVOLUTION_API_REFERENCE.md` para metodos/payloads.
 - Divergencias entre doc/modulos/servidor devem ser reconferidas e atualizadas no guia.
 

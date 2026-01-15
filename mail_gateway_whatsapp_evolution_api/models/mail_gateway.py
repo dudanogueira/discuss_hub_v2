@@ -157,6 +157,13 @@ class MailGateway(models.Model):
         ):
             record.evolution_webhook_event_ids = [(5, 0, 0)]
 
+    def _get_webhook_events(self):
+        """Retorna a lista de eventos selecionados para envio ao Evolution API."""
+        self.ensure_one()
+        if self.gateway_type != "whatsapp_evolution_api":
+            return []
+        return [ev.code for ev in self.evolution_webhook_event_ids]
+
     def _get_webhook_url(self):
         if self.gateway_type != "whatsapp_evolution_api":
             return super()._get_webhook_url()
