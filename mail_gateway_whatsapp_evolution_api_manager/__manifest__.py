@@ -28,6 +28,7 @@
         "security/security.xml",
         "views/evolution_api_server_views.xml",
         "views/evolution_api_instance_views.xml",
+        "views/mail_gateway_views.xml",
         "views/evolution_api_menus.xml",
     ],
     "installable": True,

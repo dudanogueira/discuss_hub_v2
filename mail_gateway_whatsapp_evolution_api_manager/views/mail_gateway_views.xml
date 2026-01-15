@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="mail_gateway_form_view_manager" model="ir.ui.view">
+        <field name="name">mail.gateway.form.manager</field>
+        <field name="model">mail.gateway</field>
+        <field name="inherit_id" ref="mail_gateway.mail_gateway_form_view" />
+        <field name="arch" type="xml">
+            <xpath
+                expr="//div[@name='button_box']/button[@name='remove_webhook']"
+                position="after"
+            >
+                <button
+                    type="object"
+                    name="action_open_evolution_instance"
+                    string="Instance Manager"
+                    icon="fa-external-link"
+                    invisible="gateway_type != 'whatsapp_evolution_api'"
+                />
+            </xpath>
+        </field>
+    </record>
+</odoo>

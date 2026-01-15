@@ -20,6 +20,7 @@
     "data": [
         "security/ir.model.access.csv",
         "data/evolution_webhook_event.xml",
+        "views/mail_guest_views.xml",
         "views/mail_gateway_evolution.xml",
     ],
     "installable": True,

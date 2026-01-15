@@ -19,6 +19,8 @@
         "security/security.xml",
         "security/ir.model.access.csv",
         "views/mail_gateway_webhook_log.xml",
+        "views/discuss_channel_views.xml",
+        "views/mail_message_views.xml",
         "views/mail_discuss_hub_gateway_menus.xml",
     ],
     "assets": {

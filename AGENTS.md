@@ -4,7 +4,7 @@
 
 - Leia este arquivo antes de alterar codigo.
 - Leia o `README.rst` e o `AGENTS.md` do modulo que voce vai tocar.
-- Procure por outros arquivos .md relevantes (ex: `docs/odoo18-dev-notes.md`).
+- Procure por outros arquivos .md relevantes
 
 > Instrucoes de ambiente local (Docker, paths, portas, Traefik) ficam em `AGENTS.local.md`.
 > Esse arquivo eh ignorado pelo git.
@@ -31,6 +31,8 @@ nos addons do `discuss-hub` (ou novos addons locais).
 - Views XML: use `<list>` no lugar de `<tree>`.
 - Padrao de entrega: mudanca pequena, upgrade do modulo e reinicio do Odoo.
 - Ao sincronizar dados entre modelos, use flags no `context` para evitar loop.
+- Se houver divergencia entre doc e comportamento real, confronte com outra fonte
+  (servidor, modulos de referencia, ou teste local) e atualize `EVOLUTION_API_REFERENCE.md`.
 
 ## Guia por addon (o que preservar)
 
@@ -69,3 +71,4 @@ nos addons do `discuss-hub` (ou novos addons locais).
 
 - Ambiente local e operacao: `AGENTS.local.md` (ignorado)
 - Lista de addons: `README.MD`
+- Guia Evolution API (endpoints, metodos e payloads): `EVOLUTION_API_REFERENCE.md`

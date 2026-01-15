@@ -1,0 +1,35 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* mail_gateway_whatsapp_evolution_api_manager
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 18.0\n"
+"POT-Creation-Date: 2026-01-14 00:00+0000\n"
+"PO-Revision-Date: 2026-01-14 00:00+0000\n"
+"Language-Team: \n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#. module: mail_gateway_whatsapp_evolution_api_manager
+#: model:ir.model.fields.selection,name:mail_gateway_whatsapp_evolution_api_manager.selection__evolution_api_instance__status__connected
+msgid "Connected"
+msgstr "Conectado"
+
+#. module: mail_gateway_whatsapp_evolution_api_manager
+#: model:ir.model.fields.selection,name:mail_gateway_whatsapp_evolution_api_manager.selection__evolution_api_instance__status__connecting
+msgid "Connecting"
+msgstr "Conectando"
+
+#. module: mail_gateway_whatsapp_evolution_api_manager
+#: model:ir.model.fields.selection,name:mail_gateway_whatsapp_evolution_api_manager.selection__evolution_api_instance__status__disconnected
+msgid "Disconnected"
+msgstr "Desconectado"
+
+#. module: mail_gateway_whatsapp_evolution_api_manager
+#: model:ir.model.fields.selection,name:mail_gateway_whatsapp_evolution_api_manager.selection__evolution_api_instance__status__unknown
+msgid "Unknown"
+msgstr "Desconhecido"

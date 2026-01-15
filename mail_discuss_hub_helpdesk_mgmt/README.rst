@@ -14,8 +14,9 @@ Mail Discuss Hub Helpdesk Mgmt
 
 |badge1| |badge2| |badge3|
 
-This module links Helpdesk Mgmt teams to Discuss teams for future routing
-and assignment strategies.
+This module provides Helpdesk Mgmt integration for Discuss Hub. The
+current implementation focuses on linking Helpdesk teams to Discuss
+teams as a foundation for future routing and assignment strategies.
 
 **Table of contents**
 
@@ -25,8 +26,9 @@ and assignment strategies.
 Overview
 ========
 
-Adds a Discuss Team field on Helpdesk teams and keeps teams synchronized
-between Helpdesk and Discuss.
+Currently adds a Discuss Team field on Helpdesk teams and keeps teams
+synchronized between Helpdesk and Discuss. Additional Helpdesk
+integration features are planned.
 
 Dependencies
 ============
@@ -43,7 +45,8 @@ Usage
 =====
 
 Open Helpdesk Team and set the "Discuss Team" field. Team changes are
-synchronized between Helpdesk and Discuss.
+synchronized between Helpdesk and Discuss. Other Helpdesk integration
+features are under development.
 
 Roadmap (TODO)
 ==============

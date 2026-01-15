@@ -7,7 +7,14 @@
             <list>
                 <field name="name" />
                 <field name="server_id" />
-                <field name="status" />
+                <field
+                    name="status"
+                    widget="badge"
+                    decoration-success="status == 'connected'"
+                    decoration-warning="status == 'connecting'"
+                    decoration-danger="status == 'disconnected'"
+                    decoration-muted="status == 'unknown'"
+                />
                 <field name="connection_status" />
                 <field name="profile_name" />
                 <field name="phone_number" />
@@ -20,37 +27,99 @@
         <field name="name">evolution.api.instance.kanban</field>
         <field name="model">evolution.api.instance</field>
         <field name="arch" type="xml">
-            <kanban class="o_kanban_small_column">
+            <kanban class="o_kanban_mobile" group_create="0" import="false">
                 <field name="name" />
                 <field name="server_id" />
                 <field name="status" />
                 <field name="profile_name" />
                 <field name="phone_number" />
                 <field name="last_sync" />
+                <field name="gateway_id" />
                 <templates>
                     <t t-name="card">
-                        <div class="o_kanban_record">
-                            <div class="o_kanban_record_top">
-                                <strong class="o_text_overflow">
-                                    <field name="name" />
-                                </strong>
-                                <span class="o_tag o_tag_secondary">
-                                    <field name="status" />
-                                </span>
+                        <div class="oe_kanban_global_click card shadow-sm h-100">
+                            <div class="card-body pb-2">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="me-2 overflow-hidden">
+                                        <strong class="card-title mb-1 text-truncate">
+                                            <t t-esc="record.name.value" />
+                                        </strong>
+                                        <div class="text-muted small text-truncate">
+                                            <t t-esc="record.server_id.value" />
+                                        </div>
+                                    </div>
+                                    <div class="dropdown">
+                                        <a
+                                            role="button"
+                                            data-bs-toggle="dropdown"
+                                            aria-expanded="false"
+                                            title="Menu"
+                                            class="text-muted"
+                                        >
+                                            <i class="fa fa-cog" />
+                                        </a>
+                                        <div class="dropdown-menu" role="menu">
+                                            <a role="menuitem" type="edit" class="dropdown-item">Editar</a>
+                                            <a role="menuitem" type="delete" class="dropdown-item">Excluir</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center mt-2">
+                                    <div class="flex-grow-1 text-truncate">
+                                        <div t-if="record.profile_name.value" class="fw-semibold">
+                                            <t t-esc="record.profile_name.value" />
+                                        </div>
+                                        <div t-if="record.phone_number.value" class="text-muted">
+                                            <t t-esc="record.phone_number.value" />
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="o_kanban_record_body">
-                                <div class="o_text_overflow">
-                                    <field name="profile_name" placeholder="-" />
+                            <div class="card-footer bg-white border-top-0 pt-0">
+                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-1">
+                                    <div class="d-flex flex-wrap gap-1">
+                                        <t t-if="record.status.raw_value == 'connected'">
+                                            <span class="badge text-bg-success">
+                                                <t t-esc="record.status.value" />
+                                            </span>
+                                        </t>
+                                        <t t-if="record.status.raw_value == 'connecting'">
+                                            <span class="badge text-bg-warning">
+                                                <t t-esc="record.status.value" />
+                                            </span>
+                                        </t>
+                                        <t t-if="record.status.raw_value == 'disconnected'">
+                                            <span class="badge text-bg-danger">
+                                                <t t-esc="record.status.value" />
+                                            </span>
+                                        </t>
+                                        <t t-if="record.status.raw_value == 'unknown'">
+                                            <span class="badge text-bg-secondary">
+                                                <t t-esc="record.status.value" />
+                                            </span>
+                                        </t>
+                                        <t t-if="record.gateway_id.raw_value">
+                                            <span class="badge text-bg-primary" title="Gateway vinculado">
+                                                <i class="fa fa-plug me-1" />
+                                                Gateway
+                                            </span>
+                                        </t>
+                                        <t t-if="!record.gateway_id.raw_value">
+                                            <span class="badge text-bg-light text-muted" title="Sem gateway vinculado">
+                                                <i class="fa fa-plug me-1" />
+                                                Sem gateway
+                                            </span>
+                                        </t>
+                                    </div>
+                                    <div class="text-muted small">
+                                        <t t-if="record.last_sync.value">
+                                            <span title="Ultima sincronizacao">
+                                                <i class="fa fa-clock-o me-1" />
+                                                <t t-esc="record.last_sync.value" />
+                                            </span>
+                                        </t>
+                                    </div>
                                 </div>
-                                <div class="o_text_overflow">
-                                    <field name="phone_number" placeholder="-" />
-                                </div>
-                                <div class="text-muted o_text_overflow">
-                                    <field name="server_id" />
-                                </div>
-                            </div>
-                            <div class="o_kanban_record_bottom text-muted">
-                                <field name="last_sync" />
                             </div>
                         </div>
                     </t>
@@ -163,6 +232,17 @@
                                     <field name="read_status" />
                                 </group>
                             </group>
+                            <group string="Outbound" invisible="not gateway_id">
+                                <group>
+                                    <field name="evolution_outgoing_signature" />
+                                </group>
+                                <group>
+                                    <field
+                                        name="evolution_outgoing_signature_format"
+                                        invisible="not evolution_outgoing_signature"
+                                    />
+                                </group>
+                            </group>
                             <group string="Webhook" invisible="not gateway_id">
                                 <group>
                                     <field name="evolution_webhook_by_events" readonly="1" />
@@ -185,8 +265,36 @@
                                 <field name="evolution_webhook_event_ids" widget="many2many_checkboxes" />
                             </group>
                         </page>
+                        <page string="Gateway" invisible="not gateway_id">
+                            <group>
+                                <group>
+                                    <field name="gateway_id" options="{'no_create': True}" />
+                                    <field name="gateway_type" />
+                                    <field name="gateway_integrated_webhook_state" />
+                                    <field name="gateway_evolution_api_url" />
+                                    <field name="gateway_evolution_instance" />
+                                </group>
+                                <group>
+                                    <field name="gateway_token" password="True" />
+                                    <field name="gateway_webhook_key" />
+                                    <field name="gateway_webhook_secret" password="True" />
+                                    <field
+                                        name="gateway_webhook_url"
+                                        groups="base.group_no_one"
+                                    />
+                                    <field name="gateway_webhook_user_id" />
+                                </group>
+                            </group>
+                            <group>
+                                <field
+                                    name="gateway_member_ids"
+                                    widget="many2many_tags"
+                                    options="{'no_create': True}"
+                                />
+                            </group>
+                        </page>
                         <page string="Raw Payload">
-                            <field name="raw_payload" nolabel="1" />
+                            <field name="raw_payload_pretty" nolabel="1" widget="text" />
                         </page>
                     </notebook>
                 </sheet>

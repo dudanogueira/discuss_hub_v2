@@ -14,8 +14,9 @@ Mail Discuss Hub CRM
 
 |badge1| |badge2| |badge3|
 
-This module links CRM teams to Discuss teams for future routing and
-assignment strategies.
+This module provides CRM integration for Discuss Hub. The current
+implementation focuses on linking CRM teams to Discuss teams as a
+foundation for future routing and assignment strategies.
 
 **Table of contents**
 
@@ -25,8 +26,9 @@ assignment strategies.
 Overview
 ========
 
-Adds a Discuss Team field on CRM Teams and keeps teams synchronized
-between CRM and Discuss.
+Currently adds a Discuss Team field on CRM Teams and keeps teams
+synchronized between CRM and Discuss. Additional CRM integration
+features are planned.
 
 Dependencies
 ============
@@ -43,7 +45,8 @@ Usage
 =====
 
 Open CRM Team and set the "Discuss Team" field. Team changes are
-synchronized between CRM and Discuss.
+synchronized between CRM and Discuss. Other CRM integration features
+are under development.
 
 Roadmap (TODO)
 ==============

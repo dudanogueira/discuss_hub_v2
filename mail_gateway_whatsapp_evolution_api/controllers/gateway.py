@@ -98,7 +98,10 @@ class GatewayController(BaseGatewayController):
         dispatcher = (
             env[f"mail.gateway.{usage}"]
             .with_user(bot_data["webhook_user_id"])
-            .with_context(no_gateway_notification=True)
+            .with_context(
+                no_gateway_notification=True,
+                gateway_webhook_log_id=log_record.id if log_record else False,
+            )
         )
         if not dispatcher._verify_update(bot_data, jsonrequest):
             _logger.warning(

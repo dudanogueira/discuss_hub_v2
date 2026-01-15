@@ -75,6 +75,41 @@ class EvolutionApiInstance(models.Model):
         related="gateway_id.evolution_webhook_event_ids",
         readonly=False,
     )
+    evolution_outgoing_signature = fields.Boolean(
+        related="gateway_id.evolution_outgoing_signature",
+        readonly=False,
+    )
+    evolution_outgoing_signature_format = fields.Char(
+        related="gateway_id.evolution_outgoing_signature_format",
+        readonly=False,
+    )
+    gateway_type = fields.Selection(related="gateway_id.gateway_type", readonly=True)
+    gateway_token = fields.Char(related="gateway_id.token", readonly=True)
+    gateway_integrated_webhook_state = fields.Selection(
+        related="gateway_id.integrated_webhook_state", readonly=True
+    )
+    gateway_webhook_url = fields.Char(related="gateway_id.webhook_url", readonly=True)
+    gateway_webhook_key = fields.Char(related="gateway_id.webhook_key", readonly=True)
+    gateway_webhook_secret = fields.Char(
+        related="gateway_id.webhook_secret", readonly=True
+    )
+    gateway_webhook_user_id = fields.Many2one(
+        related="gateway_id.webhook_user_id", readonly=True
+    )
+    gateway_member_ids = fields.Many2many(
+        related="gateway_id.member_ids",
+        readonly=True,
+    )
+    gateway_evolution_api_url = fields.Char(
+        related="gateway_id.evolution_api_url", readonly=True
+    )
+    gateway_evolution_instance = fields.Char(
+        related="gateway_id.evolution_instance", readonly=True
+    )
+    raw_payload_pretty = fields.Text(
+        compute="_compute_raw_payload_pretty",
+        readonly=True,
+    )
 
     def _gateway_values(self):
         self.ensure_one()
@@ -137,6 +172,24 @@ class EvolutionApiInstance(models.Model):
             return json.dumps(payload, ensure_ascii=True)
         except Exception:
             return ""
+
+    def _compute_raw_payload_pretty(self):
+        for record in self:
+            raw_payload = record.raw_payload or ""
+            if not raw_payload:
+                record.raw_payload_pretty = ""
+                continue
+            try:
+                parsed = json.loads(raw_payload)
+            except Exception:
+                record.raw_payload_pretty = raw_payload
+                continue
+            record.raw_payload_pretty = json.dumps(
+                parsed,
+                ensure_ascii=True,
+                indent=2,
+                sort_keys=True,
+            )
 
     @staticmethod
     def _extract_qr_base64(payload):
@@ -259,7 +312,7 @@ class EvolutionApiInstance(models.Model):
 
     def action_restart(self):
         self.ensure_one()
-        payload = self._api_request("PUT", f"/instance/restart/{self.name}")
+        payload = self._api_request("POST", f"/instance/restart/{self.name}")
         self._apply_instance_payload(payload)
         return {"type": "ir.actions.client", "tag": "reload"}
 

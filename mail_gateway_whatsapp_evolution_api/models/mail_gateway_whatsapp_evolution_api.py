@@ -7,7 +7,7 @@ import mimetypes
 
 import requests
 
-from odoo import _, models
+from odoo import _, fields, models
 from odoo.exceptions import UserError
 from odoo.http import request
 from odoo.tools import html2plaintext
@@ -112,6 +112,7 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             channel = channel.with_user(self.env.ref("base.public_user").id).with_context(
                 guest=author
             )
+        log_id = self.env.context.get("gateway_webhook_log_id")
         new_message = channel.sudo().message_post(
             body=body or None,
             author_id=author and author._name == "res.partner" and author.id,
@@ -120,6 +121,8 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             subtype_xmlid="mail.mt_comment",
             attachments=attachments,
         )
+        if log_id and new_message._fields.get("gateway_webhook_log_id"):
+            new_message.sudo().write({"gateway_webhook_log_id": log_id})
 
         if is_from_me and external_message_id and "mail.notification" in self.env:
             self.env["mail.notification"].sudo().create(
@@ -167,6 +170,7 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
                 message = response.json() if response.content else {}
             body = html2plaintext(self._get_message_body(record))
             if body:
+                body = self._apply_outgoing_signature(gateway, record, body)
                 payload = {"number": number, "text": body}
                 response = requests.post(
                     self._join_url(gateway.evolution_api_url, f"/message/sendText/{instance}"),
@@ -200,6 +204,41 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
         if auto_commit is True:
             # pylint: disable=invalid-commit
             self.env.cr.commit()
+
+    def _apply_outgoing_signature(self, gateway, record, body):
+        body = (body or "").strip("\n")
+        if not body or not getattr(gateway, "evolution_outgoing_signature", False):
+            return body
+
+        author = ""
+        mail_message = getattr(record, "mail_message_id", False)
+        if mail_message and getattr(mail_message, "author_id", False):
+            # Use the raw partner name to avoid display_name prefixing the parent company
+            # (e.g. 'YourCompany, Lucas Admin' -> 'Lucas Admin').
+            author = (mail_message.author_id.name or "").strip()
+        author = author or self.env.user.display_name or self.env.user.name or ""
+        author = author.strip()
+
+        fmt = (getattr(gateway, "evolution_outgoing_signature_format", "") or "").strip()
+        if not fmt:
+            fmt = "*{author}:*\\n"
+
+        # The field is a Char in Odoo UI (single-line). Users may type '\n' to
+        # express a new line; convert common escaped sequences.
+        fmt = fmt.replace("\\n", "\n").replace("\\t", "\t")
+        try:
+            prefix = fmt.format(author=author)
+        except Exception:
+            prefix = "*{author}:*\\n".format(author=author)
+
+        if not prefix:
+            return body
+
+        normalized_body = body.lstrip()
+        if normalized_body.startswith(prefix):
+            return body
+
+        return f"{prefix}{body}"
 
     def _prepare_message(self, message, data):
         body = ""
@@ -246,42 +285,74 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
         key_data = data.get("key", {})
         if key_data.get("fromMe"):
             return gateway.webhook_user_id.partner_id
-        sender = key_data.get("participant") or key_data.get("remoteJid")
-        if not sender:
-            sender = data.get("remoteJid")
-        token = self._get_contact_identifier(sender)
-        if token:
-            linked_partner = self._get_partner_from_gateway_token(gateway, token)
+        remote_jid = (
+            key_data.get("participant")
+            or key_data.get("remoteJid")
+            or data.get("remoteJid")
+        )
+        if not remote_jid:
+            return gateway.webhook_user_id.partner_id
+        push_name = data.get("pushName")
+        number = self._get_contact_identifier(remote_jid)
+        if number:
+            linked_partner = self._get_partner_from_gateway_token(gateway, number)
             if linked_partner:
                 return linked_partner
-        if not token:
-            return self._get_or_create_guest(gateway, data, sender)
-        partner_domain = [("phone_sanitized", "=", f"+{token}")]
-        if "phone_sanitized" not in self.env["res.partner"]._fields:
-            partner_domain = ["|", ("phone", "ilike", token), ("mobile", "ilike", token)]
-        partner = self.env["res.partner"].search(partner_domain, limit=1)
-        if partner:
-            self._ensure_gateway_channel_link(partner, gateway, token)
-            return partner
+        if number:
+            partner = self._find_partner_by_number(number)
+            if partner:
+                self._ensure_gateway_channel_link(partner, gateway, number)
+                return partner
         guest = self.env["mail.guest"].search(
-            [("gateway_id", "=", gateway.id), ("gateway_token", "=", str(token))],
+            [
+                ("gateway_id", "=", gateway.id),
+                ("gateway_token", "=", str(remote_jid or "")),
+            ],
             limit=1,
         )
         if guest:
-            self._maybe_update_guest_name(guest, data, token)
+            self._update_guest_metadata(guest, remote_jid, number, push_name)
             return guest
-        return self._get_or_create_guest(gateway, data, token)
+        guest = self._get_or_create_guest(gateway, remote_jid, number, push_name)
+        return guest
 
-    def _get_or_create_guest(self, gateway, data, token):
-        push_name = data.get("pushName")
-        display_name = self._format_contact_name(push_name, token)
+    def _find_partner_by_number(self, number):
+        if not number:
+            return False
+        partner_domain = [("phone_sanitized", "=", f"+{number}")]
+        if "phone_sanitized" not in self.env["res.partner"]._fields:
+            partner_domain = ["|", ("phone", "ilike", number), ("mobile", "ilike", number)]
+        return self.env["res.partner"].search(partner_domain, limit=1)
+
+    def _get_or_create_guest(self, gateway, remote_jid, number, push_name):
+        display_name = self._format_contact_name(push_name, number, remote_jid)
         return self.env["mail.guest"].create(
             {
                 "name": display_name,
                 "gateway_id": gateway.id,
-                "gateway_token": str(token or ""),
+                "gateway_token": str(remote_jid or ""),
+                "whatsapp_remote_jid": remote_jid or "",
+                "whatsapp_number": number or "",
+                "last_push_name": push_name or False,
+                "last_seen": fields.Datetime.now(),
             }
         )
+
+    def _update_guest_metadata(self, guest, remote_jid, number, push_name):
+        vals = {}
+        now = fields.Datetime.now()
+        vals["last_seen"] = now
+        if remote_jid and guest.whatsapp_remote_jid != remote_jid:
+            vals["whatsapp_remote_jid"] = remote_jid
+        if number and guest.whatsapp_number != number:
+            vals["whatsapp_number"] = number
+        if push_name and guest.last_push_name != push_name:
+            vals["last_push_name"] = push_name
+            # Atualiza o nome se ele ainda refletir o valor anterior ou estiver vazio.
+            if guest.name in {guest.last_push_name, guest.whatsapp_number, guest.whatsapp_remote_jid, False, ""}:
+                vals["name"] = self._format_contact_name(push_name, number, remote_jid)
+        if vals:
+            guest.sudo().write(vals)
 
     def _ensure_gateway_channel_link(self, partner, gateway, token):
         existing = self.env["res.partner.gateway.channel"].search(
@@ -301,43 +372,73 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             )
 
     def _get_channel_name(self, data, token, gateway=None):
-        remote_jid = (data.get("key", {}) or {}).get("remoteJid") or data.get("remoteJid")
-        if gateway:
-            linked_partner = self._get_partner_from_gateway_token(gateway, token)
-            if linked_partner:
-                return self._format_contact_name(linked_partner.name, token)
+        key_data = data.get("key", {}) or {}
+        remote_jid = key_data.get("remoteJid") or data.get("remoteJid") or token
         push_name = data.get("pushName")
+        from_me = bool(key_data.get("fromMe"))
+        group_name = self._get_group_name_from_payload(data)
+        number = self._get_contact_identifier(remote_jid)
         if remote_jid and remote_jid.endswith("@g.us"):
-            return f"Group: {token}"
-        return self._format_contact_name(push_name, token)
+            if group_name:
+                return group_name
+            return f"Group: {remote_jid.split('@')[0]}"
+        if gateway and number:
+            linked_partner = self._get_partner_from_gateway_token(gateway, number)
+            if linked_partner:
+                return self._format_contact_name(linked_partner.name, number, remote_jid)
+            partner = self._find_partner_by_number(number)
+            if partner:
+                self._ensure_gateway_channel_link(partner, gateway, number)
+                return self._format_contact_name(partner.name, number, remote_jid)
+        if not from_me:
+            return self._format_contact_name(push_name, number, remote_jid)
+        return self._format_contact_name(False, number, remote_jid)
 
-    def _format_contact_name(self, push_name, token):
+    def _format_contact_name(self, push_name, number, remote_jid):
         clean_name = (push_name or "").strip()
-        if clean_name and clean_name.lower() != "whatsapp":
-            if token:
-                return f"{clean_name} <{token}>"
+        if clean_name:
             return clean_name
-        if token:
-            return f"{token}"
-        return clean_name or "WhatsApp"
-
-    def _maybe_update_guest_name(self, guest, data, token):
-        desired_name = self._format_contact_name(data.get("pushName"), token)
-        if not desired_name or guest.name == desired_name:
-            return
-        if token and token in (guest.name or ""):
-            return
-        if guest.name and guest.name not in {data.get("pushName"), "WhatsApp"}:
-            return
-        guest.sudo().write({"name": desired_name})
+        if number:
+            return number
+        if remote_jid:
+            return remote_jid
+        return "WhatsApp"
 
     def _refresh_channel_name(self, channel, data, token):
         desired_name = self._get_channel_name(data, token, gateway=channel.gateway_id)
         if not desired_name or channel.name == desired_name:
             return
-        if channel.name and not channel.name.startswith(("WhatsApp:", "WhatsApp Group:", "Group:")):
+        gateway = channel.gateway_id
+        push_name = data.get("pushName")
+        auto_names = {
+            gateway.name if gateway else False,
+            gateway.evolution_instance if gateway else False,
+            push_name,
+        }
+        if channel.name and channel.name not in auto_names and not channel.name.startswith(
+            ("WhatsApp:", "WhatsApp Group:", "Group:")
+        ):
             return
         channel.sudo().write({"name": desired_name})
+
+    def _get_group_name_from_payload(self, data):
+        if not isinstance(data, dict):
+            return False
+        candidates = [
+            (data.get("group") or {}).get("subject"),
+            (data.get("group") or {}).get("name"),
+            (data.get("groupMetadata") or {}).get("subject"),
+            (data.get("groupMetadata") or {}).get("name"),
+            (data.get("chat") or {}).get("subject"),
+            (data.get("chat") or {}).get("name"),
+            data.get("subject"),
+            data.get("name"),
+        ]
+        for name in candidates:
+            name = (name or "").strip()
+            if name:
+                return name
+        return False
 
     def _get_partner_from_gateway_token(self, gateway, token):
         if not gateway or not token:
@@ -352,12 +453,12 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
         remote_jid = data.get("key", {}).get("remoteJid") or data.get("remoteJid")
         if not remote_jid:
             return False
-        if remote_jid.endswith("@g.us"):
-            return remote_jid
-        return self._get_contact_identifier(remote_jid)
+        return remote_jid
 
     def _get_contact_identifier(self, remote_jid):
         if not remote_jid:
+            return False
+        if isinstance(remote_jid, str) and remote_jid.endswith("@g.us"):
             return False
         whatsapp_number = remote_jid.split("@")[0].split(":")[0]
         if whatsapp_number.startswith("55") and len(whatsapp_number) == 12:

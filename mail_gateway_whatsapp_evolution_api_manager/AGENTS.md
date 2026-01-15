@@ -25,3 +25,5 @@ Este modulo nao altera o gateway diretamente.
 ## Observacoes
 
 - Os campos de Settings ficam em `evolution.api.instance` e atualizam a API via `/settings/set/{instance}`.
+- Consulte `EVOLUTION_API_REFERENCE.md` para metodos/payloads.
+- Divergencias entre doc/modulos/servidor devem ser reconferidas e atualizadas no guia.
