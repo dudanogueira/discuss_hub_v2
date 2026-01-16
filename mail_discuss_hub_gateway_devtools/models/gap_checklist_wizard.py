@@ -75,10 +75,9 @@ class GapChecklistWizard(models.TransientModel):
             if normalized_event in supported:
                 continue
 
-            key = (log.gateway_id.id or 0, provider_key, normalized_event)
+            key = (provider_key, normalized_event)
             if key not in gaps:
                 gaps[key] = {
-                    "gateway_id": log.gateway_id.id or False,
                     "gateway_type": provider_key or False,
                     "event_key": normalized_event,
                     "event_label": self._label_for_event(

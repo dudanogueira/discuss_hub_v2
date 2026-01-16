@@ -32,7 +32,6 @@
         <field name="arch" type="xml">
             <list string="Gap Checklist">
                 <field name="priority"/>
-                <field name="gateway_id"/>
                 <field name="gateway_type"/>
                 <field name="event_label"/>
                 <field name="event_key"/>
@@ -52,7 +51,6 @@
             <form string="Gap Checklist">
                 <group>
                     <field name="priority" readonly="1"/>
-                    <field name="gateway_id" readonly="1"/>
                     <field name="gateway_type" readonly="1"/>
                 </group>
                 <group>

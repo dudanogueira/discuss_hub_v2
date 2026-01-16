@@ -93,56 +93,12 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
         message = data.get("message", {}) or {}
         if not data or not message:
             return
-
-        key_data = data.get("key", {}) or {}
-        is_from_me = bool(key_data.get("fromMe"))
-        external_message_id = key_data.get("id")
-        if normalized_event == "send.message" and not is_from_me:
-            return
         dto = self._build_dto_from_evolution(update, gateway, None)
-        if not dto or not dto.message_id:
+        if not dto:
             return
 
         common = self.env["mail.gateway.whatsapp.common"]
-        msg = common._process_normalized(gateway, dto, None, author=None)
-        channel = False
-        if msg and msg.model == "discuss.channel" and msg.res_id:
-            channel = self.env["discuss.channel"].sudo().browse(msg.res_id)
-
-        if (
-            msg
-            and channel
-            and is_from_me
-            and external_message_id
-            and "mail.notification" in self.env
-        ):
-            existing_notification = (
-                self.env["mail.notification"]
-                .sudo()
-                .search(
-                    [
-                        ("notification_type", "=", "gateway"),
-                        ("gateway_type", "=", gateway.gateway_type),
-                        ("gateway_channel_id", "=", channel.id),
-                        ("gateway_message_id", "=", external_message_id),
-                    ],
-                    limit=1,
-                )
-            )
-            if not existing_notification:
-                self.env["mail.notification"].sudo().create(
-                    {
-                        "notification_type": "gateway",
-                        "mail_message_id": msg.id,
-                        "gateway_channel_id": channel.id,
-                        "gateway_type": gateway.gateway_type,
-                        "gateway_message_id": external_message_id,
-                        "notification_status": "sent",
-                    }
-                )
-
-        if msg and channel:
-            self._post_process_message(msg, channel)
+        common._process_normalized(gateway, dto, None, author=None)
 
     def _build_dto_from_evolution(self, update, gateway, channel):
         data = update.get("data", {}) or {}

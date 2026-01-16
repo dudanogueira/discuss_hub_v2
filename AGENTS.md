@@ -19,7 +19,6 @@ nos addons do `discuss-hub` (ou novos addons locais).
 
 - `mail_discuss_hub` (core): Settings do Discuss, modelo `mail.discuss.team`, menus.
 - Integracoes: `mail_discuss_hub_crm`, `mail_discuss_hub_helpdesk_mgmt` (e futuros) dependem apenas do core + modulo alvo.
-- `mail_discuss_hub_gateway` (infra Discuss+Gateway): sidebar de instancias, ajustes de autoria (sem logging obrigatorio).
 - `mail_discuss_hub_gateway_devtools` (dev): modelo/log de webhook e utilidades opcionais (views, replay, cleanup). Nao deve ser dependencia de producao.
 - `mail_gateway_whatsapp_common` (gateway core WhatsApp): DTO/servico unificado para mensagens/status/reactions.
 - `mail_gateway_whatsapp_evolution_api` (provider): integra Evolution API, delega processamento ao common.
@@ -93,6 +92,7 @@ docker compose restart odoo
 
 - Base URL (Odoo): `Settings > Technical > Parameters > System Parameters` (`web.base.url`).
 - DNS / IP / TLS: anote aqui as particularidades do seu host.
+- Evite pastas com espaco dentro de `/mnt/extra-addons` (ex.: `.bkp/discuss-hub copy`); o `entrypoint.sh` atual usa `xargs` sem `-0` e isso pode injetar `/copy` no `addons_path`, quebrando os assets (tela branca).
 
 ## Development notes (Odoo 17+)
 
@@ -163,11 +163,6 @@ Use estes arquivos como referencia de payloads e endpoints:
 - Use flags no `context` para evitar loop:
   - CRM: `mail_discuss_hub_sync_from_crm` / `mail_discuss_hub_sync_from_discuss`
   - Helpdesk: `mail_discuss_hub_sync_from_helpdesk` / `mail_discuss_hub_sync_from_discuss`
-
-### `mail_discuss_hub_gateway`
-
-- Logs nao sao obrigatorios em producao. O addon `mail_discuss_hub_gateway_devtools` adiciona logging quando instalado.
-- Nao mover log para o OCA `mail_gateway`; manter extensoes locais (via devtools).
 
 ### `mail_discuss_hub_gateway_devtools`
 
