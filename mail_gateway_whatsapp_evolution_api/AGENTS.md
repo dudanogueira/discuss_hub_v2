@@ -20,6 +20,8 @@ Gateway WhatsApp via Evolution API.
 - Parseia o payload bruto em `NormalizedPayload` e delega a `mail_gateway_whatsapp_common` para criar/atualizar mensagens.
 - Consulte `EVOLUTION_API_REFERENCE.md` para metodos/payloads.
 - Divergencias entre doc/modulos/servidor devem ser reconferidas e atualizadas no guia.
+- Persistencia de logs de webhook e' controlada pela flag
+  `mail_discuss_hub_gateway_devtools.webhook_log_enabled` (Devtools > Recursos).
 
 ## Arquivos principais
 

@@ -1,24 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <menuitem
-        id="menu_mail_discuss_hub_dev_root"
-        name="Discuss Dev"
-        parent="mail_discuss_hub.mail_discuss_hub_menu_messages_config"
-        groups="base.group_system"
-        sequence="200"
-    />
-
     <record id="action_webhook_log_dev" model="ir.actions.act_window">
         <field name="name">Webhook Logs (Dev)</field>
         <field name="res_model">mail.gateway.webhook.log</field>
         <field name="view_mode">list,form</field>
-        <field name="search_view_id" ref="mail_discuss_hub_devtools.mail_gateway_webhook_log_view_tree"/>
+        <field name="search_view_id" ref="mail_discuss_hub_gateway_devtools.mail_gateway_webhook_log_view_tree"/>
     </record>
 
     <menuitem
         id="menu_webhook_logs_dev"
         name="Webhook Logs"
-        parent="menu_mail_discuss_hub_dev_root"
+        parent="mail_discuss_hub_gateway_devtools.mail_discuss_hub_gateway_devtools_menu_webhooks"
         action="action_webhook_log_dev"
         groups="base.group_system"
         sequence="10"
@@ -34,7 +26,7 @@
     <menuitem
         id="menu_webhook_replay_wizard"
         name="Replay Webhooks"
-        parent="menu_mail_discuss_hub_dev_root"
+        parent="mail_discuss_hub_gateway_devtools.mail_discuss_hub_gateway_devtools_menu_webhooks"
         action="action_webhook_replay_wizard"
         groups="base.group_system"
         sequence="20"
@@ -50,7 +42,7 @@
     <menuitem
         id="menu_cleanup_wizard"
         name="Cleanup Data"
-        parent="menu_mail_discuss_hub_dev_root"
+        parent="mail_discuss_hub_gateway_devtools.mail_discuss_hub_gateway_devtools_menu_webhooks"
         action="action_cleanup_wizard"
         groups="base.group_system"
         sequence="30"

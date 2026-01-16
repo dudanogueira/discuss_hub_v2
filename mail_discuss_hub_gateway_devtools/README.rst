@@ -1,5 +1,5 @@
-mail_discuss_hub_devtools
-=========================
+mail_discuss_hub_gateway_devtools
+=================================
 
 Ferramentas tecnicas opcionais para apoiar desenvolvimento e testes do Discuss Hub.
 Quando instalado, habilita logging de webhooks, visualizacao detalhada e wizards
@@ -8,6 +8,16 @@ de suporte; fora dele, os gateways continuam processando webhooks sem persistir.
 Principais funcionalidades
 --------------------------
 
+- Menus de administracao em Discuss > Messages:
+  - Messages
+  - Scheduled Messages
+  - Subtypes
+  - Message Reactions
+  - User Settings
+  - Teams
+  - Guests
+  - Channels
+  - Channels/Members
 - Modelo generico ``mail.gateway.webhook.log`` para armazenar request/response,
   status e metadados do webhook.
 - Campos em ``mail.message`` para vincular a log de webhook e exibir payloads.

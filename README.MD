@@ -4,10 +4,10 @@ Addons locais para Odoo focados em Discuss + integrações (Gateway, WhatsApp Ev
 
 Arquitetura resumida:
 
-- `mail_discuss_hub`: base Discuss.
+- `mail_discuss_hub`: core (settings + teams). Menus administrativos ficam em devtools.
 - Integrações (`mail_discuss_hub_crm`, `_helpdesk_mgmt`, `_account`): dependem só do core + módulo alvo.
 - Gateways: `mail_gateway_whatsapp_common` (serviço/DTO), providers (`mail_gateway_whatsapp_evolution_api`, futuros WAHA/Quepasa/NotificaMe) e manager (opcional) para configurar instâncias.
-- Dev: `mail_discuss_hub_devtools` é opcional, habilita log/replay/cleanup; produção funciona sem ele.
+- Dev: `mail_discuss_hub_gateway_devtools` é opcional, habilita log/replay/cleanup; produção funciona sem ele.
 
 ## Fluxo de Mensagem (Webhook -> Discuss)
 
@@ -79,7 +79,7 @@ Available addons
 addon | version | summary
 ----- | ------- | -------
 [mail_discuss_hub](mail_discuss_hub/) | 18.0.1.0.0 | Discuss configuration menus for message administration
-[mail_discuss_hub_devtools](mail_discuss_hub_devtools/) | 18.0.1.0.0 | Dev tools (webhook log, replay, cleanup) for Discuss Hub
+[mail_discuss_hub_gateway_devtools](mail_discuss_hub_gateway_devtools/) | 18.0.1.0.0 | Dev tools (webhook log, replay, cleanup) for Discuss Hub
 [mail_discuss_hub_gateway](mail_discuss_hub_gateway/) | 18.0.1.0.0 | Discuss gateway extensions and sidebar grouping utilities
 [mail_gateway_whatsapp_common](mail_gateway_whatsapp_common/) | 18.0.1.0.0 | Common DTO/service for unofficial WhatsApp gateways
 [mail_gateway_whatsapp_evolution_api](mail_gateway_whatsapp_evolution_api/) | 18.0.1.0.0 | Gateway integration for WhatsApp via Evolution API

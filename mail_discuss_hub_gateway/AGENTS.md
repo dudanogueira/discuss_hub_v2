@@ -23,4 +23,4 @@ Extensoes do Discuss para gateways (sidebar, autoria de mensagens).
 ## Regras
 
 - Nao alterar OCA diretamente.
-- Logging de webhook eh opcional e fornecido por `mail_discuss_hub_devtools` (modelo e UI).
+- Logging de webhook eh opcional e fornecido por `mail_discuss_hub_gateway_devtools` (modelo e UI).

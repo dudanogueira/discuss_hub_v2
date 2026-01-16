@@ -58,7 +58,7 @@ Usage
 Use Discuss to send messages. Inbound webhooks are parsed into a
 ``NormalizedPayload`` and processados pelo módulo
 ``mail_gateway_whatsapp_common`` (idempotência, status, reações). Se
-``mail_discuss_hub_devtools`` estiver instalado, você pode inspecionar
+``mail_discuss_hub_gateway_devtools`` estiver instalado, você pode inspecionar
 logs no menu Discuss Dev.
 
 Roadmap (TODO)

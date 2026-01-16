@@ -427,6 +427,8 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
     ):
         if "mail.gateway.webhook.log" not in self.env:
             return False
+        if not self._is_webhook_logging_enabled():
+            return False
         payload_text = self._format_payload(payload)
         return (
             self.env["mail.gateway.webhook.log"]
@@ -442,6 +444,16 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
                 }
             )
         )
+
+    def _is_webhook_logging_enabled(self):
+        param = (
+            self.env["ir.config_parameter"]
+            .sudo()
+            .get_param(
+                "mail_discuss_hub_gateway_devtools.webhook_log_enabled", default="1"
+            )
+        )
+        return str(param).lower() in ("1", "true", "yes")
 
     def _format_payload(self, payload):
         if payload is None:

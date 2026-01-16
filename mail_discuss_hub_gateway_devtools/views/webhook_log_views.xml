@@ -3,7 +3,7 @@
     <record id="mail_gateway_webhook_log_view_form_dev" model="ir.ui.view">
         <field name="name">mail.gateway.webhook.log.form.dev</field>
         <field name="model">mail.gateway.webhook.log</field>
-        <field name="inherit_id" ref="mail_discuss_hub_devtools.mail_gateway_webhook_log_view_form"/>
+        <field name="inherit_id" ref="mail_discuss_hub_gateway_devtools.mail_gateway_webhook_log_view_form"/>
         <field name="arch" type="xml">
             <notebook position="inside">
                 <page string="Pretty (Dev)">

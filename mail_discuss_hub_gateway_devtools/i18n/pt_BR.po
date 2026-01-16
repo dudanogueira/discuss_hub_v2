@@ -1,0 +1,90 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* mail_discuss_hub_gateway_devtools
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 18.0\n"
+"POT-Creation-Date: 2026-01-16 00:00+0000\n"
+"PO-Revision-Date: 2026-01-16 00:00+0000\n"
+"Language-Team: \n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#. module: mail_discuss_hub_gateway_devtools
+#: model:ir.ui.menu,name:mail_discuss_hub_gateway_devtools.mail_discuss_hub_gateway_devtools_menu_messages
+msgid "Mensagem"
+msgstr "Mensagem"
+
+#. module: mail_discuss_hub_gateway_devtools
+#: model:ir.ui.menu,name:mail_discuss_hub_gateway_devtools.mail_discuss_hub_menu_mail_message
+msgid "Messages"
+msgstr "Mensagens"
+
+#. module: mail_discuss_hub_gateway_devtools
+#: model:ir.ui.menu,name:mail_discuss_hub_gateway_devtools.mail_discuss_hub_gateway_devtools_menu_root
+msgid "Devtools"
+msgstr "Devtools"
+
+#. module: mail_discuss_hub_gateway_devtools
+#: model:ir.ui.menu,name:mail_discuss_hub_gateway_devtools.mail_discuss_hub_gateway_devtools_menu_webhooks
+msgid "Webhooks"
+msgstr "Webhooks"
+
+#. module: mail_discuss_hub_gateway_devtools
+#: model:ir.ui.menu,name:mail_discuss_hub_gateway_devtools.mail_discuss_hub_gateway_devtools_menu_channels
+msgid "Canais"
+msgstr "Canais"
+
+#. module: mail_discuss_hub_gateway_devtools
+#: model:ir.actions.act_window,name:mail_discuss_hub_gateway_devtools.action_devtools_config_settings
+msgid "Devtools Settings"
+msgstr "Recursos do Devtools"
+
+#. module: mail_discuss_hub_gateway_devtools
+#: model:ir.ui.view,arch_db:mail_discuss_hub_gateway_devtools.res_config_settings_view_form_inherit_devtools
+msgid "Persist webhook logs"
+msgstr "Persistir logs de webhook"
+
+#. module: mail_discuss_hub_gateway_devtools
+#: model:ir.ui.menu,name:mail_discuss_hub_gateway_devtools.mail_discuss_hub_menu_message_schedule
+msgid "Scheduled Messages"
+msgstr "Mensagens Agendadas"
+
+#. module: mail_discuss_hub_gateway_devtools
+#: model:ir.ui.menu,name:mail_discuss_hub_gateway_devtools.mail_discuss_hub_menu_message_subtype
+msgid "Subtypes"
+msgstr "Subtipos"
+
+#. module: mail_discuss_hub_gateway_devtools
+#: model:ir.ui.menu,name:mail_discuss_hub_gateway_devtools.mail_discuss_hub_menu_message_reactions
+msgid "Message Reactions"
+msgstr "Reações de Mensagens"
+
+#. module: mail_discuss_hub_gateway_devtools
+#: model:ir.ui.menu,name:mail_discuss_hub_gateway_devtools.mail_discuss_hub_menu_user_settings
+msgid "User Settings"
+msgstr "Configurações do Usuário"
+
+#. module: mail_discuss_hub_gateway_devtools
+#: model:ir.ui.menu,name:mail_discuss_hub_gateway_devtools.mail_discuss_hub_menu_teams
+msgid "Teams"
+msgstr "Equipes"
+
+#. module: mail_discuss_hub_gateway_devtools
+#: model:ir.ui.menu,name:mail_discuss_hub_gateway_devtools.mail_discuss_hub_menu_guests
+msgid "Guests"
+msgstr "Convidados"
+
+#. module: mail_discuss_hub_gateway_devtools
+#: model:ir.ui.menu,name:mail_discuss_hub_gateway_devtools.mail_discuss_hub_menu_channels
+msgid "Channels"
+msgstr "Canais"
+
+#. module: mail_discuss_hub_gateway_devtools
+#: model:ir.ui.menu,name:mail_discuss_hub_gateway_devtools.mail_discuss_hub_menu_channels_members
+msgid "Channels/Members"
+msgstr "Canais/Membros"

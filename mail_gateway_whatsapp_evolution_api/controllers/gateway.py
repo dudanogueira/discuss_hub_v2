@@ -144,6 +144,8 @@ class GatewayController(BaseGatewayController):
     ):
         if "mail.gateway.webhook.log" not in env:
             return False
+        if not self._is_webhook_logging_enabled(env):
+            return False
         payload_text = self._format_payload(payload)
         return (
             env["mail.gateway.webhook.log"]
@@ -159,6 +161,16 @@ class GatewayController(BaseGatewayController):
                 }
             )
         )
+
+    def _is_webhook_logging_enabled(self, env):
+        param = (
+            env["ir.config_parameter"]
+            .sudo()
+            .get_param(
+                "mail_discuss_hub_gateway_devtools.webhook_log_enabled", default="1"
+            )
+        )
+        return str(param).lower() in ("1", "true", "yes")
 
     def _format_payload(self, payload):
         if payload is None:

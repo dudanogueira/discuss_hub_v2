@@ -68,7 +68,6 @@ class EvolutionApiInstance(models.Model):
             ("no_gateway", "Sem gateway"),
         ],
         compute="_compute_gateway_state",
-        store=True,
         readonly=True,
     )
     evolution_webhook_by_events = fields.Boolean(

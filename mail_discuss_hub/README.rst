@@ -14,8 +14,9 @@ Mail Discuss Hub Core
 
 |badge1| |badge2| |badge3|
 
-This module adds a dedicated Discuss configuration menu for message
-administration.
+This module provides the Discuss Hub core models and settings only.
+Administration menus moved to the optional
+``mail_discuss_hub_gateway_devtools`` addon.
 
 **Table of contents**
 
@@ -25,17 +26,16 @@ administration.
 Overview
 ========
 
-Creates a "Configuration > Messages" menu in Discuss with quick access to:
+Provides:
 
-- Messages
-- Scheduled Messages
-- Subtypes
-- Message Reactions
-- User Settings
-- Teams
-- Guests
-- Channels
-- Channels/Members
+- Discuss Hub settings (res.config.settings integration).
+- Discuss Teams model and views.
+- Security/access rules for the core entities.
+
+Does not provide:
+
+- Messages/Guests/Channels admin menus (devtools only).
+- Webhook logs, replay, or cleanup tools (devtools only).
 
 Dependencies
 ============
@@ -50,8 +50,8 @@ No extra configuration is required.
 Usage
 =====
 
-Go to Settings > Discuss > Messages and open the relevant administration
-view.
+For administration menus, install ``mail_discuss_hub_gateway_devtools`` and
+use Settings > Discuss > Messages.
 
 Roadmap (TODO)
 ==============

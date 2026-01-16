@@ -130,52 +130,6 @@ msgid "Settings"
 msgstr "Definições"
 
 #. module: mail_discuss_hub
-#: model:ir.ui.menu,name:mail_discuss_hub.mail_discuss_hub_menu_messages_config
-#: model:ir.ui.menu,name:mail_discuss_hub.mail_discuss_hub_menu_mail_message
-msgid "Messages"
-msgstr "Mensagens"
-
-#. module: mail_discuss_hub
-#: model:ir.ui.menu,name:mail_discuss_hub.mail_discuss_hub_menu_message_schedule
-msgid "Scheduled Messages"
-msgstr "Mensagens Agendadas"
-
-#. module: mail_discuss_hub
-#: model:ir.ui.menu,name:mail_discuss_hub.mail_discuss_hub_menu_message_subtype
-msgid "Subtypes"
-msgstr "Subtipos"
-
-#. module: mail_discuss_hub
-#: model:ir.ui.menu,name:mail_discuss_hub.mail_discuss_hub_menu_message_reactions
-msgid "Message Reactions"
-msgstr "Reações de Mensagens"
-
-#. module: mail_discuss_hub
-#: model:ir.ui.menu,name:mail_discuss_hub.mail_discuss_hub_menu_user_settings
-msgid "User Settings"
-msgstr "Configurações do Usuário"
-
-#. module: mail_discuss_hub
-#: model:ir.ui.menu,name:mail_discuss_hub.mail_discuss_hub_menu_teams
-msgid "Teams"
-msgstr "Equipes"
-
-#. module: mail_discuss_hub
-#: model:ir.ui.menu,name:mail_discuss_hub.mail_discuss_hub_menu_guests
-msgid "Guests"
-msgstr "Convidados"
-
-#. module: mail_discuss_hub
-#: model:ir.ui.menu,name:mail_discuss_hub.mail_discuss_hub_menu_channels
-msgid "Channels"
-msgstr "Canais"
-
-#. module: mail_discuss_hub
-#: model:ir.ui.menu,name:mail_discuss_hub.mail_discuss_hub_menu_channels_members
-msgid "Channels/Members"
-msgstr "Canais/Membros"
-
-#. module: mail_discuss_hub
 #: model_terms:ir.ui.view,arch_db:mail_discuss_hub.mail_discuss_team_view_form
 msgid "Discuss Team"
 msgstr "Equipe do Discuss"

@@ -32,7 +32,7 @@ Main features:
   partner opening).
 - Extend "Manage guest" to reuse existing links, update phone, and
   rename gateway channels.
-- Logging de webhook é opcional e fornecido pelo addon `mail_discuss_hub_devtools`
+- Logging de webhook é opcional e fornecido pelo addon `mail_discuss_hub_gateway_devtools`
   (fora do escopo deste módulo).
 
 Dependencies

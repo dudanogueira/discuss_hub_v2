@@ -118,9 +118,11 @@ class EvolutionApiServer(models.Model):
                 vals["server_id"] = self.id
                 instance = self.env["evolution.api.instance"].create(vals)
 
-            if not instance.gateway_id:
-                gateway = instance._find_gateway()
-                if gateway:
+            gateway = instance._find_gateway()
+            if gateway:
+                if instance.gateway_id != gateway:
                     instance.write({"gateway_id": gateway.id})
+            elif instance.gateway_id:
+                instance.write({"gateway_id": False})
 
         return {"type": "ir.actions.client", "tag": "reload"}

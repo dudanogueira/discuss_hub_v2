@@ -2,16 +2,37 @@
 <odoo>
     <data>
         <menuitem
-            id="mail_discuss_hub_menu_messages_config"
-            name="Messages"
-            parent="mail.menu_configuration"
+            id="mail_discuss_hub_gateway_devtools_menu_root"
+            name="Devtools"
+            parent="mail.menu_root_discuss"
+            sequence="30"
+            groups="base.group_system"
+        />
+        <menuitem
+            id="mail_discuss_hub_gateway_devtools_menu_webhooks"
+            name="Webhooks"
+            parent="mail_discuss_hub_gateway_devtools_menu_root"
+            sequence="10"
+            groups="base.group_system"
+        />
+        <menuitem
+            id="mail_discuss_hub_gateway_devtools_menu_messages"
+            name="Mensagem"
+            parent="mail_discuss_hub_gateway_devtools_menu_root"
             sequence="20"
+            groups="base.group_system"
+        />
+        <menuitem
+            id="mail_discuss_hub_gateway_devtools_menu_channels"
+            name="Canais"
+            parent="mail_discuss_hub_gateway_devtools_menu_root"
+            sequence="30"
             groups="base.group_system"
         />
         <menuitem
             id="mail_discuss_hub_menu_mail_message"
             name="Messages"
-            parent="mail_discuss_hub_menu_messages_config"
+            parent="mail_discuss_hub_gateway_devtools_menu_messages"
             action="mail.action_view_mail_message"
             sequence="10"
             groups="base.group_system"
@@ -19,7 +40,7 @@
         <menuitem
             id="mail_discuss_hub_menu_message_schedule"
             name="Scheduled Messages"
-            parent="mail_discuss_hub_menu_messages_config"
+            parent="mail_discuss_hub_gateway_devtools_menu_messages"
             action="mail.mail_message_schedule_action"
             sequence="20"
             groups="base.group_system"
@@ -27,7 +48,7 @@
         <menuitem
             id="mail_discuss_hub_menu_message_subtype"
             name="Subtypes"
-            parent="mail_discuss_hub_menu_messages_config"
+            parent="mail_discuss_hub_gateway_devtools_menu_messages"
             action="mail.action_view_message_subtype"
             sequence="30"
             groups="base.group_system"
@@ -35,7 +56,7 @@
         <menuitem
             id="mail_discuss_hub_menu_message_reactions"
             name="Message Reactions"
-            parent="mail_discuss_hub_menu_messages_config"
+            parent="mail_discuss_hub_gateway_devtools_menu_messages"
             action="mail.mail_message_reaction_action"
             sequence="35"
             groups="base.group_system"
@@ -43,7 +64,7 @@
         <menuitem
             id="mail_discuss_hub_menu_user_settings"
             name="User Settings"
-            parent="mail_discuss_hub_menu_messages_config"
+            parent="mail_discuss_hub_gateway_devtools_menu_messages"
             action="mail.res_users_settings_action"
             sequence="40"
             groups="base.group_system"
@@ -51,7 +72,7 @@
         <menuitem
             id="mail_discuss_hub_menu_teams"
             name="Teams"
-            parent="mail_discuss_hub_menu_messages_config"
+            parent="mail_discuss_hub_gateway_devtools_menu_messages"
             action="mail_discuss_hub.mail_discuss_team_action"
             sequence="45"
             groups="base.group_system"
@@ -59,7 +80,7 @@
         <menuitem
             id="mail_discuss_hub_menu_guests"
             name="Guests"
-            parent="mail_discuss_hub_menu_messages_config"
+            parent="mail_discuss_hub_gateway_devtools_menu_channels"
             action="mail.mail_guest_action"
             sequence="50"
             groups="base.group_system"
@@ -67,7 +88,7 @@
         <menuitem
             id="mail_discuss_hub_menu_channels"
             name="Channels"
-            parent="mail_discuss_hub_menu_messages_config"
+            parent="mail_discuss_hub_gateway_devtools_menu_channels"
             action="mail.discuss_channel_action_view"
             sequence="60"
             groups="base.group_system"
@@ -75,7 +96,7 @@
         <menuitem
             id="mail_discuss_hub_menu_channels_members"
             name="Channels/Members"
-            parent="mail_discuss_hub_menu_messages_config"
+            parent="mail_discuss_hub_gateway_devtools_menu_channels"
             action="mail.discuss_channel_member_action"
             sequence="70"
             groups="base.group_system"

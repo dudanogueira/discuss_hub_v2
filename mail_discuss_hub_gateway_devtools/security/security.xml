@@ -2,7 +2,7 @@
 <odoo>
     <record id="mail_gateway_webhook_log_rule" model="ir.rule">
         <field name="name">mail.gateway.webhook.log: multicompany rule</field>
-        <field name="model_id" ref="mail_discuss_hub_devtools.model_mail_gateway_webhook_log" />
+        <field name="model_id" ref="mail_discuss_hub_gateway_devtools.model_mail_gateway_webhook_log" />
         <field name="domain_force">[('company_id', 'in', company_ids + [False])]</field>
         <field name="groups" eval="[(4, ref('mail_gateway.gateway_user'))]" />
         <field name="perm_read" eval="True" />

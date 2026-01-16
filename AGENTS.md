@@ -20,7 +20,7 @@ nos addons do `discuss-hub` (ou novos addons locais).
 - `mail_discuss_hub` (core): Settings do Discuss, modelo `mail.discuss.team`, menus.
 - Integracoes: `mail_discuss_hub_crm`, `mail_discuss_hub_helpdesk_mgmt` (e futuros) dependem apenas do core + modulo alvo.
 - `mail_discuss_hub_gateway` (infra Discuss+Gateway): sidebar de instancias, ajustes de autoria (sem logging obrigatorio).
-- `mail_discuss_hub_devtools` (dev): modelo/log de webhook e utilidades opcionais (views, replay, cleanup). Nao deve ser dependencia de producao.
+- `mail_discuss_hub_gateway_devtools` (dev): modelo/log de webhook e utilidades opcionais (views, replay, cleanup). Nao deve ser dependencia de producao.
 - `mail_gateway_whatsapp_common` (gateway core WhatsApp): DTO/servico unificado para mensagens/status/reactions.
 - `mail_gateway_whatsapp_evolution_api` (provider): integra Evolution API, delega processamento ao common.
 - `mail_gateway_whatsapp_evolution_api_manager` (manager): gerencia servidores/instancias Evolution.
@@ -166,10 +166,10 @@ Use estes arquivos como referencia de payloads e endpoints:
 
 ### `mail_discuss_hub_gateway`
 
-- Logs nao sao obrigatorios em producao. O addon `mail_discuss_hub_devtools` adiciona logging quando instalado.
+- Logs nao sao obrigatorios em producao. O addon `mail_discuss_hub_gateway_devtools` adiciona logging quando instalado.
 - Nao mover log para o OCA `mail_gateway`; manter extensoes locais (via devtools).
 
-### `mail_discuss_hub_devtools`
+### `mail_discuss_hub_gateway_devtools`
 
 - Guarda o modelo `mail.gateway.webhook.log`, campos em `mail.message`, views e wizards de replay/cleanup.
 - Opcional: quando instalado, gateways passam a registrar logs; quando ausente, webhooks processam sem persistir.

@@ -19,7 +19,6 @@
         "security/ir.model.access.csv",
         "views/res_config_settings_views.xml",
         "views/mail_discuss_team_views.xml",
-        "views/mail_discuss_hub_menus.xml",
     ],
     "installable": True,
 }
