@@ -13,33 +13,172 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
     _name = "mail.gateway.whatsapp.common"
     _description = "Servico comum para gateways WhatsApp nao-oficiais"
 
+    _CANONICAL_EVENTS = {
+        "message_upsert",
+        "message_status",
+        "message_delete",
+        "reaction_upsert",
+        "reaction_delete",
+    }
+    _EVENT_ALIASES = {
+        "messages.upsert": "message_upsert",
+        "message.upsert": "message_upsert",
+        "messages_upsert": "message_upsert",
+        "message": "message_upsert",
+        "send.message": "message_upsert",
+        "send_message": "message_upsert",
+        "messages.update": "message_status",
+        "message.update": "message_status",
+        "message.status": "message_status",
+        "message_status": "message_status",
+        "status": "message_status",
+        "messages.delete": "message_delete",
+        "message.delete": "message_delete",
+        "message_delete": "message_delete",
+        "delete": "message_delete",
+        "reaction": "reaction_upsert",
+        "reaction.upsert": "reaction_upsert",
+        "reaction_upsert": "reaction_upsert",
+        "reaction.delete": "reaction_delete",
+        "reaction_delete": "reaction_delete",
+        "reaction.remove": "reaction_delete",
+        "reaction_remove": "reaction_delete",
+    }
+
     def _process_normalized(self, gateway, dto, channel, author=None):
         """Processa um NormalizedPayload e cria/atualiza mail.message.
 
         Parametros:
         - gateway: registro de mail.gateway
         - dto: NormalizedPayload
-        - channel: registro discuss.channel/mail.channel para postar a mensagem
+        - channel: opcional; se None, o common resolve/cria o canal
         - author: opcional (res.partner ou mail.guest)
         """
 
-        if author is None:
-            author = self._resolve_author(gateway, dto)
-        channel = self._prepare_channel_for_author(channel, author)
+        event = self._normalize_event(dto)
+        if not event:
+            _logger.warning("WhatsApp common: unknown event %s", dto.event)
+            return False
+        if not self._validate_dto(dto, event):
+            return False
 
-        event = (dto.event or "").lower().replace(" ", "_")
-        if event in {"message_upsert", "messages_upsert", "message"}:
+        channel_needed = event == "message_upsert"
+        if channel_needed:
+            if not channel:
+                channel = self._get_or_create_channel(gateway, dto)
+            if not channel:
+                return False
+
+        author_needed = event in {"message_upsert", "reaction_upsert", "reaction_delete"}
+        if author is None and author_needed:
+            author = self._resolve_author(gateway, dto)
+        if channel:
+            channel = self._prepare_channel_for_author(channel, author)
+
+        if event == "message_upsert":
             return self._handle_message_upsert(gateway, dto, channel, author)
-        if event in {"message_status", "status"}:
+        if event == "message_status":
             return self._handle_message_status(gateway, dto)
-        if event in {"message_delete", "delete"}:
+        if event == "message_delete":
             return self._handle_message_delete(gateway, dto)
-        if event in {"reaction_upsert", "reaction"}:
+        if event == "reaction_upsert":
             return self._handle_reaction_upsert(gateway, dto, author)
-        if event in {"reaction_delete"}:
+        if event == "reaction_delete":
             return self._handle_reaction_delete(gateway, dto, author)
         # Eventos desconhecidos: ignora silenciosamente
         return False
+
+    # Channel resolution -----------------------------------------------------
+    def _get_or_create_channel(self, gateway, dto):
+        token = self._get_channel_token(dto)
+        if not token:
+            _logger.warning("WhatsApp common: missing chat token in DTO")
+            return False
+        Channel = self.env["discuss.channel"].sudo()
+        domain = [
+            ("channel_type", "=", "gateway"),
+            ("gateway_id", "=", gateway.id),
+            ("gateway_channel_token", "=", token),
+        ]
+        channel = Channel.search(domain, limit=1)
+        if channel:
+            self._refresh_channel_name(channel, dto, token)
+            return channel
+        vals = {
+            "name": self._get_channel_name(dto, token),
+            "channel_type": "gateway",
+            "gateway_id": gateway.id,
+            "gateway_channel_token": token,
+        }
+        return Channel.create(vals)
+
+    def _get_channel_token(self, dto):
+        for token in (
+            dto.chat_id,
+            dto.sender_jid,
+            dto.sender_jid_alt,
+            dto.sender_participant_jid,
+        ):
+            if token:
+                return token
+        return False
+
+    def _get_channel_name(self, dto, token):
+        name = (dto.sender_name or "").strip()
+        return name or token
+
+    def _refresh_channel_name(self, channel, dto, token):
+        desired = self._get_channel_name(dto, token)
+        if desired and channel.name != desired:
+            channel.sudo().write({"name": desired})
+
+    # DTO validation ---------------------------------------------------------
+    def _normalize_event(self, dto):
+        raw = (dto.event or "").strip().lower()
+        if not raw:
+            return False
+        raw = raw.replace(" ", "_").replace("-", "_").replace("/", ".")
+        dotted = raw.replace("_", ".")
+        underscored = raw.replace(".", "_")
+        for key in (raw, dotted, underscored):
+            mapped = self._EVENT_ALIASES.get(key)
+            if mapped:
+                return mapped
+        if underscored in self._CANONICAL_EVENTS:
+            return underscored
+        return False
+
+    def _validate_dto(self, dto, event):
+        missing = []
+        if event == "message_upsert":
+            if not dto.message_id:
+                missing.append("message_id")
+            if not self._get_channel_token(dto):
+                missing.append("chat_id_or_sender_jid")
+        elif event == "message_status":
+            if not dto.message_id:
+                missing.append("message_id")
+            if not (dto.status or dto.status_raw):
+                missing.append("status")
+        elif event == "message_delete":
+            if not dto.message_id:
+                missing.append("message_id")
+        elif event == "reaction_upsert":
+            if not dto.reaction_target_id:
+                missing.append("reaction_target_id")
+            if not dto.reaction:
+                missing.append("reaction")
+        elif event == "reaction_delete":
+            if not dto.reaction_target_id:
+                missing.append("reaction_target_id")
+        if missing:
+            _logger.warning(
+                "WhatsApp common: invalid DTO for %s, missing: %s",
+                event,
+                ", ".join(missing),
+            )
+            return False
+        return True
 
     # Author resolution ------------------------------------------------------
     def _resolve_author(self, gateway, dto):

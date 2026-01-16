@@ -5,15 +5,24 @@
         <field name="model">mail_discuss_hub_dev.cleanup_wizard</field>
         <field name="arch" type="xml">
             <form string="Cleanup Discuss Data">
+                <div class="alert alert-danger" role="alert">
+                    <p>This action deletes Discuss/Gateway data. Use only in development.</p>
+                    <p>Only data related to the selected channel type will be removed.</p>
+                </div>
                 <group>
+                    <field name="channel_type"/>
                     <field name="clear_members"/>
                     <field name="clear_channels"/>
                     <field name="clear_reactions"/>
                     <field name="clear_guests"/>
                     <field name="clear_messages"/>
                 </group>
+                <group string="Confirmation">
+                    <field name="confirm_cleanup"/>
+                    <field name="confirm_text" placeholder="DELETE"/>
+                </group>
                 <footer>
-                    <button name="action_cleanup" type="object" string="Cleanup" class="btn-primary"/>
+                    <button name="action_cleanup" type="object" string="Cleanup" class="btn-primary" confirm="This will delete data. Continue?"/>
                     <button string="Cancel" special="cancel" class="btn-secondary"/>
                 </footer>
             </form>

@@ -14,7 +14,7 @@ Left column: Raw Event
 
 Right column: Normalized + Result
 - NormalizedPayload (pretty JSON).
-- Mapping table (source_path -> normalized_field -> target_model.field).
+- Field Map table (raw_path -> normalized_field -> destination + routine).
 - Created/updated records:
   - discuss.channel
   - mail.guest / res.partner
@@ -42,6 +42,7 @@ Mapping table (example format)
 - data.pushName -> sender_name -> mail.guest.name
 - data.message.text -> text -> mail.message.body
 - data.key.id -> gateway_remote_id -> mail.message.gateway_remote_id
+ - event -> routine -> receive_message / send_message / delete_message / update_status
 
 Controls
 - Replay with overrides (force from_me, change timestamp, swap sender).

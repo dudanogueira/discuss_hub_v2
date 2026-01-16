@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_metrics_dashboard_wizard_form" model="ir.ui.view">
+        <field name="name">dev.metrics.dashboard.wizard.form</field>
+        <field name="model">mail_discuss_hub_dev.metrics_dashboard_wizard</field>
+        <field name="arch" type="xml">
+            <form string="Metrics Dashboard">
+                <group>
+                    <field name="gateway_id"/>
+                    <field name="date_from"/>
+                    <field name="date_to"/>
+                </group>
+                <group>
+                    <button name="action_build" type="object" string="Build Dashboard" class="btn-primary"/>
+                </group>
+                <separator string="Results"/>
+                <div class="o_form_label">Use Build Dashboard to open the list view.</div>
+                <footer>
+                    <button string="Close" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_metrics_dashboard_line_list" model="ir.ui.view">
+        <field name="name">dev.metrics.dashboard.line.list</field>
+        <field name="model">mail_discuss_hub_dev.metrics_dashboard_line</field>
+        <field name="arch" type="xml">
+            <list string="Metrics Dashboard">
+                <field name="metric_name"/>
+                <field name="metric_value"/>
+                <field name="metric_key"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_metrics_dashboard_wizard" model="ir.actions.act_window">
+        <field name="name">Metrics Dashboard</field>
+        <field name="res_model">mail_discuss_hub_dev.metrics_dashboard_wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem
+        id="menu_metrics_dashboard_wizard"
+        name="Metrics Dashboard"
+        parent="mail_discuss_hub_gateway_devtools.mail_discuss_hub_gateway_devtools_menu_webhooks"
+        action="action_metrics_dashboard_wizard"
+        sequence="80"
+        groups="base.group_system"
+    />
+</odoo>

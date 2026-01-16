@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_error_panel_wizard_form" model="ir.ui.view">
+        <field name="name">dev.error.panel.wizard.form</field>
+        <field name="model">mail_discuss_hub_dev.error_panel_wizard</field>
+        <field name="arch" type="xml">
+            <form string="Error Panel">
+                <group>
+                    <field name="gateway_id"/>
+                    <field name="direction"/>
+                </group>
+                <group>
+                    <field name="date_from"/>
+                    <field name="date_to"/>
+                </group>
+                <group>
+                    <field name="include_http_errors"/>
+                    <field name="min_http_status"/>
+                </group>
+                <group>
+                    <field name="include_processing_errors"/>
+                </group>
+                <group>
+                    <button name="action_build" type="object" string="Build Panel" class="btn-primary"/>
+                    <button name="action_export_json" type="object" string="Export JSON" class="btn-secondary"/>
+                    <button name="action_export_csv" type="object" string="Export CSV" class="btn-secondary"/>
+                </group>
+                <separator string="Results"/>
+                <div class="o_form_label">Use Build Panel to open the list view.</div>
+                <footer>
+                    <button string="Close" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_error_panel_line_list" model="ir.ui.view">
+        <field name="name">dev.error.panel.line.list</field>
+        <field name="model">mail_discuss_hub_dev.error_panel_line</field>
+        <field name="arch" type="xml">
+            <list string="Error Panel">
+                <field name="gateway_id"/>
+                <field name="endpoint"/>
+                <field name="event"/>
+                <field name="error_class"/>
+                <field name="count"/>
+                <field name="last_seen"/>
+                <field name="http_status_sample"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_error_panel_line_form" model="ir.ui.view">
+        <field name="name">dev.error.panel.line.form</field>
+        <field name="model">mail_discuss_hub_dev.error_panel_line</field>
+        <field name="arch" type="xml">
+            <form string="Error Panel">
+                <group>
+                    <field name="gateway_id" readonly="1"/>
+                    <field name="endpoint" readonly="1"/>
+                    <field name="event" readonly="1"/>
+                    <field name="error_class" readonly="1"/>
+                </group>
+                <group>
+                    <field name="count" readonly="1"/>
+                    <field name="last_seen" readonly="1"/>
+                    <field name="http_status_sample" readonly="1"/>
+                </group>
+                <group>
+                    <field name="log_ids" widget="many2many_tags" readonly="1"/>
+                </group>
+                <field name="error_message_sample" readonly="1"/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_error_panel_wizard" model="ir.actions.act_window">
+        <field name="name">Error Panel</field>
+        <field name="res_model">mail_discuss_hub_dev.error_panel_wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem
+        id="menu_error_panel_wizard"
+        name="Error Panel"
+        parent="mail_discuss_hub_gateway_devtools.mail_discuss_hub_gateway_devtools_menu_webhooks"
+        action="action_error_panel_wizard"
+        sequence="40"
+        groups="base.group_system"
+    />
+</odoo>

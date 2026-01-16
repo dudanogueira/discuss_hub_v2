@@ -5,21 +5,37 @@
         <field name="model">mail_discuss_hub_dev.webhook_replay_wizard</field>
         <field name="arch" type="xml">
             <form string="Replay Webhooks">
-                <group>
-                    <field name="direction"/>
-                    <field name="gateway_id"/>
-                </group>
-                <group>
-                    <field name="events"/>
-                    <field name="date_from"/>
-                    <field name="date_to"/>
-                    <field name="limit"/>
-                </group>
-                <group>
-                    <field name="dry_run"/>
-                    <field name="commit_every"/>
-                    <field name="sleep_seconds"/>
-                </group>
+                <notebook>
+                    <page string="Filters">
+                        <group>
+                            <field name="direction"/>
+                            <field name="gateway_id"/>
+                            <field name="log_ids" widget="many2many_tags"/>
+                        </group>
+                        <group>
+                            <field name="events"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="limit"/>
+                            <field name="order"/>
+                        </group>
+                    </page>
+                    <page string="Replay Options">
+                        <group>
+                            <field name="dry_run"/>
+                            <field name="report_skipped"/>
+                            <field name="max_report"/>
+                        </group>
+                        <group>
+                            <field name="commit_every"/>
+                            <field name="sleep_seconds"/>
+                        </group>
+                        <group>
+                            <field name="update_message_date"/>
+                            <field name="update_create_date"/>
+                        </group>
+                    </page>
+                </notebook>
                 <footer>
                     <button name="action_replay" type="object" string="Replay" class="btn-primary"/>
                     <button string="Cancel" special="cancel" class="btn-secondary"/>

@@ -6,12 +6,52 @@
         <field name="inherit_id" ref="mail_discuss_hub_gateway_devtools.mail_gateway_webhook_log_view_form"/>
         <field name="arch" type="xml">
             <notebook position="inside">
-                <page string="Pretty (Dev)">
-                    <group>
-                        <field name="request_payload_pretty" nolabel="1" widget="text" readonly="1"/>
+                <page string="Analysis (Dev)">
+                    <group col="2">
+                        <group>
+                            <field name="analysis_enabled" invisible="1"/>
+                            <field name="analysis_provider" readonly="1"/>
+                            <field name="event" readonly="1"/>
+                            <field name="analysis_routine" readonly="1"/>
+                            <field name="analysis_error" readonly="1" widget="text"/>
+                            <field name="analysis_message_id" readonly="1"/>
+                        </group>
                     </group>
+                    <group col="2">
+                        <group>
+                            <separator string="Raw Payload"/>
+                            <field name="request_payload_pretty" nolabel="1" widget="text" readonly="1"/>
+                        </group>
+                        <group>
+                            <separator string="Normalized Payload"/>
+                            <field name="analysis_normalized_payload" nolabel="1" widget="text" readonly="1"/>
+                        </group>
+                    </group>
+                </page>
+                <page string="Field Map (Dev)">
                     <group>
-                        <field name="response_payload_pretty" nolabel="1" widget="text" readonly="1"/>
+                        <field name="analysis_mapping_table_html" nolabel="1" widget="html" readonly="1"/>
+                    </group>
+                </page>
+                <page string="Inspector (Dev)">
+                    <group col="2">
+                        <group>
+                            <field name="inspector_enabled" invisible="1"/>
+                            <field name="inspector_event" readonly="1"/>
+                            <field name="inspector_error" readonly="1" widget="text"/>
+                        </group>
+                        <group>
+                            <separator string="Missing Required Fields"/>
+                            <field name="inspector_missing_fields" nolabel="1" widget="text" readonly="1"/>
+                        </group>
+                        <group>
+                            <separator string="Used Fields"/>
+                            <field name="inspector_used_fields" nolabel="1" widget="text" readonly="1"/>
+                        </group>
+                        <group>
+                            <separator string="Diff vs Previous (Same Event)"/>
+                            <field name="inspector_diff" nolabel="1" widget="text" readonly="1"/>
+                        </group>
                     </group>
                 </page>
             </notebook>

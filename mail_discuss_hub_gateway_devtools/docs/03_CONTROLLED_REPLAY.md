@@ -3,6 +3,9 @@
 Goal
 - Replay webhook logs with throttling and overrides to reproduce bugs.
 
+Config flag
+- `mail_discuss_hub_gateway_devtools.controlled_replay_enabled`
+
 Steps
 1) Filter webhook logs by date/event/chat_id.
 2) Select replay order (original, reverse, custom).

@@ -99,22 +99,23 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
         external_message_id = key_data.get("id")
         if normalized_event == "send.message" and not is_from_me:
             return
-        chat_token = self._get_chat_token(data)
-        if not chat_token:
-            return
-        channel = self._get_channel(gateway, chat_token, data)
-        if not channel:
-            return
-        self._refresh_channel_name(channel, data, chat_token)
-
-        dto = self._build_dto_from_evolution(update, gateway, channel)
+        dto = self._build_dto_from_evolution(update, gateway, None)
         if not dto or not dto.message_id:
             return
 
         common = self.env["mail.gateway.whatsapp.common"]
-        msg = common._process_normalized(gateway, dto, channel, author=None)
+        msg = common._process_normalized(gateway, dto, None, author=None)
+        channel = False
+        if msg and msg.model == "discuss.channel" and msg.res_id:
+            channel = self.env["discuss.channel"].sudo().browse(msg.res_id)
 
-        if msg and is_from_me and external_message_id and "mail.notification" in self.env:
+        if (
+            msg
+            and channel
+            and is_from_me
+            and external_message_id
+            and "mail.notification" in self.env
+        ):
             existing_notification = (
                 self.env["mail.notification"]
                 .sudo()
@@ -140,7 +141,7 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
                     }
                 )
 
-        if msg:
+        if msg and channel:
             self._post_process_message(msg, channel)
 
     def _build_dto_from_evolution(self, update, gateway, channel):
@@ -162,7 +163,7 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             sender_jid=key_data.get("participant") or key_data.get("remoteJid"),
             sender_jid_alt=key_data.get("remoteJidAlt"),
             sender_participant_jid=key_data.get("participant"),
-            sender_name=data.get("pushName"),
+            sender_name=data.get("pushName") or data.get("name"),
             timestamp=message.get("messageTimestamp") or data.get("timestamp"),
             message_type=message.get("messageType") or message.get("type"),
             text=body,
@@ -222,40 +223,6 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
     # -------------------------------------------------------------------------
     # Helpers
     # -------------------------------------------------------------------------
-    def _get_channel(self, gateway, chat_token, data):
-        channel = self.env["discuss.channel"].sudo().search(
-            [
-                ("channel_type", "=", "gateway"),
-                ("gateway_id", "=", gateway.id),
-                ("gateway_channel_token", "=", chat_token),
-            ],
-            limit=1,
-        )
-        if channel:
-            return channel
-        vals = {
-            "name": self._get_channel_name(data, chat_token, gateway=gateway),
-            "channel_type": "gateway",
-            "gateway_id": gateway.id,
-            "gateway_channel_token": chat_token,
-        }
-        return self.env["discuss.channel"].sudo().create(vals)
-
-    def _get_channel_name(self, data, token, gateway=None):
-        remote_jid, remote_jid_alt, participant_jid = self._extract_jids(data)
-        name = remote_jid or remote_jid_alt or token
-        push = data.get("pushName") or data.get("name")
-        if push:
-            name = push
-        return name
-
-    def _refresh_channel_name(self, channel, data, token):
-        # Minimal refresh: update name if empty or equals token
-        desired = self._get_channel_name(data, token, gateway=channel.gateway_id)
-        if desired and channel.name != desired:
-            channel.sudo().write({"name": desired})
-
-
     def _decode_base64_payload(self, payload):
         if not payload:
             return False

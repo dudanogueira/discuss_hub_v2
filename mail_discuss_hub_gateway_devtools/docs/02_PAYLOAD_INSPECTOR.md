@@ -3,6 +3,9 @@
 Goal
 - Provide schema validation, field usage, and diffs between similar payloads.
 
+Config flag
+- `mail_discuss_hub_gateway_devtools.payload_inspector_enabled`
+
 Steps
 1) Select a webhook log (mail.gateway.webhook.log).
 2) Parse and pretty-print JSON with field paths.

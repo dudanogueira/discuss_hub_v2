@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_idempotency_map_wizard_form" model="ir.ui.view">
+        <field name="name">dev.idempotency.map.wizard.form</field>
+        <field name="model">mail_discuss_hub_dev.idempotency_map_wizard</field>
+        <field name="arch" type="xml">
+            <form string="Idempotency Map">
+                <group>
+                    <field name="gateway_id"/>
+                    <field name="date_from"/>
+                    <field name="date_to"/>
+                </group>
+                <group>
+                    <field name="include_logs"/>
+                    <field name="include_messages"/>
+                    <field name="only_collisions"/>
+                </group>
+                <group>
+                    <button name="action_build" type="object" string="Build Map" class="btn-primary"/>
+                </group>
+                <separator string="Results"/>
+                <div class="o_form_label">Use Build Map to open the list view.</div>
+                <footer>
+                    <button string="Close" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_idempotency_map_line_list" model="ir.ui.view">
+        <field name="name">dev.idempotency.map.line.list</field>
+        <field name="model">mail_discuss_hub_dev.idempotency_map_line</field>
+        <field name="arch" type="xml">
+            <list string="Idempotency Map" decoration-danger="is_collision">
+                <field name="gateway_id"/>
+                <field name="gateway_remote_id"/>
+                <field name="status"/>
+                <field name="log_count"/>
+                <field name="message_count"/>
+                <field name="event_summary"/>
+                <field name="message_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_idempotency_map_line_form" model="ir.ui.view">
+        <field name="name">dev.idempotency.map.line.form</field>
+        <field name="model">mail_discuss_hub_dev.idempotency_map_line</field>
+        <field name="arch" type="xml">
+            <form string="Idempotency Map">
+                <group>
+                    <field name="gateway_id" readonly="1"/>
+                    <field name="gateway_remote_id" readonly="1"/>
+                    <field name="status" readonly="1"/>
+                </group>
+                <group>
+                    <field name="log_count" readonly="1"/>
+                    <field name="message_count" readonly="1"/>
+                    <field name="event_summary" readonly="1"/>
+                </group>
+                <group>
+                    <field name="webhook_log_ids" widget="many2many_tags" readonly="1"/>
+                    <field name="message_ids" widget="many2many_tags" readonly="1"/>
+                </group>
+                <field name="details" readonly="1"/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_idempotency_map_wizard" model="ir.actions.act_window">
+        <field name="name">Idempotency Map</field>
+        <field name="res_model">mail_discuss_hub_dev.idempotency_map_wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem
+        id="menu_idempotency_map_wizard"
+        name="Idempotency Map"
+        parent="mail_discuss_hub_gateway_devtools.mail_discuss_hub_gateway_devtools_menu_messages"
+        action="action_idempotency_map_wizard"
+        sequence="90"
+        groups="base.group_system"
+    />
+</odoo>

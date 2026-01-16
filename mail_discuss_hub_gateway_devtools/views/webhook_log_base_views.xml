@@ -26,6 +26,7 @@
                         <field name="gateway_type" readonly="1" />
                         <field name="direction" />
                         <field name="event" />
+                        <field name="analysis_routine" readonly="1" />
                         <field name="status" />
                         <field name="http_status" />
                         <field name="endpoint" />

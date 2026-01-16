@@ -50,6 +50,61 @@ msgid "Persist webhook logs"
 msgstr "Persistir logs de webhook"
 
 #. module: mail_discuss_hub_gateway_devtools
+#: model:ir.ui.view,arch_db:mail_discuss_hub_gateway_devtools.res_config_settings_view_form_inherit_devtools
+msgid "Webhook analysis panel"
+msgstr "Painel de analise de webhook"
+
+#. module: mail_discuss_hub_gateway_devtools
+#: model:ir.ui.view,arch_db:mail_discuss_hub_gateway_devtools.res_config_settings_view_form_inherit_devtools
+msgid "Payload inspector"
+msgstr "Inspecao de payload"
+
+#. module: mail_discuss_hub_gateway_devtools
+#: model:ir.ui.view,arch_db:mail_discuss_hub_gateway_devtools.res_config_settings_view_form_inherit_devtools
+msgid "Controlled replay"
+msgstr "Replay controlado"
+
+#. module: mail_discuss_hub_gateway_devtools
+#: model:ir.ui.view,arch_db:mail_discuss_hub_gateway_devtools.res_config_settings_view_form_inherit_devtools
+msgid "Unified timeline"
+msgstr "Linha do tempo unificada"
+
+#. module: mail_discuss_hub_gateway_devtools
+#: model:ir.ui.view,arch_db:mail_discuss_hub_gateway_devtools.res_config_settings_view_form_inherit_devtools
+msgid "Idempotency map"
+msgstr "Mapa de idempotencia"
+
+#. module: mail_discuss_hub_gateway_devtools
+#: model:ir.ui.view,arch_db:mail_discuss_hub_gateway_devtools.res_config_settings_view_form_inherit_devtools
+msgid "Error panel"
+msgstr "Painel de erros"
+
+#. module: mail_discuss_hub_gateway_devtools
+#: model:ir.ui.view,arch_db:mail_discuss_hub_gateway_devtools.res_config_settings_view_form_inherit_devtools
+msgid "Connection simulator"
+msgstr "Simulador de conexao"
+
+#. module: mail_discuss_hub_gateway_devtools
+#: model:ir.ui.view,arch_db:mail_discuss_hub_gateway_devtools.res_config_settings_view_form_inherit_devtools
+msgid "Provider comparator"
+msgstr "Comparador de provedores"
+
+#. module: mail_discuss_hub_gateway_devtools
+#: model:ir.ui.view,arch_db:mail_discuss_hub_gateway_devtools.res_config_settings_view_form_inherit_devtools
+msgid "Trace correlation"
+msgstr "Correlacao de trace"
+
+#. module: mail_discuss_hub_gateway_devtools
+#: model:ir.ui.view,arch_db:mail_discuss_hub_gateway_devtools.res_config_settings_view_form_inherit_devtools
+msgid "Metrics dashboard"
+msgstr "Painel de metricas"
+
+#. module: mail_discuss_hub_gateway_devtools
+#: model:ir.ui.view,arch_db:mail_discuss_hub_gateway_devtools.res_config_settings_view_form_inherit_devtools
+msgid "Gap checklist"
+msgstr "Checklist de gaps"
+
+#. module: mail_discuss_hub_gateway_devtools
 #: model:ir.ui.menu,name:mail_discuss_hub_gateway_devtools.mail_discuss_hub_menu_message_schedule
 msgid "Scheduled Messages"
 msgstr "Mensagens Agendadas"

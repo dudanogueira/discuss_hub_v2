@@ -15,3 +15,4 @@
 Notes
 - Each item has a dedicated file with steps and scope.
 - All features are dev-only and should not be required by production modules.
+- Each feature has a config flag in Devtools > Recursos.

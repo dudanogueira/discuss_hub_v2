@@ -61,22 +61,7 @@
             sequence="35"
             groups="base.group_system"
         />
-        <menuitem
-            id="mail_discuss_hub_menu_user_settings"
-            name="User Settings"
-            parent="mail_discuss_hub_gateway_devtools_menu_messages"
-            action="mail.res_users_settings_action"
-            sequence="40"
-            groups="base.group_system"
-        />
-        <menuitem
-            id="mail_discuss_hub_menu_teams"
-            name="Teams"
-            parent="mail_discuss_hub_gateway_devtools_menu_messages"
-            action="mail_discuss_hub.mail_discuss_team_action"
-            sequence="45"
-            groups="base.group_system"
-        />
+        <!-- ...entries 'User Settings' and 'Teams' removed from devtools to keep them managed by mail_discuss_hub (core) -->
         <menuitem
             id="mail_discuss_hub_menu_guests"
             name="Guests"
@@ -99,6 +84,22 @@
             parent="mail_discuss_hub_gateway_devtools_menu_channels"
             action="mail.discuss_channel_member_action"
             sequence="70"
+            groups="base.group_system"
+        />
+        <menuitem
+            id="mail_discuss_hub_gateway_devtools_menu_gateway"
+            name="Gateway"
+            parent="mail_discuss_hub_gateway_devtools_menu_channels"
+            action="mail_gateway.mail_gateway_act_window"
+            sequence="80"
+            groups="base.group_system"
+        />
+        <menuitem
+            id="mail_discuss_hub_gateway_devtools_menu_partner_channels"
+            name="Gateway Partner Channels"
+            parent="mail_discuss_hub_gateway_devtools_menu_channels"
+            action="mail_gateway.res_partner_gateway_channel_act_window"
+            sequence="90"
             groups="base.group_system"
         />
     </data>

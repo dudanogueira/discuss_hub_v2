@@ -18,6 +18,6 @@ Camada comum para gateways WhatsApp nao-oficiais:
 ## Regras
 
 - Providers (Evolution, WAHA, Quepasa, NotificaMe...) devem apenas converter o webhook bruto para `NormalizedPayload` e chamar o servico comum.
-- Resolucao de author (guest vs partner) acontece no common.
+- Resolucao de channel e author (guest vs partner) acontece no common.
 - Idempotencia: usar `(gateway_id, gateway_remote_id)`.
 - Evitar fallbacks legados; projeto greenfield.

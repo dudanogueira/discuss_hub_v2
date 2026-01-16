@@ -2,4 +2,12 @@ from . import mail_gateway_webhook_log
 from . import webhook_log
 from . import mail_message
 from . import devtools_settings
+from . import timeline_wizard
 from . import evolution_api_instance
+from . import idempotency_map_wizard
+from . import error_panel_wizard
+from . import connection_simulator_wizard
+from . import provider_comparator_wizard
+from . import trace_correlation_wizard
+from . import metrics_dashboard_wizard
+from . import gap_checklist_wizard

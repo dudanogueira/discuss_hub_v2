@@ -179,6 +179,7 @@ Use estes arquivos como referencia de payloads e endpoints:
 - Define DTO `NormalizedPayload` e servico `_process_normalized` (message/reaction/status/delete) com idempotencia.
 - Adiciona campos em `mail.message` para id externo, chat, status, quote, reactions e payload bruto.
 - Providers apenas convertem o webhook bruto para DTO e chamam o servico.
+- Resolucao/criacao de canal passa a ser responsabilidade do common.
 
 ### `mail_gateway_whatsapp_evolution_api`
 
