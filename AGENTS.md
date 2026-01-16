@@ -52,14 +52,13 @@ docker compose up -d --build
 
 ### Containers / Bancos (exemplo)
 
-- Odoo principal (db `odoo2`) roda no service `odoo`.
-- Odoo legado (db `odoo1`) roda no service `odoo_legacy` (ou nome equivalente).
+- Odoo principal (db `odoo`) roda no service `odoo`.
 
 > Ajuste os nomes acima de acordo com o seu `docker-compose.yml`.
 
 ### Acessar
 
-- Local: `http://127.0.0.1:8069`
+- Local/IP: `http://127.0.0.1:8070` (ou `http://<ip>:8070`)
 - Via Traefik (se habilitado): configure `TRAEFIK_ENABLE=true` e `TRAEFIK_HOST` no `.env`.
 
 Na primeira abertura, crie a base pelo wizard do Odoo. A "master password" eh
@@ -80,11 +79,11 @@ cd /home/administrador/odoo18
 
 # Upgrade
 docker compose exec -T odoo /opt/venv/bin/python /opt/odoo/odoo-bin \
-  -c /etc/odoo/odoo.conf -d odoo2 -u modulo --stop-after-init
+  -c /etc/odoo/odoo.conf -d odoo -u modulo --stop-after-init
 
 # Install
 docker compose exec -T odoo /opt/venv/bin/python /opt/odoo/odoo-bin \
-  -c /etc/odoo/odoo.conf -d odoo2 -i modulo --stop-after-init
+  -c /etc/odoo/odoo.conf -d odoo -i modulo --stop-after-init
 
 # Reinicio do Odoo
 docker compose restart odoo

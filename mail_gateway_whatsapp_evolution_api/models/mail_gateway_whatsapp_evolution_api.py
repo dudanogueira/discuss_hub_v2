@@ -111,14 +111,8 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
         if not dto or not dto.message_id:
             return
 
-        author = self._get_author(gateway, data)
-        if author and author._name == "mail.guest":
-            channel = channel.with_user(self.env.ref("base.public_user").id).with_context(
-                guest=author
-            )
-
         common = self.env["mail.gateway.whatsapp.common"]
-        msg = common._process_normalized(gateway, dto, channel, author)
+        msg = common._process_normalized(gateway, dto, channel, author=None)
 
         if msg and is_from_me and external_message_id and "mail.notification" in self.env:
             existing_notification = (
@@ -166,6 +160,8 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             chat_id=chat_id,
             from_me=bool(key_data.get("fromMe")),
             sender_jid=key_data.get("participant") or key_data.get("remoteJid"),
+            sender_jid_alt=key_data.get("remoteJidAlt"),
+            sender_participant_jid=key_data.get("participant"),
             sender_name=data.get("pushName"),
             timestamp=message.get("messageTimestamp") or data.get("timestamp"),
             message_type=message.get("messageType") or message.get("type"),
@@ -259,41 +255,6 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
         if desired and channel.name != desired:
             channel.sudo().write({"name": desired})
 
-    def _get_author(self, gateway, update):
-        data = update or {}
-        key_data = data.get("key", {})
-        if key_data.get("fromMe"):
-            return gateway.webhook_user_id.partner_id
-        remote_jid, remote_jid_alt, participant_jid = self._extract_jids(data)
-        remote_jid = remote_jid or remote_jid_alt
-        if not remote_jid:
-            return gateway.webhook_user_id.partner_id
-        push_name = data.get("pushName")
-        guest = self.env["mail.guest"].search(
-            [
-                ("gateway_id", "=", gateway.id),
-                ("gateway_token", "=", str(remote_jid or "")),
-            ],
-            limit=1,
-        )
-        if guest:
-            guest.sudo().write(
-                {
-                    "name": push_name or guest.name,
-                    "whatsapp_remote_jid_alt": remote_jid_alt or guest.whatsapp_remote_jid_alt,
-                    "whatsapp_participant_jid": participant_jid or guest.whatsapp_participant_jid,
-                }
-            )
-            return guest
-        return self.env["mail.guest"].sudo().create(
-            {
-                "name": push_name or remote_jid,
-                "gateway_id": gateway.id,
-                "gateway_token": remote_jid,
-                "whatsapp_remote_jid_alt": remote_jid_alt,
-                "whatsapp_participant_jid": participant_jid,
-            }
-        )
 
     def _decode_base64_payload(self, payload):
         if not payload:

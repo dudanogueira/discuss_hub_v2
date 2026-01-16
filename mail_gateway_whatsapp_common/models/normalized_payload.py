@@ -27,6 +27,8 @@ class NormalizedPayload:
         "chat_id",
         "from_me",
         "sender_jid",
+        "sender_jid_alt",
+        "sender_participant_jid",
         "sender_name",
         "timestamp",
         "message_type",
@@ -60,6 +62,8 @@ class NormalizedPayload:
         chat_id: Optional[str],
         from_me: bool = False,
         sender_jid: Optional[str] = None,
+        sender_jid_alt: Optional[str] = None,
+        sender_participant_jid: Optional[str] = None,
         sender_name: Optional[str] = None,
         timestamp: Optional[int] = None,
         message_type: Optional[str] = None,
@@ -89,6 +93,8 @@ class NormalizedPayload:
         self.chat_id = chat_id
         self.from_me = bool(from_me)
         self.sender_jid = sender_jid
+        self.sender_jid_alt = sender_jid_alt
+        self.sender_participant_jid = sender_participant_jid
         self.sender_name = sender_name
         self.timestamp = timestamp
         self.message_type = message_type

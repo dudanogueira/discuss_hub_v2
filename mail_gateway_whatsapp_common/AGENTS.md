@@ -9,7 +9,7 @@
 Camada comum para gateways WhatsApp nao-oficiais:
 - DTO `NormalizedPayload`.
 - Servico `_process_normalized` para message/status/delete/reaction.
-- Campos em `mail.message` para id externo, chat, status, quote, reactions e payload bruto.
+- Campos em `mail.message` para id externo, chat, status, quote, reactions.
 
 ## Dependencias
 
@@ -18,5 +18,6 @@ Camada comum para gateways WhatsApp nao-oficiais:
 ## Regras
 
 - Providers (Evolution, WAHA, Quepasa, NotificaMe...) devem apenas converter o webhook bruto para `NormalizedPayload` e chamar o servico comum.
+- Resolucao de author (guest vs partner) acontece no common.
 - Idempotencia: usar `(gateway_id, gateway_remote_id)`.
 - Evitar fallbacks legados; projeto greenfield.

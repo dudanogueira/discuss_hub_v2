@@ -23,6 +23,10 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         - author: opcional (res.partner ou mail.guest)
         """
 
+        if author is None:
+            author = self._resolve_author(gateway, dto)
+        channel = self._prepare_channel_for_author(channel, author)
+
         event = (dto.event or "").lower().replace(" ", "_")
         if event in {"message_upsert", "messages_upsert", "message"}:
             return self._handle_message_upsert(gateway, dto, channel, author)
@@ -36,6 +40,62 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
             return self._handle_reaction_delete(gateway, dto, author)
         # Eventos desconhecidos: ignora silenciosamente
         return False
+
+    # Author resolution ------------------------------------------------------
+    def _resolve_author(self, gateway, dto):
+        if dto.from_me:
+            return gateway.webhook_user_id.partner_id
+
+        sender_jid = dto.sender_jid or dto.chat_id
+        if not sender_jid:
+            return gateway.webhook_user_id.partner_id
+
+        guest = (
+            self.env["mail.guest"]
+            .sudo()
+            .search(
+                [
+                    ("gateway_id", "=", gateway.id),
+                    ("gateway_token", "=", str(sender_jid)),
+                ],
+                limit=1,
+            )
+        )
+        vals = self._guest_values(gateway, dto, sender_jid)
+        if guest:
+            guest.sudo().write(vals)
+            return guest
+        return self.env["mail.guest"].sudo().create(vals)
+
+    def _prepare_channel_for_author(self, channel, author):
+        if author and author._name == "mail.guest":
+            public_user = self.env.ref("base.public_user")
+            return channel.with_user(public_user.id).with_context(guest=author)
+        return channel
+
+    def _guest_values(self, gateway, dto, sender_jid):
+        push_name = (dto.sender_name or "").strip()
+        values = {
+            "name": push_name or sender_jid,
+            "gateway_id": gateway.id,
+            "gateway_token": sender_jid,
+            "last_push_name": push_name or False,
+            "whatsapp_remote_jid": dto.sender_jid or sender_jid,
+            "whatsapp_remote_jid_alt": dto.sender_jid_alt,
+            "whatsapp_participant_jid": dto.sender_participant_jid,
+        }
+        number = self._extract_whatsapp_number(dto.sender_jid or sender_jid)
+        if number:
+            values["whatsapp_number"] = number
+        return values
+
+    def _extract_whatsapp_number(self, jid):
+        if not jid or not isinstance(jid, str):
+            return False
+        if "@g.us" in jid:
+            return False
+        number = jid.split("@", 1)[0]
+        return number or False
 
     # Handlers ---------------------------------------------------------------
     def _handle_message_upsert(self, gateway, dto, channel, author):
@@ -58,7 +118,7 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
             "gateway_quoted_remote_id": dto.quote_id,
             "gateway_has_reaction": dto.has_reaction(),
         }
-        if dto.raw:
+        if dto.raw and "gateway_payload_raw" in self.env["mail.message"]._fields:
             values["gateway_payload_raw"] = self._safe_json(dto.raw)
 
         parent_id = False

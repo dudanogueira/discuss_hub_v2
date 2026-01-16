@@ -56,7 +56,6 @@ class EvolutionApiInstance(models.Model):
     api_key = fields.Char(readonly=True)
     qr_code = fields.Image(readonly=True)
     last_sync = fields.Datetime(readonly=True)
-    raw_payload = fields.Text(readonly=True)
     gateway_id = fields.Many2one(
         "mail.gateway",
         string="Gateway",
@@ -114,10 +113,6 @@ class EvolutionApiInstance(models.Model):
     )
     gateway_evolution_instance = fields.Char(
         related="gateway_id.evolution_instance", readonly=True
-    )
-    raw_payload_pretty = fields.Text(
-        compute="_compute_raw_payload_pretty",
-        readonly=True,
     )
 
     def _gateway_values(self):
@@ -182,23 +177,6 @@ class EvolutionApiInstance(models.Model):
         except Exception:
             return ""
 
-    def _compute_raw_payload_pretty(self):
-        for record in self:
-            raw_payload = record.raw_payload or ""
-            if not raw_payload:
-                record.raw_payload_pretty = ""
-                continue
-            try:
-                parsed = json.loads(raw_payload)
-            except Exception:
-                record.raw_payload_pretty = raw_payload
-                continue
-            record.raw_payload_pretty = json.dumps(
-                parsed,
-                ensure_ascii=True,
-                indent=2,
-                sort_keys=True,
-            )
 
     @staticmethod
     def _extract_qr_base64(payload):
@@ -234,10 +212,9 @@ class EvolutionApiInstance(models.Model):
 
     def _apply_instance_payload(self, payload):
         self.ensure_one()
-        vals = {
-            "last_sync": fields.Datetime.now(),
-            "raw_payload": self._safe_json(payload),
-        }
+        vals = {"last_sync": fields.Datetime.now()}
+        if "raw_payload" in self._fields:
+            vals["raw_payload"] = self._safe_json(payload)
         instance_data = {}
         if isinstance(payload, dict):
             if isinstance(payload.get("instance"), dict):
@@ -303,14 +280,14 @@ class EvolutionApiInstance(models.Model):
         payload = self._api_request("GET", f"/instance/connect/{self.name}")
         qr_code = self._extract_qr_base64(payload) if isinstance(payload, dict) else False
         if qr_code:
-            self.write(
-                {
-                    "connection_status": "qrcode",
-                    "last_sync": fields.Datetime.now(),
-                    "raw_payload": self._safe_json(payload),
-                    "qr_code": qr_code,
-                }
-            )
+            vals = {
+                "connection_status": "qrcode",
+                "last_sync": fields.Datetime.now(),
+                "qr_code": qr_code,
+            }
+            if "raw_payload" in self._fields:
+                vals["raw_payload"] = self._safe_json(payload)
+            self.write(vals)
         else:
             self._apply_instance_payload(payload)
         return {"type": "ir.actions.client", "tag": "reload"}

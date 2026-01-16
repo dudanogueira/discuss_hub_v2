@@ -108,12 +108,19 @@ class EvolutionApiServer(models.Model):
                 "phone_number": self._parse_owner_jid(item.get("ownerJid")),
                 "api_key": item.get("token"),
                 "last_sync": now,
-                "raw_payload": self._safe_json(item),
             }
+            if "raw_payload" in self.env["evolution.api.instance"]._fields:
+                vals["raw_payload"] = self._safe_json(item)
             if name in existing:
-                existing[name].write(vals)
+                instance = existing[name]
+                instance.write(vals)
             else:
                 vals["server_id"] = self.id
-                self.env["evolution.api.instance"].create(vals)
+                instance = self.env["evolution.api.instance"].create(vals)
+
+            if not instance.gateway_id:
+                gateway = instance._find_gateway()
+                if gateway:
+                    instance.write({"gateway_id": gateway.id})
 
         return {"type": "ir.actions.client", "tag": "reload"}

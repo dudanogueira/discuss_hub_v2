@@ -25,7 +25,6 @@ class MailMessage(models.Model):
     gateway_quoted_remote_id = fields.Char()
     gateway_has_reaction = fields.Boolean()
     gateway_deleted = fields.Boolean()
-    gateway_payload_raw = fields.Text()
 
     _sql_constraints = [
         (

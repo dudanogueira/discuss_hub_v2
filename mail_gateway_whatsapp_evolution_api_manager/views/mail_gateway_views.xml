@@ -14,7 +14,7 @@
                     name="action_open_evolution_instance"
                     string="Instance Manager"
                     icon="fa-external-link"
-                    invisible="gateway_type != 'whatsapp_evolution_api'"
+                    invisible="gateway_type != 'whatsapp_evolution_api' or not can_set_webhook or integrated_webhook_state"
                 />
             </xpath>
         </field>

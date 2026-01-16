@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="evolution_api_instance_view_form_devtools" model="ir.ui.view">
+        <field name="name">evolution.api.instance.form.devtools</field>
+        <field name="model">evolution.api.instance</field>
+        <field name="inherit_id" ref="mail_gateway_whatsapp_evolution_api_manager.evolution_api_instance_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Raw Payload" groups="base.group_system">
+                    <field name="raw_payload_pretty" nolabel="1" widget="text"/>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

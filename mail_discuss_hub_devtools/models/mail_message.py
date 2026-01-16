@@ -6,6 +6,10 @@ from odoo import fields, models
 class MailMessage(models.Model):
     _inherit = "mail.message"
 
+    gateway_payload_raw = fields.Text(
+        help="Raw payload captured during processing (dev-only)."
+    )
+
     gateway_webhook_log_id = fields.Many2one(
         "mail.gateway.webhook.log",
         string="Webhook Log",

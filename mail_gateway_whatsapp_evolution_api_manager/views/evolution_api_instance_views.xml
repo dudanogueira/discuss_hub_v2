@@ -299,9 +299,6 @@
                                 />
                             </group>
                         </page>
-                        <page string="Raw Payload">
-                            <field name="raw_payload_pretty" nolabel="1" widget="text" />
-                        </page>
                     </notebook>
                 </sheet>
             </form>
