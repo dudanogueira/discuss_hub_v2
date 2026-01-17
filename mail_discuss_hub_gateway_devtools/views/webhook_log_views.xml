@@ -1,5 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <record id="mail_gateway_webhook_log_view_search_dev" model="ir.ui.view">
+        <field name="name">mail.gateway.webhook.log.search.dev</field>
+        <field name="model">mail.gateway.webhook.log</field>
+        <field name="type">search</field>
+        <field name="arch" type="xml">
+            <search string="Webhook Logs">
+                <field name="gateway_id"/>
+                <field name="direction"/>
+                <field name="event"/>
+                <field name="status"/>
+                <field name="internal_result"/>
+                <field name="internal_routine"/>
+                <field name="http_status"/>
+                <field name="create_date"/>
+                <separator/>
+                <filter string="Inbound" name="direction_in" domain="[('direction', '=', 'in')]"/>
+                <filter string="Outbound" name="direction_out" domain="[('direction', '=', 'out')]"/>
+                <separator/>
+                <filter
+                    string="Messages"
+                    name="event_messages"
+                    domain="['|', ('event', 'ilike', 'messages.'), ('event', 'ilike', 'message.')]"
+                />
+                <filter string="Presence" name="event_presence" domain="[('event', 'ilike', 'presence.')]"/>
+                <filter string="Contacts" name="event_contacts" domain="[('event', 'ilike', 'contacts.')]"/>
+                <filter
+                    string="Groups"
+                    name="event_groups"
+                    domain="['|', ('event', 'ilike', 'groups.'), ('event', 'ilike', 'group.')]"
+                />
+                <separator/>
+                <filter string="Received" name="status_received" domain="[('status', '=', 'received')]"/>
+                <filter string="Processed" name="status_processed" domain="[('status', '=', 'processed')]"/>
+                <filter string="Rejected" name="status_rejected" domain="[('status', '=', 'rejected')]"/>
+                <filter string="Error" name="status_error" domain="[('status', '=', 'error')]"/>
+                <separator/>
+                <filter
+                    string="Internal Received"
+                    name="internal_received"
+                    domain="[('internal_result', '=', 'received')]"
+                />
+                <filter
+                    string="Internal Processed"
+                    name="internal_processed"
+                    domain="[('internal_result', '=', 'processed')]"
+                />
+                <group expand="0" string="Group By">
+                    <filter name="group_gateway" string="Gateway" context="{'group_by': 'gateway_id'}"/>
+                    <filter name="group_event" string="Event" context="{'group_by': 'event'}"/>
+                    <filter name="group_routine" string="Routine" context="{'group_by': 'internal_routine'}"/>
+                    <filter name="group_status" string="Status" context="{'group_by': 'status'}"/>
+                    <filter name="group_direction" string="Direction" context="{'group_by': 'direction'}"/>
+                    <filter name="group_day" string="Day" context="{'group_by': 'create_date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="mail_gateway_webhook_log_view_form_dev" model="ir.ui.view">
         <field name="name">mail.gateway.webhook.log.form.dev</field>
         <field name="model">mail.gateway.webhook.log</field>

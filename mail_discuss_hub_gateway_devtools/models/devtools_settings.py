@@ -36,12 +36,6 @@ class ResConfigSettings(models.TransientModel):
         default=True,
         help="Enable timeline views per channel/guest.",
     )
-    idempotency_map_enabled = fields.Boolean(
-        string="Idempotency map",
-        config_parameter="mail_discuss_hub_gateway_devtools.idempotency_map_enabled",
-        default=True,
-        help="Enable dedupe key diagnostics.",
-    )
     error_panel_enabled = fields.Boolean(
         string="Error panel",
         config_parameter="mail_discuss_hub_gateway_devtools.error_panel_enabled",
@@ -59,18 +53,6 @@ class ResConfigSettings(models.TransientModel):
         config_parameter="mail_discuss_hub_gateway_devtools.provider_comparator_enabled",
         default=True,
         help="Enable provider payload comparison.",
-    )
-    trace_correlation_enabled = fields.Boolean(
-        string="Trace correlation",
-        config_parameter="mail_discuss_hub_gateway_devtools.trace_correlation_enabled",
-        default=True,
-        help="Enable trace ID correlation views.",
-    )
-    metrics_dashboard_enabled = fields.Boolean(
-        string="Metrics dashboard",
-        config_parameter="mail_discuss_hub_gateway_devtools.metrics_dashboard_enabled",
-        default=True,
-        help="Enable dev metrics dashboards.",
     )
     gap_checklist_enabled = fields.Boolean(
         string="Gap checklist",

@@ -24,9 +24,6 @@
                         <setting id="devtools_unified_timeline_enabled" string="Unified timeline">
                             <field name="unified_timeline_enabled"/>
                         </setting>
-                        <setting id="devtools_idempotency_map_enabled" string="Idempotency map">
-                            <field name="idempotency_map_enabled"/>
-                        </setting>
                         <setting id="devtools_error_panel_enabled" string="Error panel">
                             <field name="error_panel_enabled"/>
                         </setting>
@@ -35,12 +32,6 @@
                         </setting>
                         <setting id="devtools_provider_comparator_enabled" string="Provider comparator">
                             <field name="provider_comparator_enabled"/>
-                        </setting>
-                        <setting id="devtools_trace_correlation_enabled" string="Trace correlation">
-                            <field name="trace_correlation_enabled"/>
-                        </setting>
-                        <setting id="devtools_metrics_dashboard_enabled" string="Metrics dashboard">
-                            <field name="metrics_dashboard_enabled"/>
                         </setting>
                         <setting id="devtools_gap_checklist_enabled" string="Gap checklist">
                             <field name="gap_checklist_enabled"/>

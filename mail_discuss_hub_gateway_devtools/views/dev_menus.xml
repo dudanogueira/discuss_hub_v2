@@ -4,7 +4,7 @@
         <field name="name">Webhook Logs (Dev)</field>
         <field name="res_model">mail.gateway.webhook.log</field>
         <field name="view_mode">list,form</field>
-        <field name="search_view_id" ref="mail_discuss_hub_gateway_devtools.mail_gateway_webhook_log_view_tree"/>
+        <field name="search_view_id" ref="mail_discuss_hub_gateway_devtools.mail_gateway_webhook_log_view_search_dev"/>
     </record>
 
     <menuitem

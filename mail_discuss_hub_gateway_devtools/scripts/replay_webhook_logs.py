@@ -222,9 +222,16 @@ for log in logs:
         skipped += 1
         continue
 
-    dispatcher = env[f"mail.gateway.{gateway.gateway_type}"].with_context(
-        mail_notrack=True,
-        tracking_disable=True,
+    dispatcher = (
+        env[f"mail.gateway.{gateway.gateway_type}"]
+        .with_user(gateway.webhook_user_id or env.user)
+        .with_company(gateway.company_id)
+        .with_context(
+            mail_notrack=True,
+            tracking_disable=True,
+            no_gateway_notification=True,
+            gateway_webhook_log_id=log.id,
+        )
     )
     kwargs = dict(payload) if isinstance(payload, dict) else {}
     kwargs["event"] = payload.get("event")

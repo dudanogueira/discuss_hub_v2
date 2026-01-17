@@ -2,6 +2,7 @@
 
 import json
 import logging
+from urllib.parse import urlsplit, urlunsplit
 
 import requests
 
@@ -40,6 +41,41 @@ class EvolutionApiServer(models.Model):
         clean_endpoint = endpoint if endpoint.startswith("/") else f"/{endpoint}"
         return f"{base_url}{clean_endpoint}"
 
+    @staticmethod
+    def _sanitize_base_url(base_url):
+        if not base_url:
+            return base_url
+        base_url = base_url.strip()
+        parts = urlsplit(base_url)
+        if not parts.scheme and not parts.netloc:
+            clean = base_url.rstrip("/")
+            if clean.endswith("/manager"):
+                clean = clean[: -len("/manager")]
+            return clean.rstrip("/")
+        path = (parts.path or "").rstrip("/")
+        if path.endswith("/manager"):
+            path = path[: -len("/manager")]
+        clean = urlunsplit((parts.scheme, parts.netloc, path, parts.query, parts.fragment))
+        return clean.rstrip("/")
+
+    @api.onchange("base_url")
+    def _onchange_base_url(self):
+        for server in self:
+            if server.base_url:
+                server.base_url = self._sanitize_base_url(server.base_url)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if "base_url" in vals:
+                vals["base_url"] = self._sanitize_base_url(vals["base_url"])
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if "base_url" in vals:
+            vals["base_url"] = self._sanitize_base_url(vals["base_url"])
+        return super().write(vals)
+
     def _api_request(self, method, endpoint, payload=None, api_key=None):
         self.ensure_one()
         token = api_key or self.api_key
@@ -51,6 +87,9 @@ class EvolutionApiServer(models.Model):
             "Content-Type": "application/json",
             "apikey": token,
         }
+        hint = ""
+        if "/manager" in (self.base_url or ""):
+            hint = _(" Check the Base URL (use the API root, without /manager).")
         try:
             response = requests.request(
                 method.upper(),
@@ -60,7 +99,17 @@ class EvolutionApiServer(models.Model):
                 timeout=30,
             )
             response.raise_for_status()
-            return response.json() if response.content else {}
+            if not response.content:
+                return {}
+            try:
+                return response.json()
+            except ValueError:
+                snippet = response.text[:500] if response.text else ""
+                details = _("Invalid JSON response (status %s).") % response.status_code
+                if snippet:
+                    details = f"{details} {snippet}"
+                _logger.error("Evolution API invalid JSON (%s): %s", url, details)
+                raise UserError(_("Evolution API error: %s") % f"{details}{hint}")
         except requests.exceptions.HTTPError as exc:
             details = exc.response.text if exc.response else str(exc)
             _logger.error("Evolution API HTTP error (%s): %s", url, details)

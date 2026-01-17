@@ -1,12 +1,24 @@
 class NormalizedPayload:
     """Lightweight DTO for normalized gateway payloads."""
 
+    VALID_EVENTS = {
+        "message.upsert",
+        "message.status",
+        "message.delete",
+        "reaction.upsert",
+        "reaction.delete",
+    }
+
     _known_fields = (
         "provider",
         "instance",
         "event",
         "message_id",
         "chat_id",
+        "chat_name",
+        "chat_description",
+        "chat_picture_url",
+        "is_group",
         "from_me",
         "sender_jid",
         "sender_jid_alt",
@@ -31,6 +43,11 @@ class NormalizedPayload:
             if field == "from_me":
                 value = kwargs.get(field, False)
                 value = bool(value) if value is not None else False
+            elif field == "is_group":
+                value = kwargs.get(field, False)
+                value = bool(value) if value is not None else False
+            elif field == "event":
+                value = (kwargs.get(field) or "").strip().lower() or None
             elif field == "attachments":
                 value = kwargs.get(field) or []
             elif field == "raw":

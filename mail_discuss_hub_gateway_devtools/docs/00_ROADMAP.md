@@ -15,4 +15,5 @@
 Notes
 - Each item has a dedicated file with steps and scope.
 - All features are dev-only and should not be required by production modules.
-- Each feature has a config flag in Devtools > Recursos.
+- Items 05/09/10 are currently disabled until the common model persists remote IDs.
+- Most features have a config flag in Devtools > Recursos.

@@ -6,7 +6,7 @@
 
 ## Objetivo
 
-Sincronizar webhooks do Evolution API para o Chatwoot (experimentos).
+Sincronizar webhooks do Evolution API para o Chatwoot.
 
 ## Dependencias
 

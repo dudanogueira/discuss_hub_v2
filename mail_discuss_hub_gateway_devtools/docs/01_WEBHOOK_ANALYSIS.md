@@ -31,17 +31,17 @@ Step-by-step flow to display
    - matched channel + why (chat_id, gateway_id, instance, etc.)
    - matched sender + why (jid/phone/name, guest vs partner)
 6) Show idempotency check:
-   - gateway_remote_id
-   - gateway_chat_id
+   - message_id (mail.notification.gateway_message_id)
+   - chat_id (discuss.channel.gateway_channel_token)
    - result: created / updated / skipped
 7) Show record write preview (before/after diff).
 8) Provide "Replay" action with override options.
 
 Mapping table (example format)
-- data.key.remoteJid -> chat_id -> discuss.channel.gateway_chat_id
+- data.key.remoteJid -> chat_id -> discuss.channel.gateway_channel_token
 - data.pushName -> sender_name -> mail.guest.name
 - data.message.text -> text -> mail.message.body
-- data.key.id -> gateway_remote_id -> mail.message.gateway_remote_id
+- data.key.id -> message_id -> mail.notification.gateway_message_id
  - event -> routine -> receive_message / send_message / delete_message / update_status
 
 Controls

@@ -36,6 +36,9 @@ class MailGatewayWhatsappEvolutionApiMixin(models.AbstractModel):
             "Content-Type": "application/json",
             "apikey": api_key,
         }
+        hint = ""
+        if "/manager" in (base_url or ""):
+            hint = _(" Check the Base URL (use the API root, without /manager).")
         try:
             response = requests.request(
                 method.upper(),
@@ -53,7 +56,24 @@ class MailGatewayWhatsappEvolutionApiMixin(models.AbstractModel):
                     }
                 )
             response.raise_for_status()
-            return response.json() if response.content else {}
+            if not response.content:
+                return {}
+            try:
+                return response.json()
+            except ValueError:
+                snippet = response.text[:500] if response.text else ""
+                details = _("Invalid JSON response (status %s).") % response.status_code
+                if snippet:
+                    details = f"{details} {snippet}"
+                _logger.error("Evolution API invalid JSON (%s): %s", url, details)
+                if log_record:
+                    log_record.sudo().write(
+                        {
+                            "status": "error",
+                            "error_message": details,
+                        }
+                    )
+                raise UserError(_("Evolution API error: %s") % f"{details}{hint}")
         except requests.exceptions.HTTPError as exc:
             details = exc.response.text if exc.response else str(exc)
             _logger.error("Evolution API HTTP error (%s): %s", url, details)

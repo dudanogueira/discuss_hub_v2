@@ -10,12 +10,26 @@ class CleanupWizard(models.TransientModel):
 
     @api.model
     def _get_channel_type_selection(self):
-        selection = self.env["discuss.channel"]._fields["channel_type"].selection
-        return list(selection) if selection else []
+        selection = list(
+            self.env["discuss.channel"]._fields["channel_type"].selection or []
+        )
+        known = {key for key, _label in selection}
+        self.env.cr.execute(
+            """
+            SELECT DISTINCT channel_type
+            FROM discuss_channel
+            WHERE channel_type IS NOT NULL
+        """
+        )
+        for value in sorted({row[0] for row in self.env.cr.fetchall()} - known):
+            selection.append((value, f"Legacy ({value})"))
+        return selection
 
     def _default_channel_type(self):
         selection = self._get_channel_type_selection()
         values = [key for key, _label in selection]
+        if "whatsapp" in values:
+            return "whatsapp"
         if "gateway" in values:
             return "gateway"
         if "channel" in values:
@@ -42,6 +56,12 @@ class CleanupWizard(models.TransientModel):
     clear_guests = fields.Boolean(default=True)
     clear_messages = fields.Boolean(default=True, help="Somente mensagens de discuss.channel.")
 
+    @api.model
+    def _channel_domain(self, channel_type):
+        if channel_type == "gateway":
+            return ["|", ("channel_type", "=", "gateway"), ("gateway_id", "!=", False)]
+        return [("channel_type", "=", channel_type)]
+
     def action_cleanup(self):
         self.ensure_one()
         if not self.confirm_cleanup:
@@ -52,7 +72,7 @@ class CleanupWizard(models.TransientModel):
         wizard = self.sudo().with_context(mail_notrack=True, tracking_disable=True)
         env = wizard.env
         Channel = env["discuss.channel"]
-        channel_domain = [("channel_type", "=", wizard.channel_type)]
+        channel_domain = wizard._channel_domain(wizard.channel_type)
         channels = Channel.search(channel_domain)
         channel_ids = channels.ids
 
@@ -85,6 +105,8 @@ class CleanupWizard(models.TransientModel):
                     ("gateway_id", "in", gateway_ids),
                     ("gateway_token", "in", tokens),
                 ]
+            elif gateway_ids:
+                guest_domain = [("gateway_id", "in", gateway_ids)]
             counts["guests"] = Guest.search_count(guest_domain)
             Guest.search(guest_domain).unlink()
 

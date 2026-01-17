@@ -1,9 +1,9 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 import base64
-import json
 import logging
 import mimetypes
+from urllib.parse import quote
 
 import requests
 
@@ -85,52 +85,73 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
     # Incoming
     # -------------------------------------------------------------------------
     def _receive_update(self, gateway, update):
-        event = (update.get("event") or "").lower()
-        normalized_event = event.replace("_", ".")
-        if normalized_event not in {"messages.upsert", "send.message"}:
-            return
+        canonical_event = self._normalize_event(update)
+        if not canonical_event:
+            return {"status": "ignored", "reason": "event_not_supported"}
         data = update.get("data", {}) or {}
-        message = data.get("message", {}) or {}
-        if not data or not message:
-            return
-        dto = self._build_dto_from_evolution(update, gateway, None)
+        if isinstance(data, list):
+            data = data[0] if data else {}
+        if not data:
+            return {"status": "ignored", "reason": "missing_data"}
+        if canonical_event == "message.upsert":
+            message = data.get("message", {}) or {}
+            if not message:
+                return {"status": "ignored", "reason": "missing_message"}
+        dto = self._build_dto_from_evolution(
+            update, gateway, None, canonical_event=canonical_event
+        )
         if not dto:
-            return
+            return {"status": "ignored", "reason": "normalization_failed"}
 
         common = self.env["mail.gateway.whatsapp.common"]
-        common._process_normalized(gateway, dto, None, author=None)
+        return common._process_normalized(gateway, dto, None, author=None)
 
-    def _build_dto_from_evolution(self, update, gateway, channel):
+    def _build_dto_from_evolution(self, update, gateway, channel, canonical_event=None):
         data = update.get("data", {}) or {}
+        if isinstance(data, list):
+            data = data[0] if data else {}
         message = data.get("message", {}) or {}
         key_data = data.get("key", {}) or {}
         body, attachments = self._prepare_message(message, data)
-        event = (update.get("event") or "message_upsert").lower()
-        normalized_event = event.replace("_", ".")
-        dto_event = "message_upsert" if "message" in normalized_event else normalized_event
+        dto_event = canonical_event or self._normalize_event(update)
+        if not dto_event:
+            return False
+        reaction, reaction_target_id = self._extract_reaction_data(data, message)
+        message_id = self._get_message_id(data, key_data)
         chat_id = self._get_chat_token(data)
+        is_group = self._is_group_chat(chat_id)
+        sender_name = data.get("pushName") or data.get("name")
+        chat_name, chat_description, chat_picture_url = self._get_group_metadata(
+            update, gateway, chat_id, sender_name, dto_event
+        )
         return NormalizedPayload(
             provider="evolution",
             instance=self._instance_name(gateway),
             event=dto_event,
-            message_id=key_data.get("id"),
+            message_id=message_id,
             chat_id=chat_id,
+            chat_name=chat_name,
+            chat_description=chat_description,
+            chat_picture_url=chat_picture_url,
+            is_group=is_group,
             from_me=bool(key_data.get("fromMe")),
             sender_jid=key_data.get("participant") or key_data.get("remoteJid"),
             sender_jid_alt=key_data.get("remoteJidAlt"),
             sender_participant_jid=key_data.get("participant"),
-            sender_name=data.get("pushName") or data.get("name"),
+            sender_name=sender_name,
             timestamp=message.get("messageTimestamp") or data.get("timestamp"),
-            message_type=message.get("messageType") or message.get("type"),
+            message_type=message.get("messageType")
+            or data.get("messageType")
+            or message.get("type"),
             text=body,
             caption=message.get("caption"),
             attachments=attachments,
             quote_id=(data.get("quotedMessage") or {}).get("stanzaId") or data.get("quotedStanzaID"),
             quote_text=(data.get("quotedMessage") or {}).get("text"),
-            reaction=data.get("reaction"),
-            reaction_target_id=data.get("reactionMessageId") or data.get("messageId"),
-            status=data.get("status"),
-            status_raw=data.get("status_raw"),
+            reaction=reaction,
+            reaction_target_id=reaction_target_id,
+            status=data.get("status") or data.get("status_raw"),
+            status_raw=data.get("status_raw") or data.get("status"),
             raw=update,
         )
 
@@ -176,9 +197,135 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
                 )
         return body, attachments
 
+    def _get_group_metadata(self, update, gateway, chat_id, sender_name, event):
+        if not self._is_group_chat(chat_id):
+            return None, None, None
+        payload_name, payload_desc, payload_picture = (
+            self._extract_group_metadata_from_payload(update)
+        )
+        if payload_name or payload_desc or payload_picture:
+            return payload_name, payload_desc, payload_picture
+        if event != "message.upsert":
+            return None, None, None
+        if not self._should_fetch_group_info(gateway, chat_id, sender_name):
+            return None, None, None
+        info = self._fetch_group_info(gateway, chat_id)
+        if not info:
+            return None, None, None
+        return (
+            info.get("subject") or info.get("name"),
+            info.get("desc") or info.get("description"),
+            info.get("pictureUrl") or info.get("picture_url"),
+        )
+
+    def _extract_group_metadata_from_payload(self, update):
+        data = update.get("data", {}) or {}
+        if isinstance(data, list):
+            data = data[0] if data else {}
+        if not isinstance(data, dict):
+            return None, None, None
+        return (
+            data.get("subject") or data.get("name"),
+            data.get("desc") or data.get("description"),
+            data.get("pictureUrl") or data.get("profilePicUrl"),
+        )
+
+    def _should_fetch_group_info(self, gateway, chat_id, sender_name):
+        if not gateway or not chat_id:
+            return True
+        channel_id = gateway._get_channel_id(chat_id)
+        if not channel_id:
+            return True
+        channel = self.env["discuss.channel"].browse(channel_id)
+        if not channel:
+            return True
+        fallback_group = self.env["mail.gateway.whatsapp.common"]._format_group_name(chat_id)
+        fallback_chat = self.env["mail.gateway.whatsapp.common"]._format_chat_id(chat_id)
+        current_name = (channel.name or "").strip()
+        sender_name = (sender_name or "").strip()
+        if not current_name or current_name in {fallback_group, fallback_chat}:
+            return True
+        if sender_name and current_name == sender_name:
+            return True
+        if not channel.description or not channel.image_128:
+            return True
+        return False
+
+    def _fetch_group_info(self, gateway, chat_id):
+        if not gateway or not chat_id:
+            return False
+        instance = self._instance_name(gateway)
+        endpoint = f"/group/findGroupInfos/{instance}?groupJid={quote(chat_id)}"
+        try:
+            return self._send_api_request(gateway, "GET", endpoint)
+        except Exception as exc:
+            _logger.warning("Failed to fetch group info: %s", exc)
+            return False
+
     # -------------------------------------------------------------------------
     # Helpers
     # -------------------------------------------------------------------------
+    def _normalize_event(self, update):
+        event = (update.get("event") or "").lower()
+        normalized_event = event.replace("_", ".")
+        if normalized_event in {
+            "message.upsert",
+            "message.status",
+            "message.delete",
+            "reaction.upsert",
+            "reaction.delete",
+        }:
+            return normalized_event
+
+        data = update.get("data", {}) or {}
+        if isinstance(data, list):
+            data = data[0] if data else {}
+        message = data.get("message", {}) or {}
+        reaction, reaction_target_id = self._extract_reaction_data(data, message)
+
+        if normalized_event == "messages.upsert":
+            if reaction_target_id:
+                return "reaction.delete" if not reaction else "reaction.upsert"
+            return "message.upsert"
+        if normalized_event in {"messages.update", "send.message"}:
+            return "message.status"
+        if normalized_event == "messages.delete":
+            return "message.delete"
+        return None
+
+    @staticmethod
+    def _is_group_chat(chat_id):
+        return str(chat_id or "").endswith("@g.us")
+
+    def _extract_reaction_data(self, data, message):
+        reaction = None
+        reaction_target_id = None
+        reaction_message = message.get("reactionMessage") if isinstance(message, dict) else None
+        if isinstance(reaction_message, dict):
+            reaction = reaction_message.get("text")
+            if isinstance(reaction, str):
+                reaction = reaction.strip()
+            reaction_key = reaction_message.get("key") or {}
+            reaction_target_id = reaction_key.get("id")
+            return reaction, reaction_target_id
+
+        if "reaction" in data:
+            reaction = data.get("reaction")
+            if isinstance(reaction, str):
+                reaction = reaction.strip()
+            reaction_target_id = data.get("reactionMessageId") or data.get("messageId")
+        return reaction, reaction_target_id
+
+    @staticmethod
+    def _get_message_id(data, key_data):
+        message_id = key_data.get("id")
+        if message_id:
+            return message_id
+        message_id = data.get("keyId") or data.get("id") or data.get("messageId")
+        if isinstance(message_id, list):
+            message_id = message_id[0] if message_id else None
+        return message_id
+
     def _decode_base64_payload(self, payload):
         if not payload:
             return False
@@ -323,7 +470,7 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
     # API request (wrapper)
     # -------------------------------------------------------------------------
     def _send_api_request(self, gateway, method, endpoint, payload=None):
-        log_record = self._create_webhook_log(
+        log_record = self._devtools_log_webhook(
             gateway,
             direction="out",
             status="sending",
@@ -339,7 +486,7 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             log_record=log_record,
         )
 
-    def _create_webhook_log(
+    def _devtools_log_webhook(
         self,
         gateway,
         direction,
@@ -348,40 +495,4 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
         event=None,
         endpoint=None,
     ):
-        if "mail.gateway.webhook.log" not in self.env:
-            return False
-        if not self._is_webhook_logging_enabled():
-            return False
-        payload_text = self._format_payload(payload)
-        return (
-            self.env["mail.gateway.webhook.log"]
-            .sudo()
-            .create(
-                {
-                    "gateway_id": gateway.id if gateway else False,
-                    "direction": direction,
-                    "status": status,
-                    "event": event,
-                    "endpoint": endpoint,
-                    "request_payload": payload_text,
-                }
-            )
-        )
-
-    def _is_webhook_logging_enabled(self):
-        param = (
-            self.env["ir.config_parameter"]
-            .sudo()
-            .get_param(
-                "mail_discuss_hub_gateway_devtools.webhook_log_enabled", default="1"
-            )
-        )
-        return str(param).lower() in ("1", "true", "yes")
-
-    def _format_payload(self, payload):
-        if payload is None:
-            return False
-        try:
-            return json.dumps(payload, ensure_ascii=True, indent=2)
-        except (TypeError, ValueError):
-            return str(payload)
+        return False

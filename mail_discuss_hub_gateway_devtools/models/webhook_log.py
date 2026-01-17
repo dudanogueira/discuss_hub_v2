@@ -76,6 +76,16 @@ class MailGatewayWebhookLog(models.Model):
         compute="_compute_payload_inspector",
         readonly=True,
     )
+    internal_routine = fields.Char(
+        help="Internal routine resolved by devtools after processing.",
+    )
+    internal_result = fields.Selection(
+        [
+            ("received", "Received"),
+            ("processed", "Processed"),
+        ],
+        help="Devtools evaluation of whether the webhook triggered an internal action.",
+    )
 
     def _compute_pretty_payloads(self):
         for record in self:
@@ -207,6 +217,21 @@ class MailGatewayWebhookLog(models.Model):
                 "source_path": "data.key.remoteJid|data.key.remoteJidAlt|data.key.participant",
                 "normalized_field": "chat_id",
                 "value": dto.chat_id,
+            },
+            {
+                "source_path": "data.subject|data.name",
+                "normalized_field": "chat_name",
+                "value": getattr(dto, "chat_name", None),
+            },
+            {
+                "source_path": "data.desc|data.description",
+                "normalized_field": "chat_description",
+                "value": getattr(dto, "chat_description", None),
+            },
+            {
+                "source_path": "data.pictureUrl|data.profilePicUrl",
+                "normalized_field": "chat_picture_url",
+                "value": getattr(dto, "chat_picture_url", None),
             },
             {
                 "source_path": "data.key.fromMe",
@@ -354,26 +379,19 @@ class MailGatewayWebhookLog(models.Model):
     @staticmethod
     def _normalized_destination_map():
         return {
-            "provider": ("mail.message", "gateway_provider"),
-            "instance": ("mail.message", "gateway_instance"),
             "event": ("mail.gateway.whatsapp.common", "_process_normalized"),
-            "message_id": ("mail.message", "gateway_remote_id"),
-            "chat_id": ("mail.message", "gateway_chat_id"),
-            "from_me": ("mail.guest/res.partner", "author"),
+            "message_id": ("mail.notification", "gateway_message_id"),
+            "chat_id": ("discuss.channel", "gateway_channel_token"),
             "sender_jid": ("mail.guest", "gateway_token"),
-            "sender_jid_alt": ("mail.guest", "whatsapp_remote_jid_alt"),
-            "sender_participant_jid": ("mail.guest", "whatsapp_participant_jid"),
-            "sender_name": ("mail.guest", "name/last_push_name"),
+            "sender_name": ("mail.guest", "name"),
             "timestamp": ("mail.message", "date"),
-            "message_type": ("mail.message", "message_type"),
             "text": ("mail.message", "body"),
             "caption": ("mail.message", "body"),
-            "quote_id": ("mail.message", "gateway_quoted_remote_id"),
+            "attachments": ("ir.attachment", "datas"),
+            "quote_id": ("mail.message", "parent_id"),
             "quote_text": ("mail.message", "parent_id/body"),
             "reaction": ("mail.message.reaction", "reaction"),
             "reaction_target_id": ("mail.message.reaction", "message_id"),
-            "status": ("mail.message", "gateway_status"),
-            "status_raw": ("mail.message", "gateway_status_raw"),
         }
 
     @staticmethod
@@ -420,16 +438,16 @@ class MailGatewayWebhookLog(models.Model):
 
     @staticmethod
     def _resolve_routine(dto):
-        event = (dto.event or "").lower()
-        if event in {"message_upsert", "messages_upsert", "message"}:
+        event = (dto.event or "").lower().replace("_", ".")
+        if event in {"message.upsert", "messages.upsert", "message", "send.message"}:
             return "send_message" if dto.from_me else "receive_message"
-        if event in {"message_status", "status"}:
+        if event in {"message.status", "status"}:
             return "update_status"
-        if event in {"message_delete", "delete"}:
+        if event in {"message.delete", "delete"}:
             return "delete_message"
-        if event in {"reaction_upsert", "reaction"}:
+        if event in {"reaction.upsert", "reaction"}:
             return "add_reaction"
-        if event in {"reaction_delete"}:
+        if event in {"reaction.delete"}:
             return "remove_reaction"
         if event:
             return f"unhandled:{event}"

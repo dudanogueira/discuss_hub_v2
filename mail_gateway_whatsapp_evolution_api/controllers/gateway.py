@@ -86,8 +86,7 @@ class GatewayController(BaseGatewayController):
             _logger.warning("Invalid JSON payload received on gateway webhook")
             return self._empty_response()
         gateway = env["mail.gateway"].browse(bot_data["id"])
-        log_record = self._create_webhook_log(
-            env,
+        log_record = env["mail.gateway.whatsapp_evolution_api"]._devtools_log_webhook(
             gateway,
             direction="in",
             status="received",
@@ -113,7 +112,7 @@ class GatewayController(BaseGatewayController):
                 log_record.sudo().write({"status": "rejected"})
             return self._empty_response()
         try:
-            dispatcher._receive_update(gateway, jsonrequest)
+            result = dispatcher._receive_update(gateway, jsonrequest) or {}
         except Exception as exc:
             if log_record:
                 log_record.sudo().write(
@@ -121,7 +120,8 @@ class GatewayController(BaseGatewayController):
                 )
             raise
         if log_record:
-            log_record.sudo().write({"status": "processed"})
+            status = "processed" if result.get("status") in ("ok", "duplicate") else "received"
+            log_record.sudo().write({"status": status})
         return self._empty_response()
 
     def _empty_response(self):
@@ -131,51 +131,3 @@ class GatewayController(BaseGatewayController):
                 ("Content-Type", "application/json"),
             ],
         )
-
-    def _create_webhook_log(
-        self,
-        env,
-        gateway,
-        direction,
-        status,
-        payload=None,
-        event=None,
-        endpoint=None,
-    ):
-        if "mail.gateway.webhook.log" not in env:
-            return False
-        if not self._is_webhook_logging_enabled(env):
-            return False
-        payload_text = self._format_payload(payload)
-        return (
-            env["mail.gateway.webhook.log"]
-            .sudo()
-            .create(
-                {
-                    "gateway_id": gateway.id if gateway else False,
-                    "direction": direction,
-                    "status": status,
-                    "event": event,
-                    "endpoint": endpoint,
-                    "request_payload": payload_text,
-                }
-            )
-        )
-
-    def _is_webhook_logging_enabled(self, env):
-        param = (
-            env["ir.config_parameter"]
-            .sudo()
-            .get_param(
-                "mail_discuss_hub_gateway_devtools.webhook_log_enabled", default="1"
-            )
-        )
-        return str(param).lower() in ("1", "true", "yes")
-
-    def _format_payload(self, payload):
-        if payload is None:
-            return False
-        try:
-            return json.dumps(payload, ensure_ascii=True, indent=2)
-        except (TypeError, ValueError):
-            return str(payload)

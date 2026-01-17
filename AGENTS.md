@@ -19,6 +19,7 @@ nos addons do `discuss-hub` (ou novos addons locais).
 
 - `mail_discuss_hub` (core): Settings do Discuss, modelo `mail.discuss.team`, menus.
 - Integracoes: `mail_discuss_hub_crm`, `mail_discuss_hub_helpdesk_mgmt` (e futuros) dependem apenas do core + modulo alvo.
+- `mail_discuss_hub_gateway` (ui): UI do Discuss para gateways (sidebar por instancia, ajustes de autor).
 - `mail_discuss_hub_gateway_devtools` (dev): modelo/log de webhook e utilidades opcionais (views, replay, cleanup). Nao deve ser dependencia de producao.
 - `mail_gateway_whatsapp_common` (gateway core WhatsApp): DTO/servico unificado para mensagens/status/reactions.
 - `mail_gateway_whatsapp_evolution_api` (provider): integra Evolution API, delega processamento ao common.
@@ -93,6 +94,7 @@ docker compose restart odoo
 - Base URL (Odoo): `Settings > Technical > Parameters > System Parameters` (`web.base.url`).
 - DNS / IP / TLS: anote aqui as particularidades do seu host.
 - Evite pastas com espaco dentro de `/mnt/extra-addons` (ex.: `.bkp/discuss-hub copy`); o `entrypoint.sh` atual usa `xargs` sem `-0` e isso pode injetar `/copy` no `addons_path`, quebrando os assets (tela branca).
+- Regra: `mail_gateway_whatsapp_evolution_api` nao deve adicionar campos em `mail.guest`; qualquer extensao deve ficar no common (ou ficar fora durante refactor).
 
 ## Development notes (Odoo 17+)
 
@@ -147,6 +149,8 @@ Use estes arquivos como referencia de payloads e endpoints:
 
 - A Evolution API roda no mesmo servidor via Docker.
 - Mantenha o webhook apontando para a URL do gateway no Odoo (sem `?db=`).
+- Base URL da Evolution API deve ser o root da API (sem `/manager`), ou o sync de instancias retorna HTML e quebra o JSON.
+- Evolution API Manager auto-remove `/manager` ao salvar a Base URL (para evitar erro de JSON).
 
 ## Guia por addon (o que preservar)
 
@@ -164,6 +168,12 @@ Use estes arquivos como referencia de payloads e endpoints:
   - CRM: `mail_discuss_hub_sync_from_crm` / `mail_discuss_hub_sync_from_discuss`
   - Helpdesk: `mail_discuss_hub_sync_from_helpdesk` / `mail_discuss_hub_sync_from_discuss`
 
+### `mail_discuss_hub_gateway`
+
+- Tudo que integra `mail_gateway` com o Discuss (`mail_discuss_hub`) deve ficar aqui (nao apenas UI).
+- Nao colocar logica de provider ou processamento (isso fica nos addons de gateway).
+- Sidebar por instancia deve usar `gateway_id`/`gateway.name` vindos do OCA.
+
 ### `mail_discuss_hub_gateway_devtools`
 
 - Guarda o modelo `mail.gateway.webhook.log`, campos em `mail.message`, views e wizards de replay/cleanup.
@@ -175,6 +185,10 @@ Use estes arquivos como referencia de payloads e endpoints:
 - Adiciona campos em `mail.message` para id externo, chat, status, quote, reactions e payload bruto.
 - Providers apenas convertem o webhook bruto para DTO e chamam o servico.
 - Resolucao/criacao de canal passa a ser responsabilidade do common.
+- Canal: usar channel_type=gateway + gateway_id (padrao OCA), sem channel_type whatsapp.
+- Eventos canonicos no common: message.upsert, message.status, reaction.upsert, reaction.delete, message.delete (provider mapeia).
+- Contato padrao: usar `mail.guest` e promover para `res.partner` quando vincular.
+- Infra padrao: usar `mail.gateway` + `mail.notification` para id externo e status.
 
 ### `mail_gateway_whatsapp_evolution_api`
 

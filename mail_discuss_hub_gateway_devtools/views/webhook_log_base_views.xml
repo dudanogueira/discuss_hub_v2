@@ -9,6 +9,8 @@
                 <field name="gateway_id" />
                 <field name="direction" />
                 <field name="event" />
+                <field name="internal_result" />
+                <field name="internal_routine" />
                 <field name="status" />
                 <field name="http_status" />
             </list>
@@ -27,6 +29,8 @@
                         <field name="direction" />
                         <field name="event" />
                         <field name="analysis_routine" readonly="1" />
+                        <field name="internal_result" />
+                        <field name="internal_routine" />
                         <field name="status" />
                         <field name="http_status" />
                         <field name="endpoint" />
