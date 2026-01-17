@@ -325,7 +325,9 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             if reaction_target_id:
                 return "reaction.delete" if not reaction else "reaction.upsert"
             return "message.upsert"
-        if normalized_event in {"messages.update", "send.message"}:
+        if normalized_event == "send.message":
+            return "message.upsert"
+        if normalized_event == "messages.update":
             return "message.status"
         if normalized_event == "messages.delete":
             return "message.delete"
