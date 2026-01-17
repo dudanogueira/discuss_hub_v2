@@ -1,7 +1,9 @@
 import {DiscussAppCategory} from "@mail/core/public_web/discuss_app_category_model";
 import {Thread} from "@mail/core/common/thread_model";
+import {DiscussSidebarChannel} from "@mail/discuss/core/public_web/discuss_sidebar_categories";
 import {compareDatetime} from "@mail/utils/common/misc";
 import {_t} from "@web/core/l10n/translation";
+import {useService} from "@web/core/utils/hooks";
 import {patch} from "@web/core/utils/patch";
 
 const GATEWAY_CATEGORY_PREFIX = "mail_gateway_instance_";
@@ -61,6 +63,37 @@ patch(Thread.prototype, {
     },
 });
 
+const DiscussSidebarChannelPatch = {
+    setup() {
+        super.setup();
+        this.actionService = useService("action");
+    },
+    get commands() {
+        const commands = super.commands;
+        if (this.thread.channel_type === "gateway") {
+            commands.push({
+                onSelect: () => this.openGatewayChannelSettings(),
+                label: _t("Channel settings"),
+                icon: "fa fa-cog",
+                sequence: 10,
+            });
+        }
+        return commands;
+    },
+    openGatewayChannelSettings() {
+        if (this.thread.channel_type !== "gateway") {
+            return;
+        }
+        this.actionService.doAction({
+            type: "ir.actions.act_window",
+            res_model: "discuss.channel",
+            res_id: this.thread.id,
+            views: [[false, "form"]],
+            target: "current",
+        });
+    },
+};
+
 patch(DiscussAppCategory.prototype, {
     get isVisible() {
         if (this.id === "gateway") {
@@ -79,3 +112,5 @@ patch(DiscussAppCategory.prototype, {
         return super.sortThreads(t1, t2);
     },
 });
+
+patch(DiscussSidebarChannel.prototype, DiscussSidebarChannelPatch);

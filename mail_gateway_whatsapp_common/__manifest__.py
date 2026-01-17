@@ -8,6 +8,8 @@
     "author": "Soloz Technologies",
     "website": "https://github.com/lcsztl/discuss_hub",
     "depends": ["mail_gateway"],
-    "data": [],
+    "data": [
+        "views/mail_guest_views.xml",
+    ],
     "installable": True,
 }

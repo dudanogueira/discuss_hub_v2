@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <record id="mail_guest_view_form_whatsapp_common" model="ir.ui.view">
+        <field name="name">mail.guest.view.form.whatsapp.common</field>
+        <field name="model">mail.guest</field>
+        <field name="inherit_id" ref="mail_gateway.mail_guest_view_form" />
+        <field name="arch" type="xml">
+            <field name="gateway_token" position="after">
+                <field name="gateway_phone" readonly="1" />
+            </field>
+        </field>
+    </record>
+</odoo>

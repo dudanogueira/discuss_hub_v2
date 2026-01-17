@@ -85,6 +85,7 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         if not channel:
             return {"status": "ignored", "reason": "channel_not_found"}
         self._apply_channel_metadata(channel, dto)
+        self._ensure_guest_member(channel, author)
 
         body = (dto.text or "").strip()
         if not body and not dto.has_attachments():
@@ -138,6 +139,19 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
             "message_id": message.id,
             "channel_id": channel.id,
         }
+
+    def _ensure_guest_member(self, channel, author):
+        if not channel or not author or author._name != "mail.guest":
+            return
+        member_model = self.env["discuss.channel.member"].sudo()
+        if "guest_id" not in member_model._fields:
+            return
+        existing = member_model.search(
+            [("channel_id", "=", channel.id), ("guest_id", "=", author.id)], limit=1
+        )
+        if existing:
+            return
+        member_model.create({"channel_id": channel.id, "guest_id": author.id, "unpin_dt": False})
 
     def _handle_contact_update(self, gateway, dto, channel, author=None):
         contact_jid = (dto.contact_jid or dto.chat_id or "").strip()

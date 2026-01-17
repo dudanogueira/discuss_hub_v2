@@ -30,5 +30,10 @@
         "wizards/webhook_replay_wizard.xml",
         "wizards/cleanup_wizard.xml",
     ],
+    "assets": {
+        "web.assets_backend": [
+            "mail_discuss_hub_gateway_devtools/static/src/js/message_actions_devtools.esm.js",
+        ],
+    },
     "installable": True,
 }
