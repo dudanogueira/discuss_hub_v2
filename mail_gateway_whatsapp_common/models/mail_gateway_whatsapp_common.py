@@ -1,10 +1,12 @@
 import base64
 import json
 import logging
+from datetime import datetime
 
 import requests
 
-from odoo import Command, models
+from odoo import Command, fields, models
+from odoo.tools import html_escape
 
 
 class MailGatewayWhatsappCommon(models.AbstractModel):
@@ -87,7 +89,7 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         self._apply_channel_metadata(channel, dto)
         self._ensure_guest_member(channel, author)
 
-        body = (dto.text or "").strip()
+        body = self._render_message_body(dto)
         if not body and not dto.has_attachments():
             return {"status": "ignored", "reason": "empty_body"}
 
@@ -133,6 +135,7 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
             except Exception:
                 write_vals["gateway_payload_raw"] = str(dto.raw)
         message.sudo().write(write_vals)
+        self._apply_message_timestamp(message, dto)
 
         return {
             "status": "ok",
@@ -152,6 +155,31 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         if existing:
             return
         member_model.create({"channel_id": channel.id, "guest_id": author.id, "unpin_dt": False})
+
+    def _apply_message_timestamp(self, message, dto):
+        if not message or not dto or not dto.timestamp:
+            return
+        dt_value = self._normalize_timestamp(dto.timestamp)
+        if not dt_value:
+            return
+        message.sudo().write({"date": dt_value, "write_date": dt_value})
+
+    def _render_message_body(self, dto):
+        text = (dto.text or "").strip()
+        if not text:
+            return ""
+        if dto.text_is_html:
+            return text
+        return html_escape(text).replace("\n", "<br/>")
+
+    def _normalize_timestamp(self, value):
+        if isinstance(value, datetime):
+            return value
+        if isinstance(value, (int, float)):
+            return fields.Datetime.from_timestamp(value)
+        if isinstance(value, str):
+            return fields.Datetime.to_datetime(value)
+        return False
 
     def _handle_contact_update(self, gateway, dto, channel, author=None):
         contact_jid = (dto.contact_jid or dto.chat_id or "").strip()

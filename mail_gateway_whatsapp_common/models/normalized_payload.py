@@ -30,6 +30,7 @@ class NormalizedPayload:
         "contact_jid",
         "contact_name",
         "contact_profile_pic_url",
+        "text_is_html",
         "timestamp",
         "message_type",
         "text",
@@ -55,6 +56,9 @@ class NormalizedPayload:
             elif field == "chat_unread_count":
                 value = kwargs.get(field)
                 value = int(value) if value is not None else None
+            elif field == "text_is_html":
+                value = kwargs.get(field, False)
+                value = bool(value) if value is not None else False
             elif field == "event":
                 value = (kwargs.get(field) or "").strip().lower() or None
             elif field == "attachments":
