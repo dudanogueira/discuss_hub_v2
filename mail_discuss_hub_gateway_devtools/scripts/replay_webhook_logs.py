@@ -174,6 +174,9 @@ logs = env["mail.gateway.webhook.log"].sudo().search(
 if limit:
     logs = logs[:limit]
 
+if logs and "internal_routine" in logs._fields:
+    logs.write({"internal_routine": False, "internal_result": False})
+
 print(
     "Replay webhook logs:",
     f"count={len(logs)}",

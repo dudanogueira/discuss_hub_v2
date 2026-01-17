@@ -31,3 +31,5 @@ Ferramentas tecnicas opcionais para desenvolvimento:
   quando o devtools esta instalado.
 - Devtools grava `internal_result` e `internal_routine` em `mail.gateway.webhook.log`
   para diagnostico (resultado interno e rotina acionada).
+- O replay limpa `internal_result`/`internal_routine` dos logs selecionados antes
+  de reprocessar, para refletir o comportamento atual.

@@ -7,6 +7,8 @@ class NormalizedPayload:
         "message.delete",
         "reaction.upsert",
         "reaction.delete",
+        "contact.update",
+        "chat.update",
     }
 
     _known_fields = (
@@ -18,12 +20,16 @@ class NormalizedPayload:
         "chat_name",
         "chat_description",
         "chat_picture_url",
+        "chat_unread_count",
         "is_group",
         "from_me",
         "sender_jid",
         "sender_jid_alt",
         "sender_participant_jid",
         "sender_name",
+        "contact_jid",
+        "contact_name",
+        "contact_profile_pic_url",
         "timestamp",
         "message_type",
         "text",
@@ -46,6 +52,9 @@ class NormalizedPayload:
             elif field == "is_group":
                 value = kwargs.get(field, False)
                 value = bool(value) if value is not None else False
+            elif field == "chat_unread_count":
+                value = kwargs.get(field)
+                value = int(value) if value is not None else None
             elif field == "event":
                 value = (kwargs.get(field) or "").strip().lower() or None
             elif field == "attachments":

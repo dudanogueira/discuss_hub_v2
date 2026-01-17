@@ -116,6 +116,10 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
         dto_event = canonical_event or self._normalize_event(update)
         if not dto_event:
             return False
+        if dto_event == "contact.update":
+            return self._build_contact_dto(update, gateway, data)
+        if dto_event == "chat.update":
+            return self._build_chat_dto(update, gateway, data)
         reaction, reaction_target_id = self._extract_reaction_data(data, message)
         message_id = self._get_message_id(data, key_data)
         chat_id = self._get_chat_token(data)
@@ -136,7 +140,7 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             is_group=is_group,
             from_me=bool(key_data.get("fromMe")),
             sender_jid=key_data.get("participant") or key_data.get("remoteJid"),
-            sender_jid_alt=key_data.get("remoteJidAlt"),
+            sender_jid_alt=key_data.get("participantAlt") or key_data.get("remoteJidAlt"),
             sender_participant_jid=key_data.get("participant"),
             sender_name=sender_name,
             timestamp=message.get("messageTimestamp") or data.get("timestamp"),
@@ -152,6 +156,36 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             reaction_target_id=reaction_target_id,
             status=data.get("status") or data.get("status_raw"),
             status_raw=data.get("status_raw") or data.get("status"),
+            raw=update,
+        )
+
+    def _build_contact_dto(self, update, gateway, data):
+        contact_jid = data.get("remoteJid")
+        contact_name = data.get("pushName")
+        contact_pic = data.get("profilePicUrl")
+        return NormalizedPayload(
+            provider="evolution",
+            instance=self._instance_name(gateway),
+            event="contact.update",
+            chat_id=contact_jid,
+            contact_jid=contact_jid,
+            contact_name=contact_name,
+            contact_profile_pic_url=contact_pic,
+            sender_name=contact_name,
+            is_group=self._is_group_chat(contact_jid),
+            raw=update,
+        )
+
+    def _build_chat_dto(self, update, gateway, data):
+        chat_id = data.get("remoteJid")
+        return NormalizedPayload(
+            provider="evolution",
+            instance=self._instance_name(gateway),
+            event="chat.update",
+            chat_id=chat_id,
+            chat_name=data.get("name"),
+            chat_unread_count=data.get("unreadMessages"),
+            is_group=self._is_group_chat(chat_id),
             raw=update,
         )
 
@@ -276,6 +310,10 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             "reaction.delete",
         }:
             return normalized_event
+        if normalized_event in {"contacts.update", "contacts.upsert", "contact.update"}:
+            return "contact.update"
+        if normalized_event in {"chats.update", "chats.upsert", "chat.update"}:
+            return "chat.update"
 
         data = update.get("data", {}) or {}
         if isinstance(data, list):

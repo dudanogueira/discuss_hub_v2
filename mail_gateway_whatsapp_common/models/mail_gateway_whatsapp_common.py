@@ -139,6 +139,61 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
             "channel_id": channel.id,
         }
 
+    def _handle_contact_update(self, gateway, dto, channel, author=None):
+        contact_jid = (dto.contact_jid or dto.chat_id or "").strip()
+        if not contact_jid:
+            return {"status": "ignored", "reason": "missing_contact_jid"}
+        if dto.is_group:
+            return {"status": "ignored", "reason": "group_contact_ignored"}
+        if not dto.chat_id:
+            dto.chat_id = contact_jid
+        guest = self._find_guest_by_tokens(gateway, dto)
+        if not guest:
+            if not dto.contact_name:
+                return {"status": "ignored", "reason": "guest_not_found"}
+            guest = self._get_or_create_guest(gateway, dto)
+        if not guest:
+            return {"status": "ignored", "reason": "guest_not_found"}
+        update_vals = {}
+        if (
+            dto.contact_profile_pic_url
+            and "gateway_profile_pic_url" in guest._fields
+            and guest.gateway_profile_pic_url != dto.contact_profile_pic_url
+        ):
+            update_vals["gateway_profile_pic_url"] = dto.contact_profile_pic_url
+        if update_vals:
+            guest.sudo().write(update_vals)
+        if dto.contact_profile_pic_url:
+            channel_id = gateway._get_channel_id(contact_jid)
+            if channel_id:
+                channel = self.env["discuss.channel"].browse(channel_id)
+                if channel and not channel.image_128:
+                    image_base64 = self._fetch_image_base64(dto.contact_profile_pic_url)
+                    if image_base64:
+                        channel.sudo().write({"image_128": image_base64})
+        return {"status": "ok", "guest_id": guest.id}
+
+    def _handle_chat_update(self, gateway, dto, channel, author=None):
+        chat_id = (dto.chat_id or "").strip()
+        if not chat_id:
+            return {"status": "ignored", "reason": "missing_chat_id"}
+        channel_id = gateway._get_channel_id(chat_id)
+        if not channel_id:
+            return {"status": "ignored", "reason": "channel_not_found"}
+        channel = self.env["discuss.channel"].browse(channel_id)
+        update_vals = {}
+        if dto.chat_name and self._should_update_channel_name(channel, dto, chat_id):
+            update_vals["name"] = dto.chat_name.strip()
+        if (
+            dto.chat_unread_count is not None
+            and "gateway_unread_count" in channel._fields
+            and channel.gateway_unread_count != dto.chat_unread_count
+        ):
+            update_vals["gateway_unread_count"] = dto.chat_unread_count
+        if update_vals:
+            channel.sudo().write(update_vals)
+        return {"status": "ok", "channel_id": channel.id}
+
     def _find_existing_message(self, gateway, dto):
         domain = [
             ("gateway_message_external_id", "=", dto.message_id),
@@ -157,14 +212,14 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         return self._get_or_create_guest(gateway, dto)
 
     def _get_or_create_guest(self, gateway, dto):
-        guest_token = self._get_guest_token(dto)
-        if not guest_token:
+        token_candidates = self._get_guest_token_candidates(dto)
+        if not token_candidates:
             return False
+        primary_token = token_candidates[0]
         guest_model = self.env["mail.guest"].sudo()
-        guest = guest_model.search(
-            [("gateway_id", "=", gateway.id), ("gateway_token", "=", guest_token)],
-            limit=1,
-        )
+        guest = self._find_guest_by_tokens(gateway, dto, token_candidates)
+        if guest and guest.gateway_token != primary_token:
+            guest.write({"gateway_token": primary_token})
         name = self._get_guest_name(dto)
         if guest:
             if name and guest.name != name:
@@ -174,18 +229,39 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
             {
                 "name": name,
                 "gateway_id": gateway.id,
-                "gateway_token": guest_token,
+                "gateway_token": primary_token,
             }
         )
 
-    def _get_guest_token(self, dto):
+    def _find_guest_by_tokens(self, gateway, dto, tokens=None):
+        token_candidates = tokens or self._get_guest_token_candidates(dto)
+        if not token_candidates:
+            return False
+        guest_model = self.env["mail.guest"].sudo()
+        return guest_model.search(
+            [("gateway_id", "=", gateway.id), ("gateway_token", "in", token_candidates)],
+            limit=1,
+        )
+
+    def _get_guest_token_candidates(self, dto):
         if dto.is_group:
-            return (dto.sender_participant_jid or dto.sender_jid or "").strip()
-        return (dto.chat_id or "").strip()
+            candidates = [
+                (dto.sender_jid_alt or "").strip(),
+                (dto.sender_participant_jid or "").strip(),
+                (dto.sender_jid or "").strip(),
+            ]
+            return [token for token in candidates if token]
+        if dto.contact_jid:
+            return [(dto.contact_jid or "").strip()]
+        if dto.chat_id:
+            return [(dto.chat_id or "").strip()]
+        return []
 
     def _get_guest_name(self, dto):
         if dto.sender_name:
             return dto.sender_name
+        if dto.contact_name:
+            return dto.contact_name
         if dto.is_group:
             return self._format_chat_id(dto.sender_participant_jid or dto.sender_jid)
         return self._format_chat_id(dto.chat_id)

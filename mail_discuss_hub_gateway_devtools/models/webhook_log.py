@@ -190,6 +190,8 @@ class MailGatewayWebhookLog(models.Model):
 
     def _evolution_mapping(self, payload, gateway, dto):
         data = payload.get("data", {}) or {}
+        if isinstance(data, list):
+            data = data[0] if data else {}
         key_data = data.get("key", {}) or {}
         message = data.get("message", {}) or {}
         return [

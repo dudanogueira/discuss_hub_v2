@@ -16,15 +16,16 @@ Este documento guia o passo a passo da implementacao. Atualize apos cada etapa.
 ## Decisoes (manter atualizado)
 - OCA padrao: usar mail.gateway + mail.notification para id externo e status. (ok)
 - Contato: usar mail.guest por padrao e promover para res.partner quando vincular. (ok)
-- Eventos canonicos no common: message.upsert, message.status, reaction.upsert, reaction.delete, message.delete. (ok)
+- Eventos canonicos no common: message.upsert, message.status, reaction.upsert, reaction.delete, message.delete, contact.update, chat.update. (ok)
 - Channel: channel_type=gateway seguindo OCA (sem tipo whatsapp). (ok)
 
 ## NormalizedPayload (contrato v0)
-- event: message.upsert | message.status | reaction.upsert | reaction.delete | message.delete
+- event: message.upsert | message.status | reaction.upsert | reaction.delete | message.delete | contact.update | chat.update
 - provider, instance
-- message_id, chat_id, from_me, timestamp
-- chat_name, chat_description, chat_picture_url
-- sender_jid, sender_name
+- message_id, chat_id, is_group, from_me, timestamp
+- chat_name, chat_description, chat_picture_url, chat_unread_count
+- sender_jid, sender_name, sender_participant_jid
+- contact_jid, contact_name, contact_profile_pic_url
 - text, attachments (lista de {name, datas, mimetype})
 - quote_id, quote_text
 - reaction, reaction_target_id

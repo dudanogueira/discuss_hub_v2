@@ -63,6 +63,14 @@ class WebhookReplayWizard(models.TransientModel):
                 % (len(logs), self.direction),
             )
 
+        if logs and "internal_routine" in logs._fields:
+            logs.sudo().write(
+                {
+                    "internal_routine": False,
+                    "internal_result": False,
+                }
+            )
+
         processed = skipped = errors = 0
         reported = 0
         messages = []
