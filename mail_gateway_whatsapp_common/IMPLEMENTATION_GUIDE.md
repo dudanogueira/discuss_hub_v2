@@ -27,6 +27,7 @@ Este documento guia o passo a passo da implementacao. Atualize apos cada etapa.
 - sender_jid, sender_name, sender_participant_jid
 - contact_jid, contact_name, contact_profile_pic_url
 - text, attachments (lista de {name, datas, mimetype})
+- text_is_html (true apenas quando provider gerar HTML confiavel, ex: link de localizacao)
 - quote_id, quote_text
 - reaction, reaction_target_id
 - status, status_raw

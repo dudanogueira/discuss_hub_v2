@@ -112,7 +112,7 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             data = data[0] if data else {}
         message = data.get("message", {}) or {}
         key_data = data.get("key", {}) or {}
-        body, attachments = self._prepare_message(message, data)
+        body, attachments, text_is_html = self._prepare_message(message, data)
         dto_event = canonical_event or self._normalize_event(update)
         if not dto_event:
             return False
@@ -148,6 +148,7 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             or data.get("messageType")
             or message.get("type"),
             text=body,
+            text_is_html=text_is_html,
             caption=message.get("caption"),
             attachments=attachments,
             quote_id=(data.get("quotedMessage") or {}).get("stanzaId") or data.get("quotedStanzaID"),
@@ -192,6 +193,7 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
     def _prepare_message(self, message, data):
         body = ""
         attachments = []
+        text_is_html = False
         if message.get("conversation"):
             body = message.get("conversation")
         elif message.get("extendedTextMessage"):
@@ -229,7 +231,8 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
                     f'<a target="_blank" href="https://www.google.com/maps/'
                     f"search/?api=1&query={latitude},{longitude}\">Location</a>"
                 )
-        return body, attachments
+                text_is_html = True
+        return body, attachments, text_is_html
 
     def _get_group_metadata(self, update, gateway, chat_id, sender_name, event):
         if not self._is_group_chat(chat_id):

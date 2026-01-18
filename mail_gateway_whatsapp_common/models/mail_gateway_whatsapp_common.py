@@ -7,6 +7,7 @@ import requests
 
 from odoo import Command, fields, models
 from odoo.tools import html_escape
+from psycopg2 import IntegrityError
 
 
 class MailGatewayWhatsappCommon(models.AbstractModel):
@@ -105,17 +106,7 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         else:
             author_id = author.id
 
-        message = post_channel.sudo().message_post(
-            body=body or None,
-            author_id=author_id,
-            message_type="comment",
-            subtype_xmlid="mail.mt_comment",
-            gateway_type=gateway.gateway_type,
-        )
-        if not message:
-            return {"status": "ignored", "reason": "message_not_created"}
-
-        write_vals = {
+        msg_kwargs = {
             "gateway_message_external_id": message_id,
             "gateway_instance": dto.instance,
             "gateway_chat_id": chat_id,
@@ -125,16 +116,33 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
             "gateway_type": gateway.gateway_type,
         }
         webhook_log_id = self.env.context.get("gateway_webhook_log_id")
-        if webhook_log_id and "gateway_webhook_log_id" in message._fields:
-            write_vals["gateway_webhook_log_id"] = webhook_log_id
-        if "gateway_payload_raw" in message._fields:
+        if webhook_log_id and "gateway_webhook_log_id" in self.env["mail.message"]._fields:
+            msg_kwargs["gateway_webhook_log_id"] = webhook_log_id
+        if "gateway_payload_raw" in self.env["mail.message"]._fields:
             try:
-                write_vals["gateway_payload_raw"] = json.dumps(
+                msg_kwargs["gateway_payload_raw"] = json.dumps(
                     dto.raw, ensure_ascii=True, sort_keys=True
                 )
             except Exception:
-                write_vals["gateway_payload_raw"] = str(dto.raw)
-        message.sudo().write(write_vals)
+                msg_kwargs["gateway_payload_raw"] = str(dto.raw)
+        try:
+            with self.env.cr.savepoint():
+                message = post_channel.sudo().message_post(
+                    body=body or None,
+                    body_is_html=True,
+                    author_id=author_id,
+                    message_type="comment",
+                    subtype_xmlid="mail.mt_comment",
+                )
+        except IntegrityError:
+            existing = self._find_existing_message(gateway, dto)
+            if existing:
+                return {"status": "duplicate", "message_id": existing.id}
+            raise
+        if not message:
+            return {"status": "ignored", "reason": "message_not_created"}
+
+        message.sudo().write(msg_kwargs)
         self._apply_message_timestamp(message, dto)
 
         return {
@@ -163,6 +171,7 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         if not dt_value:
             return
         message.sudo().write({"date": dt_value, "write_date": dt_value})
+        self._apply_message_create_date(message, dt_value)
 
     def _render_message_body(self, dto):
         text = (dto.text or "").strip()
@@ -176,10 +185,45 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         if isinstance(value, datetime):
             return value
         if isinstance(value, (int, float)):
-            return fields.Datetime.from_timestamp(value)
+            return fields.Datetime.from_timestamp(self._normalize_epoch(value))
         if isinstance(value, str):
-            return fields.Datetime.to_datetime(value)
+            value = value.strip()
+            if not value:
+                return False
+            if value.isdigit():
+                return fields.Datetime.from_timestamp(self._normalize_epoch(int(value)))
+            try:
+                float_value = float(value)
+            except ValueError:
+                float_value = None
+            if float_value is not None:
+                return fields.Datetime.from_timestamp(self._normalize_epoch(float_value))
+            try:
+                return fields.Datetime.to_datetime(value)
+            except Exception:
+                return False
         return False
+
+    def _normalize_epoch(self, value):
+        if value is None:
+            return value
+        if value > 1e11:
+            return value / 1000.0
+        return value
+
+    def _apply_message_create_date(self, message, dt_value):
+        if not message or not dt_value:
+            return
+        if message.create_date and message.create_date == dt_value:
+            return
+        try:
+            self.env.cr.execute(
+                "UPDATE mail_message SET create_date=%s WHERE id=%s",
+                (fields.Datetime.to_string(dt_value), message.id),
+            )
+            message.invalidate_recordset(["create_date"])
+        except Exception:
+            self._logger.debug("Failed to update mail.message create_date.", exc_info=True)
 
     def _handle_contact_update(self, gateway, dto, channel, author=None):
         contact_jid = (dto.contact_jid or dto.chat_id or "").strip()
