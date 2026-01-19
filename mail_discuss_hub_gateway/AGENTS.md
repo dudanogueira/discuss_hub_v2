@@ -6,7 +6,7 @@
 
 ## Objetivo
 
-UI do Discuss para canais gateway (sidebar por instancia).
+Integrações Discuss + mail_gateway (UI e regras comuns de canais gateway).
 
 ## Dependencias
 
@@ -16,8 +16,9 @@ UI do Discuss para canais gateway (sidebar por instancia).
 ## Arquivos principais
 
 - `static/src/js/gateway_instance_sidebar.esm.js`
+- `models/discuss_channel.py`
 
 ## Regras
 
 - Nao alterar OCA diretamente.
-- Manter o modulo focado em UI generica de gateway.
+- Manter o modulo focado em regras genericas de gateway.

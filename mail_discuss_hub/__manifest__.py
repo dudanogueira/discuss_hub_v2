@@ -20,6 +20,7 @@
         "views/res_config_settings_views.xml",
         "views/discuss_channel_views.xml",
         "views/mail_discuss_team_views.xml",
+        "views/mail_discuss_team_menus.xml",
     ],
     "installable": True,
 }

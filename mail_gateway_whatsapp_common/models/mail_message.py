@@ -7,14 +7,15 @@ class MailMessage(models.Model):
     gateway_message_external_id = fields.Char(index=True)
     gateway_instance = fields.Char(index=True)
     gateway_chat_id = fields.Char(index=True)
+    gateway_message_key = fields.Char(index=True)
     gateway_sender_jid = fields.Char()
     gateway_sender_name = fields.Char()
     gateway_from_me = fields.Boolean()
 
     _sql_constraints = [
         (
-            "gateway_message_external_id_unique",
-            "unique(gateway_type, gateway_message_external_id, gateway_instance, gateway_chat_id)",
+            "gateway_message_key_unique",
+            "unique(gateway_message_key)",
             "Gateway message already exists.",
         )
     ]

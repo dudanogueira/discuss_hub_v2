@@ -1,9 +1,11 @@
 import base64
 import json
 import logging
+import re
 from datetime import datetime
 
 import requests
+from markupsafe import Markup
 
 from odoo import Command, fields, models
 from odoo.tools import html_escape
@@ -11,12 +13,20 @@ from psycopg2 import IntegrityError
 
 
 class MailGatewayWhatsappCommon(models.AbstractModel):
+    """Shared webhook processing for WhatsApp gateway providers.
+
+    Providers normalize raw payloads into a DTO and call `_process_normalized`,
+    which handles idempotency, guest resolution, channel creation, and posting.
+    """
+
     _name = "mail.gateway.whatsapp.common"
     _description = "WhatsApp Gateway Common"
     _abstract = True
     _logger = logging.getLogger(__name__)
+    _br_tag_re = re.compile(r"<br\s*/?>", re.IGNORECASE)
 
     def _process_normalized(self, gateway, dto, channel, author=None):
+        """Dispatch a normalized event to the matching handler."""
         if not gateway or not dto or not dto.event:
             return {
                 "status": "ignored",
@@ -33,13 +43,15 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         return handler(gateway, dto, channel, author=author)
 
     def _handle_message_upsert(self, gateway, dto, channel, author=None):
+        """Create or update a message coming from the gateway."""
         message_id = (dto.message_id or "").strip()
         chat_id = (dto.chat_id or "").strip()
         if not message_id:
             return {"status": "ignored", "reason": "missing_message_id"}
         if not chat_id:
             return {"status": "ignored", "reason": "missing_chat_id"}
-        existing = self._find_existing_message(gateway, dto)
+        message_key = self._build_message_key(gateway, dto)
+        existing = self._find_existing_message(gateway, dto, message_key=message_key)
         if existing:
             update_vals = {}
             webhook_log_id = self.env.context.get("gateway_webhook_log_id")
@@ -64,7 +76,9 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
                 "gateway_sender_name": dto.sender_name,
                 "gateway_from_me": bool(dto.from_me),
                 "gateway_type": gateway.gateway_type,
+                "gateway_message_key": message_key,
             }
+            # Backfill metadata only when missing to keep idempotent updates cheap.
             for field_name, value in backfill_values.items():
                 if field_name not in existing._fields:
                     continue
@@ -99,6 +113,7 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         post_channel = channel.with_context(**ctx)
         author_id = False
         if author._name == "mail.guest":
+            # Post as public user with guest context so it renders as the guest.
             public_user = self.env.ref("base.public_user", raise_if_not_found=False)
             if public_user:
                 post_channel = post_channel.with_user(public_user.id)
@@ -114,6 +129,7 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
             "gateway_sender_name": dto.sender_name,
             "gateway_from_me": bool(dto.from_me),
             "gateway_type": gateway.gateway_type,
+            "gateway_message_key": message_key,
         }
         webhook_log_id = self.env.context.get("gateway_webhook_log_id")
         if webhook_log_id and "gateway_webhook_log_id" in self.env["mail.message"]._fields:
@@ -142,6 +158,7 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         if not message:
             return {"status": "ignored", "reason": "message_not_created"}
 
+        # Store gateway metadata after message creation to preserve mail.thread flow.
         message.sudo().write(msg_kwargs)
         self._apply_message_timestamp(message, dto)
 
@@ -152,6 +169,7 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         }
 
     def _ensure_guest_member(self, channel, author):
+        """Ensure a guest author is a member of the channel."""
         if not channel or not author or author._name != "mail.guest":
             return
         member_model = self.env["discuss.channel.member"].sudo()
@@ -165,6 +183,7 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         member_model.create({"channel_id": channel.id, "guest_id": author.id, "unpin_dt": False})
 
     def _apply_message_timestamp(self, message, dto):
+        """Apply gateway timestamps to preserve chronological ordering."""
         if not message or not dto or not dto.timestamp:
             return
         dt_value = self._normalize_timestamp(dto.timestamp)
@@ -178,8 +197,11 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         if not text:
             return ""
         if dto.text_is_html:
-            return text
-        return html_escape(text).replace("\n", "<br/>")
+            return Markup(text)
+        text = self._br_tag_re.sub("\n", text)
+        text = text.replace("\r\n", "\n").replace("\r", "\n")
+        escaped = html_escape(text)
+        return Markup(escaped.replace("\n", Markup("<br/>")))
 
     def _normalize_timestamp(self, value):
         if isinstance(value, datetime):
@@ -217,6 +239,7 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         if message.create_date and message.create_date == dt_value:
             return
         try:
+            # Direct SQL is needed to update create_date without side effects.
             self.env.cr.execute(
                 "UPDATE mail_message SET create_date=%s WHERE id=%s",
                 (fields.Datetime.to_string(dt_value), message.id),
@@ -226,6 +249,7 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
             self._logger.debug("Failed to update mail.message create_date.", exc_info=True)
 
     def _handle_contact_update(self, gateway, dto, channel, author=None):
+        """Sync guest details and optional avatar based on contact updates."""
         contact_jid = (dto.contact_jid or dto.chat_id or "").strip()
         if not contact_jid:
             return {"status": "ignored", "reason": "missing_contact_jid"}
@@ -260,6 +284,7 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         return {"status": "ok", "guest_id": guest.id}
 
     def _handle_chat_update(self, gateway, dto, channel, author=None):
+        """Update channel metadata such as name and unread count."""
         chat_id = (dto.chat_id or "").strip()
         if not chat_id:
             return {"status": "ignored", "reason": "missing_chat_id"}
@@ -280,7 +305,17 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
             channel.sudo().write(update_vals)
         return {"status": "ok", "channel_id": channel.id}
 
-    def _find_existing_message(self, gateway, dto):
+    def _find_existing_message(self, gateway, dto, message_key=None):
+        # Prefer gateway_message_key for strict idempotency when available.
+        message_model = self.env["mail.message"].sudo()
+        if "gateway_message_key" in message_model._fields:
+            message_key = message_key or self._build_message_key(gateway, dto)
+            if message_key:
+                existing = message_model.search(
+                    [("gateway_message_key", "=", message_key)], limit=1
+                )
+                if existing:
+                    return existing
         domain = [
             ("gateway_message_external_id", "=", dto.message_id),
             ("gateway_type", "=", gateway.gateway_type),
@@ -289,15 +324,30 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
             domain.append(("gateway_instance", "=", dto.instance))
         if dto.chat_id:
             domain.append(("gateway_chat_id", "=", dto.chat_id))
-        return self.env["mail.message"].sudo().search(domain, limit=1)
+        return message_model.search(domain, limit=1)
+
+    def _build_message_key(self, gateway, dto):
+        """Stable key to dedupe message upserts across retries."""
+        if not gateway or not dto:
+            return False
+        parts = [
+            gateway.gateway_type or "",
+            str(gateway.id or ""),
+            dto.instance or "",
+            dto.chat_id or "",
+            dto.message_id or "",
+        ]
+        return "|".join(parts)
 
     def _resolve_author(self, gateway, dto):
+        """Resolve the author as a partner (outbound) or guest (inbound)."""
         if dto.from_me:
             user = gateway.webhook_user_id or self.env.user
             return user.partner_id if user else False
         return self._get_or_create_guest(gateway, dto)
 
     def _get_or_create_guest(self, gateway, dto):
+        """Find or create a mail.guest using gateway identifiers."""
         token_candidates = self._get_guest_token_candidates(dto)
         if not token_candidates:
             return False
@@ -353,6 +403,7 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         return self._format_chat_id(dto.chat_id)
 
     def _get_or_create_channel(self, gateway, dto, author):
+        """Find or create the gateway channel for a chat_id."""
         chat_id = (dto.chat_id or "").strip()
         if not chat_id:
             return False
@@ -364,21 +415,30 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         channel_env = self.env["discuss.channel"].sudo()
         channel_env = channel_env.with_user(gateway.webhook_user_id or self.env.user)
         channel_env = channel_env.with_context(install_mode=True)
-        channel = channel_env.create(
-            {
-                "name": channel_name,
-                "channel_type": "gateway",
-                "gateway_id": gateway.id,
-                "gateway_channel_token": chat_id,
-                "channel_member_ids": members,
-                "company_id": gateway.company_id.id,
-                "description": (dto.chat_description or "").strip() or False,
-            }
-        )
+        try:
+            channel = channel_env.create(
+                {
+                    "name": channel_name,
+                    "channel_type": "gateway",
+                    "gateway_id": gateway.id,
+                    "gateway_channel_token": chat_id,
+                    "channel_member_ids": members,
+                    "company_id": gateway.company_id.id,
+                    "description": (dto.chat_description or "").strip() or False,
+                }
+            )
+        except IntegrityError:
+            # Another transaction created the same gateway channel concurrently.
+            self.env.cr.rollback()
+            channel_id = gateway._get_channel_id(chat_id)
+            if not channel_id:
+                raise
+            channel = self.env["discuss.channel"].browse(channel_id)
         channel._broadcast(channel.channel_member_ids.mapped("partner_id").ids)
         return channel
 
     def _build_channel_members(self, gateway, author):
+        """Add gateway members and the author to the channel."""
         members = []
         for user in gateway.member_ids:
             if user.partner_id:
@@ -403,6 +463,7 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         return members
 
     def _apply_channel_metadata(self, channel, dto):
+        """Update group channel metadata when missing or clearly outdated."""
         chat_id = (dto.chat_id or "").strip()
         if not chat_id or not self._is_group_chat(chat_id):
             return
@@ -420,6 +481,7 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
             channel.sudo().write(update_vals)
 
     def _should_update_channel_name(self, channel, dto, chat_id):
+        """Heuristic to replace fallback names with a better one."""
         current_name = (channel.name or "").strip()
         if not current_name:
             return True
@@ -436,14 +498,20 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         return False
 
     def _get_channel_name(self, dto):
+        """Compute a human-friendly channel name."""
         chat_id = (dto.chat_id or "").strip()
         if not chat_id:
             return (dto.sender_name or "").strip()
         if self._is_group_chat(chat_id):
             return (dto.chat_name or "").strip() or self._format_group_name(chat_id)
+        if dto.from_me:
+            if dto.contact_name:
+                return dto.contact_name.strip()
+            return self._format_chat_id(chat_id)
         return (dto.sender_name or "").strip() or self._format_chat_id(chat_id)
 
     def _fetch_image_base64(self, url):
+        """Download and convert images to base64 for channel avatars."""
         if not url:
             return False
         try:

@@ -6,4 +6,5 @@ from odoo import fields, models
 class DiscussChannel(models.Model):
     _inherit = "discuss.channel"
 
+    # Unread count mirrored from gateway chat updates.
     gateway_unread_count = fields.Integer()

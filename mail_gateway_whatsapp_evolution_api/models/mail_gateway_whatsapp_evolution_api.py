@@ -489,6 +489,11 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
                         "failure_reason": False,
                     }
                 )
+                message_id = self._extract_message_id_from_response(message)
+                if message_id:
+                    self._update_outgoing_message(
+                        record, gateway, message_id, instance, number
+                    )
         if auto_commit:
             record._cr.commit()
 
@@ -497,6 +502,73 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
 
     def _get_message_body(self, record):
         return record.mail_message_id.body
+
+    def _extract_message_id_from_response(self, payload):
+        if not payload:
+            return False
+        if isinstance(payload, dict):
+            key_data = payload.get("key") or {}
+            message_id = key_data.get("id")
+            if message_id:
+                return message_id
+            message_id = payload.get("messageId") or payload.get("id")
+            if isinstance(message_id, list):
+                message_id = message_id[0] if message_id else None
+            if message_id:
+                return message_id
+            message_data = payload.get("message") or {}
+            if isinstance(message_data, dict):
+                key_data = message_data.get("key") or {}
+                message_id = key_data.get("id")
+                if message_id:
+                    return message_id
+                message_id = message_data.get("messageId") or message_data.get("id")
+                if isinstance(message_id, list):
+                    message_id = message_id[0] if message_id else None
+                if message_id:
+                    return message_id
+        return False
+
+    def _build_message_key(self, gateway, instance, chat_id, message_id):
+        parts = [
+            gateway.gateway_type or "",
+            str(gateway.id or ""),
+            instance or "",
+            chat_id or "",
+            message_id or "",
+        ]
+        return "|".join(parts)
+
+    def _update_outgoing_message(self, record, gateway, message_id, instance, chat_id):
+        mail_message = record.mail_message_id.sudo()
+        if not mail_message or not message_id:
+            return
+        message_key = self._build_message_key(gateway, instance, chat_id, message_id)
+        if message_key:
+            existing = (
+                self.env["mail.message"]
+                .sudo()
+                .search([("gateway_message_key", "=", message_key)], limit=1)
+            )
+            if existing and existing.id != mail_message.id:
+                return
+        sender_name = (
+            mail_message.author_id.name
+            or mail_message.author_guest_id.name
+            or False
+        )
+        update_vals = {
+            "gateway_message_external_id": message_id,
+            "gateway_message_key": message_key,
+            "gateway_instance": instance,
+            "gateway_chat_id": chat_id,
+            "gateway_from_me": True,
+            "gateway_type": gateway.gateway_type,
+        }
+        if sender_name:
+            update_vals["gateway_sender_name"] = sender_name
+        mail_message.write(update_vals)
+        record.sudo().write({"gateway_message_id": message_id})
 
     def _guess_media_type(self, mimetype):
         if not mimetype:

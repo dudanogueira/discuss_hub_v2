@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <menuitem
+            id="mail_discuss_team_menu"
+            name="Teams"
+            parent="mail.menu_configuration"
+            action="mail_discuss_hub.mail_discuss_team_action"
+            sequence="30"
+            groups="base.group_system"
+        />
+    </data>
+</odoo>
