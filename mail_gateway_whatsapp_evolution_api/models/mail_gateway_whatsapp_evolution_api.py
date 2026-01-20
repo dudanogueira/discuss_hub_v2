@@ -10,9 +10,7 @@ import requests
 from odoo import _, models
 from odoo.exceptions import UserError
 from odoo.http import request
-from odoo.tools import html2plaintext
 
-from odoo.addons.base.models.ir_mail_server import MailDeliveryException
 from odoo.addons.mail_gateway_whatsapp_common.models.normalized_payload import (
     NormalizedPayload,
 )
@@ -24,6 +22,7 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
     _name = "mail.gateway.whatsapp_evolution_api"
     _inherit = ["mail.gateway.abstract", "mail.gateway.whatsapp_evolution_api.mixin"]
     _description = "WhatsApp Evolution API Gateway"
+    _uses_gateway_common = True
 
     # -------------------------------------------------------------------------
     # Webhook / verification
@@ -406,11 +405,10 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             return message.get(key, {}).get("fileName")
         return f"{key}.bin"
 
-    def _apply_outgoing_signature(self, gateway, record, body):
-        if not gateway.evolution_outgoing_signature or not record.author_id:
+    def _apply_outgoing_signature(self, gateway, author_name, body):
+        if not gateway.evolution_outgoing_signature or not author_name:
             return body
-        author = record.author_id.name or ""
-        author = author.strip()
+        author = str(author_name or "").strip()
         fmt = (getattr(gateway, "evolution_outgoing_signature_format", "") or "").strip()
         if not fmt:
             fmt = "*{author}:*\\n"
@@ -455,73 +453,74 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
         raise_exception=False,
         parse_mode=False,
     ):
+        common = self.env["mail.gateway.whatsapp.common"]
+        return common._send_outbound(
+            gateway,
+            record,
+            auto_commit=auto_commit,
+            raise_exception=raise_exception,
+            parse_mode=parse_mode,
+            provider=self,
+        )
+
+    def _send_outbound(self, gateway, dto):
+        self._ensure_gateway_ready(gateway)
         message = False
-        try:
-            channel = record.gateway_channel_id
-            number = channel.gateway_channel_token
-            instance = self._instance_name(gateway)
-            headers = self._get_headers(gateway)
-            for attachment in record.mail_message_id.attachment_ids:
-                media_type = self._guess_media_type(attachment.mimetype)
-                media = attachment.datas
-                if isinstance(media, bytes):
-                    media = media.decode("utf-8")
-                if not media and getattr(attachment, "raw", None):
-                    media = base64.b64encode(attachment.raw).decode("ascii")
-                payload = {
-                    "number": number,
-                    "mediatype": media_type,
-                    "mimetype": attachment.mimetype,
-                    "media": media,
-                    "fileName": attachment.name or "attachment",
-                }
-                response = requests.post(
-                    self._join_url(gateway.evolution_api_url, f"/message/sendMedia/{instance}"),
-                    json=payload,
-                    headers=headers,
-                    timeout=30,
-                )
-                response.raise_for_status()
-                message = response.json() if response.content else {}
-            body = html2plaintext(self._get_message_body(record))
-            if body:
-                body = self._apply_outgoing_signature(gateway, record, body)
-                payload = {"number": number, "text": body}
-                response = requests.post(
-                    self._join_url(gateway.evolution_api_url, f"/message/sendText/{instance}"),
-                    json=payload,
-                    headers=headers,
-                    timeout=20,
-                )
-                response.raise_for_status()
-                message = response.json() if response.content else {}
-        except Exception as exc:
-            _logger.exception("Unable to send Evolution message")
-            if raise_exception:
-                raise MailDeliveryException(
-                    _("Unable to send the Evolution message")
-                ) from exc
-            record.sudo().write(
-                {
-                    "notification_status": "exception",
-                    "failure_reason": str(exc),
-                }
+        responses = []
+        instance = self._instance_name(gateway)
+        headers = self._get_headers(gateway)
+        number = dto.chat_id
+        for attachment in dto.attachments or []:
+            media = attachment.get("datas")
+            if isinstance(media, bytes):
+                media = media.decode("utf-8")
+            if not media:
+                continue
+            payload = {
+                "number": number,
+                "mediatype": self._guess_media_type(attachment.get("mimetype")),
+                "mimetype": attachment.get("mimetype"),
+                "media": media,
+                "fileName": attachment.get("name") or "attachment",
+            }
+            response = requests.post(
+                self._join_url(
+                    gateway.evolution_api_url,
+                    f"/message/sendMedia/{instance}",
+                ),
+                json=payload,
+                headers=headers,
+                timeout=30,
             )
-        else:
-            if message:
-                record.sudo().write(
-                    {
-                        "notification_status": "sent",
-                        "failure_reason": False,
-                    }
-                )
-                message_id = self._extract_message_id_from_response(message)
-                if message_id:
-                    self._update_outgoing_message(
-                        record, gateway, message_id, instance, number
-                    )
-        if auto_commit:
-            record._cr.commit()
+            response.raise_for_status()
+            message = response.json() if response.content else {}
+            responses.append(message)
+        body = (dto.text or "").strip()
+        if body:
+            body = self._apply_outgoing_signature(gateway, dto.author_name, body)
+            payload = {"number": number, "text": body}
+            response = requests.post(
+                self._join_url(
+                    gateway.evolution_api_url,
+                    f"/message/sendText/{instance}",
+                ),
+                json=payload,
+                headers=headers,
+                timeout=20,
+            )
+            response.raise_for_status()
+            message = response.json() if response.content else {}
+            responses.append(message)
+        return {
+            "message_id": self._extract_message_id_from_response(message),
+            "instance": instance,
+            "chat_id": number,
+            "responses": responses,
+        }
+
+    def _ensure_gateway_ready(self, gateway):
+        if not gateway.evolution_api_url or not gateway.token:
+            raise UserError(_("Evolution API URL and token are required."))
 
     def _join_url(self, base_url, endpoint):
         return f"{(base_url or '').rstrip('/')}/{endpoint.lstrip('/')}"
@@ -554,47 +553,6 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
                 if message_id:
                     return message_id
         return False
-
-    def _build_message_key(self, gateway, instance, chat_id, message_id):
-        parts = [
-            gateway.gateway_type or "",
-            str(gateway.id or ""),
-            instance or "",
-            chat_id or "",
-            message_id or "",
-        ]
-        return "|".join(parts)
-
-    def _update_outgoing_message(self, record, gateway, message_id, instance, chat_id):
-        mail_message = record.mail_message_id.sudo()
-        if not mail_message or not message_id:
-            return
-        message_key = self._build_message_key(gateway, instance, chat_id, message_id)
-        if message_key:
-            existing = (
-                self.env["mail.message"]
-                .sudo()
-                .search([("gateway_message_key", "=", message_key)], limit=1)
-            )
-            if existing and existing.id != mail_message.id:
-                return
-        sender_name = (
-            mail_message.author_id.name
-            or mail_message.author_guest_id.name
-            or False
-        )
-        update_vals = {
-            "gateway_message_external_id": message_id,
-            "gateway_message_key": message_key,
-            "gateway_instance": instance,
-            "gateway_chat_id": chat_id,
-            "gateway_from_me": True,
-            "gateway_type": gateway.gateway_type,
-        }
-        if sender_name:
-            update_vals["gateway_sender_name"] = sender_name
-        mail_message.write(update_vals)
-        record.sudo().write({"gateway_message_id": message_id})
 
     def _guess_media_type(self, mimetype):
         if not mimetype:

@@ -20,4 +20,7 @@ Gateway WhatsApp via WAHA.
 - `waha_session` default e `default` (WAHA Core suporta apenas esta sessao).
 - Webhook inbound suporta apenas evento `message` (texto).
 - `webhook_secret` vira HMAC SHA-256 (`X-Webhook-Hmac`) nos webhooks.
+- Common e o unico ponto de conexao com o Odoo; este modulo nao escreve no Odoo.
+- Outbound e' roteado pelo common; este modulo so implementa `_send_outbound` (API externa).
 - Anexos/medias ainda nao suportados no envio nem no inbound.
+- Devtools e opcional e nunca deve ser dependencia de modulo algum.

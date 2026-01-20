@@ -3,7 +3,6 @@
 import json
 
 from odoo import models
-from odoo.tools import html2plaintext
 from odoo.http import request
 
 
@@ -44,21 +43,14 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             log_record.sudo().write({"status": status})
         return result
 
-    def _send(
-        self,
-        gateway,
-        record,
-        auto_commit=False,
-        raise_exception=False,
-        parse_mode=False,
-    ):
+    def _send_outbound(self, gateway, dto):
         log_record = self._devtools_log_webhook(
             gateway,
             direction="out",
             status="sending",
             event="message.send",
-            endpoint=self._devtools_outgoing_endpoint(gateway, record),
-            payload=self._devtools_outgoing_payload(gateway, record),
+            endpoint=self._devtools_outgoing_endpoint(gateway, dto),
+            payload=self._devtools_outgoing_payload(gateway, dto),
         )
         if log_record:
             log_record.sudo().write(
@@ -68,13 +60,7 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
                 }
             )
         try:
-            res = super()._send(
-                gateway,
-                record,
-                auto_commit=auto_commit,
-                raise_exception=raise_exception,
-                parse_mode=parse_mode,
-            )
+            res = super()._send_outbound(gateway, dto)
         except Exception as exc:
             if log_record:
                 log_record.sudo().write(
@@ -86,21 +72,12 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             raise
 
         if log_record:
-            if record.notification_status == "sent":
-                log_record.sudo().write(
-                    {
-                        "status": "sent",
-                        "internal_result": "processed",
-                    }
-                )
-            elif record.notification_status == "exception":
-                log_record.sudo().write(
-                    {
-                        "status": "error",
-                        "error_message": record.failure_reason,
-                        "internal_result": "received",
-                    }
-                )
+            log_record.sudo().write(
+                {
+                    "status": "sent",
+                    "internal_result": "processed",
+                }
+            )
         return res
 
     @staticmethod
@@ -158,29 +135,28 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
         except (TypeError, ValueError):
             return str(payload)
 
-    def _devtools_outgoing_payload(self, gateway, record):
-        channel = record.gateway_channel_id
-        if not channel:
-            return {"notification_id": record.id, "message_id": record.mail_message_id.id}
+    def _devtools_outgoing_payload(self, gateway, dto):
+        if not dto:
+            return {}
         instance = self._instance_name(gateway)
-        body = html2plaintext(self._get_message_body(record) or "")
+        body = (dto.text or "").strip()
         if body:
-            body = self._apply_outgoing_signature(gateway, record, body)
+            body = self._apply_outgoing_signature(gateway, dto.author_name, body)
         attachments = []
-        for attachment in record.mail_message_id.attachment_ids:
+        for attachment in dto.attachments or []:
             attachments.append(
                 {
-                    "id": attachment.id,
-                    "name": attachment.name,
-                    "mimetype": attachment.mimetype,
-                    "size": attachment.file_size,
+                    "id": attachment.get("id"),
+                    "name": attachment.get("name"),
+                    "mimetype": attachment.get("mimetype"),
+                    "size": attachment.get("size"),
                 }
             )
         return {
-            "notification_id": record.id,
-            "message_id": record.mail_message_id.id,
+            "notification_id": dto.notification_id,
+            "message_id": dto.message_id,
             "instance": instance,
-            "number": channel.gateway_channel_token,
+            "number": dto.chat_id,
             "text": body or False,
             "attachments": attachments,
             "endpoints": self._devtools_outgoing_endpoints(instance, body, attachments),
@@ -195,12 +171,14 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             endpoints.append(f"/message/sendText/{instance}")
         return endpoints
 
-    def _devtools_outgoing_endpoint(self, gateway, record):
+    def _devtools_outgoing_endpoint(self, gateway, dto):
+        if not dto:
+            return False
         instance = self._instance_name(gateway)
-        body = html2plaintext(self._get_message_body(record) or "")
+        body = (dto.text or "").strip()
         if body:
-            body = self._apply_outgoing_signature(gateway, record, body)
-        has_attachments = bool(record.mail_message_id.attachment_ids)
+            body = self._apply_outgoing_signature(gateway, dto.author_name, body)
+        has_attachments = bool(dto.attachments)
         if has_attachments and body:
             return f"/message/sendText/{instance}"
         if has_attachments:

@@ -36,6 +36,10 @@ nos addons do `discuss-hub` (ou novos addons locais).
 - Se houver divergencia entre doc e comportamento real, confronte com outra fonte
   (servidor, modulos de referencia, ou teste local) e atualize `EVOLUTION_API_REFERENCE.md`.
 - Projeto greenfield: evite fallbacks e legados sem comprovacao; prefira fluxos diretos e dados canonicos.
+- Regra de arquitetura: `mail_gateway_whatsapp_common` e o unico ponto de conexao entre Odoo e providers
+  (inbound e outbound). Providers nao devem escrever no Odoo; Odoo nao deve falar direto com providers.
+- Regra de arquitetura: `mail_discuss_hub_gateway_devtools` jamais pode ser dependencia de outros modulos;
+  tudo precisa funcionar perfeitamente sem ele instalado.
 
 ## Ambiente local (unico arquivo)
 
@@ -185,12 +189,14 @@ Use estes arquivos como referencia de payloads e endpoints:
 
 - Guarda o modelo `mail.gateway.webhook.log`, campos em `mail.message`, views e wizards de replay/cleanup.
 - Opcional: quando instalado, gateways passam a registrar logs; quando ausente, webhooks processam sem persistir.
+- Nao pode ser dependencia em nenhum modulo (devtools deve ser sempre opcional).
 
 ### `mail_gateway_whatsapp_common`
 
 - Define DTO `NormalizedPayload` e servico `_process_normalized` (message/reaction/status/delete) com idempotencia.
 - Adiciona campos em `mail.message` para id externo, chat, status, quote, reactions e payload bruto.
 - Providers apenas convertem o webhook bruto para DTO e chamam o servico.
+- Outbound tambem passa pelo common; providers so enviam para APIs externas (sem escrever no Odoo).
 - Resolucao/criacao de canal passa a ser responsabilidade do common.
 - Canal: usar channel_type=gateway + gateway_id (padrao OCA), sem channel_type whatsapp.
 - Eventos canonicos no common: message.upsert, message.status, reaction.upsert, reaction.delete, message.delete (provider mapeia).

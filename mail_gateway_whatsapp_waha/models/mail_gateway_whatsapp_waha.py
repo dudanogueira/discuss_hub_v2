@@ -10,9 +10,7 @@ import requests
 from odoo import _, models
 from odoo.exceptions import UserError
 from odoo.http import request
-from odoo.tools import html2plaintext
 
-from odoo.addons.base.models.ir_mail_server import MailDeliveryException
 from odoo.addons.mail_gateway_whatsapp_common.models.normalized_payload import (
     NormalizedPayload,
 )
@@ -24,6 +22,7 @@ class MailGatewayWhatsappWaha(models.AbstractModel):
     _name = "mail.gateway.whatsapp_waha"
     _inherit = "mail.gateway.abstract"
     _description = "WhatsApp WAHA Gateway"
+    _uses_gateway_common = True
 
     def _receive_get_update(self, bot_data, req, **kwargs):
         response = request.make_response(
@@ -95,54 +94,44 @@ class MailGatewayWhatsappWaha(models.AbstractModel):
         raise_exception=False,
         parse_mode=False,
     ):
-        message = False
-        chat_id = False
-        session = False
-        try:
-            self._ensure_gateway_ready(gateway)
-            session = gateway.waha_session or "default"
-            channel = record.gateway_channel_id
-            chat_id = self._normalize_chat_id(channel.gateway_channel_token)
-            body = html2plaintext(self._get_message_body(record) or "").strip()
-            if record.mail_message_id.attachment_ids:
-                raise UserError(_("WAHA media sending is not supported yet."))
-            if not body:
-                raise UserError(_("Message body is empty."))
-            payload = {
-                "session": session,
-                "chatId": chat_id,
-                "text": body,
-            }
-            response = requests.post(
-                self._join_url(gateway.waha_api_url, "/api/sendText"),
-                json=payload,
-                headers=self._get_headers(gateway),
-                timeout=20,
-            )
-            response.raise_for_status()
-            message = response.json() if response.content else {}
-        except Exception as exc:
-            _logger.exception("Unable to send WAHA message")
-            if raise_exception:
-                raise MailDeliveryException(_("Unable to send the WAHA message")) from exc
-            record.sudo().write(
-                {
-                    "notification_status": "exception",
-                    "failure_reason": str(exc),
-                }
-            )
-        else:
-            record.sudo().write(
-                {
-                    "notification_status": "sent",
-                    "failure_reason": False,
-                }
-            )
-            message_id = self._extract_message_id_from_response(message)
-            if message_id:
-                self._update_outgoing_message(record, gateway, message_id, session, chat_id)
-        if auto_commit:
-            record._cr.commit()
+        common = self.env["mail.gateway.whatsapp.common"]
+        return common._send_outbound(
+            gateway,
+            record,
+            auto_commit=auto_commit,
+            raise_exception=raise_exception,
+            parse_mode=parse_mode,
+            provider=self,
+        )
+
+    def _send_outbound(self, gateway, dto):
+        self._ensure_gateway_ready(gateway)
+        session = gateway.waha_session or "default"
+        chat_id = self._normalize_chat_id(dto.chat_id)
+        if dto.attachments:
+            raise UserError(_("WAHA media sending is not supported yet."))
+        body = (dto.text or "").strip()
+        if not body:
+            raise UserError(_("Message body is empty."))
+        payload = {
+            "session": session,
+            "chatId": chat_id,
+            "text": body,
+        }
+        response = requests.post(
+            self._join_url(gateway.waha_api_url, "/api/sendText"),
+            json=payload,
+            headers=self._get_headers(gateway),
+            timeout=20,
+        )
+        response.raise_for_status()
+        message = response.json() if response.content else {}
+        return {
+            "message_id": self._extract_message_id_from_response(message),
+            "instance": session,
+            "chat_id": chat_id,
+            "responses": [message] if message else [],
+        }
 
     def _ensure_gateway_ready(self, gateway):
         if not gateway.waha_api_url or not gateway.token:
@@ -241,47 +230,6 @@ class MailGatewayWhatsappWaha(models.AbstractModel):
                 if candidate:
                     return candidate
         return False
-
-    def _build_message_key(self, gateway, session, chat_id, message_id):
-        parts = [
-            gateway.gateway_type or "",
-            str(gateway.id or ""),
-            session or "",
-            chat_id or "",
-            message_id or "",
-        ]
-        return "|".join(parts)
-
-    def _update_outgoing_message(self, record, gateway, message_id, session, chat_id):
-        mail_message = record.mail_message_id.sudo()
-        if not mail_message or not message_id:
-            return
-        message_key = self._build_message_key(gateway, session, chat_id, message_id)
-        if message_key:
-            existing = (
-                self.env["mail.message"]
-                .sudo()
-                .search([("gateway_message_key", "=", message_key)], limit=1)
-            )
-            if existing and existing.id != mail_message.id:
-                return
-        sender_name = (
-            mail_message.author_id.name
-            or mail_message.author_guest_id.name
-            or False
-        )
-        update_vals = {
-            "gateway_message_external_id": message_id,
-            "gateway_message_key": message_key,
-            "gateway_instance": session,
-            "gateway_chat_id": chat_id,
-            "gateway_from_me": True,
-            "gateway_type": gateway.gateway_type,
-        }
-        if sender_name:
-            update_vals["gateway_sender_name"] = sender_name
-        mail_message.write(update_vals)
-        record.sudo().write({"gateway_message_id": message_id})
 
     def _get_webhook_events(self):
         return ["message"]

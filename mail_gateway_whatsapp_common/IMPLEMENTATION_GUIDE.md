@@ -5,10 +5,13 @@ Este documento guia o passo a passo da implementacao. Atualize apos cada etapa.
 ## Objetivo
 - Provider (evolution/quepasa/waha/notificame) normaliza payload e chama o common.
 - Common aplica regras e escreve no Odoo (contato, canal, mensagem, status, reacao, delete).
+- Outbound: common normaliza a saida do Odoo e delega o envio ao provider.
 - Discuss apenas consome os registros.
 
 ## Principios
 - Modulo simples, sem acoplamento com provider.
+- Common e o unico ponto de conexao entre Odoo e providers (inbound e outbound).
+- Devtools e opcional e nunca pode ser dependencia de modulo algum.
 - Idempotencia por id externo (message_id / reaction_target_id).
 - Sem efeitos colaterais no provider.
 - Context flags para evitar loop de outbound.
@@ -18,6 +21,7 @@ Este documento guia o passo a passo da implementacao. Atualize apos cada etapa.
 - Contato: usar mail.guest por padrao e promover para res.partner quando vincular. (ok)
 - Eventos canonicos no common: message.upsert, message.status, reaction.upsert, reaction.delete, message.delete, contact.update, chat.update. (ok)
 - Channel: channel_type=gateway seguindo OCA (sem tipo whatsapp). (ok)
+- Outbound usa OutboundPayload e providers implementam apenas `_send_outbound` (sem escrever no Odoo). (ok)
 
 ## NormalizedPayload (contrato v0)
 - event: message.upsert | message.status | reaction.upsert | reaction.delete | message.delete | contact.update | chat.update
@@ -32,6 +36,13 @@ Este documento guia o passo a passo da implementacao. Atualize apos cada etapa.
 - reaction, reaction_target_id
 - status, status_raw
 - raw
+
+## OutboundPayload (contrato v0)
+- provider, gateway_type
+- notification_id, message_id
+- chat_id, instance
+- text, author_name
+- attachments (lista de {id, name, mimetype, size, datas})
 
 ## Etapas (implementar e testar uma a uma)
 - [x] Etapa 0 - validar contrato do DTO e nomes de eventos
@@ -57,9 +68,14 @@ Este documento guia o passo a passo da implementacao. Atualize apos cada etapa.
 - [x] Etapa 6 - message.delete
   - Marcar mensagem como apagada (nao apagar registro)
   - Teste: corpo indica apagado
+- [x] Etapa 7 - outbound (texto/anexos)
+  - mail.notification.send_gateway roteia para o common
+  - common cria OutboundPayload e delega `_send_outbound` do provider
+  - provider envia para API externa; common atualiza mail.message/mail.notification
 
 ## Observacoes
 - Manter o common independente de API externa.
 - Preferir alteracoes pequenas e validar em cada etapa.
 - Attachments devem ser enviados ao message_post como bytes (nao base64).
 - Audio deve incluir info={"voice": True} para gerar discuss.voice.metadata.
+- Outbound: `_get_outbound_provider` retorna recordset vazio; nao usar `bool(recordset)` para validar suporte.

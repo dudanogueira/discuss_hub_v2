@@ -17,6 +17,8 @@ Features:
 - Configure WAHA API URL and session.
 - Send outbound text messages from Discuss.
 - Receive inbound text messages via WAHA webhooks.
+- Inbound/outbound flows are routed through ``mail_gateway_whatsapp_common``;
+  this module only adapts WAHA payloads.
 
 Dependencies
 ============
@@ -45,7 +47,8 @@ Usage
 =====
 
 Use Discuss to send text messages. Inbound webhooks are handled for text
-messages (media is ignored for now).
+messages (media is ignored for now). O devtools e opcional e nunca pode ser
+dependencia de nenhum modulo.
 
 Roadmap (TODO)
 ==============

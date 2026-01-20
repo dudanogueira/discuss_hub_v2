@@ -19,6 +19,8 @@ Gateway WhatsApp via Evolution API.
 - Nao usar `?db=` (Evolution API nao preserva querystring).
 - Nao adicionar campos em `mail.guest` neste modulo (extensoes devem ficar no common).
 - Parseia o payload bruto em `NormalizedPayload` e delega a `mail_gateway_whatsapp_common` para criar/atualizar mensagens.
+- Common e o unico ponto de conexao com o Odoo; este modulo nao escreve no Odoo.
+- Outbound e' roteado pelo common; este modulo so implementa `_send_outbound` (API externa).
 - Consulte `EVOLUTION_API_REFERENCE.md` para metodos/payloads.
 - Divergencias entre doc/modulos/servidor devem ser reconferidas e atualizadas no guia.
 - Persistencia de logs de webhook e' controlada pela flag
@@ -27,6 +29,7 @@ Gateway WhatsApp via Evolution API.
   `_devtools_log_webhook` quando disponivel.
 - Status do webhook: `processed` apenas quando `_process_normalized` retorna `ok` ou `duplicate`;
   caso contrario fica `received` (sem acao no Odoo).
+- Devtools e opcional e nunca deve ser dependencia de modulo algum.
 
 ## Arquivos principais
 

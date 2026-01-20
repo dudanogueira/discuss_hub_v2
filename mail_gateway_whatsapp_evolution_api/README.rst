@@ -31,6 +31,8 @@ Features:
 - Integrate, update, or remove webhooks from Odoo.
 - Receive inbound messages and attachments via webhook.
 - Send outbound messages and media from Discuss.
+- Inbound/outbound flows are routed through ``mail_gateway_whatsapp_common``;
+  this module only adapts Evolution API payloads.
 
 Dependencies
 ============
@@ -59,7 +61,8 @@ Use Discuss to send messages. Inbound webhooks are parsed into a
 ``NormalizedPayload`` and processados pelo módulo
 ``mail_gateway_whatsapp_common`` (idempotência, status, reações). Se
 ``mail_discuss_hub_gateway_devtools`` estiver instalado, você pode inspecionar
-logs no menu Discuss Dev.
+logs no menu Discuss Dev. O devtools e opcional e nunca pode ser dependencia
+de nenhum modulo.
 
 Roadmap (TODO)
 ==============

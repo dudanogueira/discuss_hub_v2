@@ -33,6 +33,7 @@ Uso
 
 - Instale apenas em ambientes de desenvolvimento/QA quando quiser inspecionar
   webhooks; em producao pode ficar desinstalado sem impacto no processamento.
+- Nao deve ser dependencia de nenhum outro modulo; tudo precisa funcionar sem ele.
 - Acesso aos menus apenas para ``base.group_system``.
 - Os wizards estao protegidos com mensagens de placeholder para evitar uso
   acidental; revise antes de habilitar em ambientes compartilhados.
