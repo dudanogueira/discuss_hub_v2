@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="waha_webhook_event_session_status" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Session Status</field>
+        <field name="code">session.status</field>
+        <field name="sequence">10</field>
+    </record>
+    <record id="waha_webhook_event_message" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Message</field>
+        <field name="code">message</field>
+        <field name="sequence">20</field>
+    </record>
+    <record id="waha_webhook_event_message_any" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Message Any</field>
+        <field name="code">message.any</field>
+        <field name="sequence">30</field>
+    </record>
+    <record id="waha_webhook_event_message_reaction" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Message Reaction</field>
+        <field name="code">message.reaction</field>
+        <field name="sequence">40</field>
+    </record>
+    <record id="waha_webhook_event_message_ack" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Message Ack</field>
+        <field name="code">message.ack</field>
+        <field name="sequence">50</field>
+    </record>
+    <record id="waha_webhook_event_message_ack_group" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Message Ack (Group)</field>
+        <field name="code">message.ack.group</field>
+        <field name="sequence">60</field>
+    </record>
+    <record id="waha_webhook_event_message_waiting" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Message Waiting</field>
+        <field name="code">message.waiting</field>
+        <field name="sequence">70</field>
+    </record>
+    <record id="waha_webhook_event_message_revoked" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Message Revoked</field>
+        <field name="code">message.revoked</field>
+        <field name="sequence">80</field>
+    </record>
+    <record id="waha_webhook_event_message_edited" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Message Edited</field>
+        <field name="code">message.edited</field>
+        <field name="sequence">90</field>
+    </record>
+    <record id="waha_webhook_event_state_change" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">State Change</field>
+        <field name="code">state.change</field>
+        <field name="sequence">100</field>
+    </record>
+    <record id="waha_webhook_event_group_join" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Group Join</field>
+        <field name="code">group.join</field>
+        <field name="sequence">110</field>
+    </record>
+    <record id="waha_webhook_event_group_leave" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Group Leave</field>
+        <field name="code">group.leave</field>
+        <field name="sequence">120</field>
+    </record>
+    <record id="waha_webhook_event_group_v2_join" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Group V2 Join</field>
+        <field name="code">group.v2.join</field>
+        <field name="sequence">130</field>
+    </record>
+    <record id="waha_webhook_event_group_v2_leave" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Group V2 Leave</field>
+        <field name="code">group.v2.leave</field>
+        <field name="sequence">140</field>
+    </record>
+    <record id="waha_webhook_event_group_v2_update" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Group V2 Update</field>
+        <field name="code">group.v2.update</field>
+        <field name="sequence">150</field>
+    </record>
+    <record id="waha_webhook_event_group_v2_participants" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Group V2 Participants</field>
+        <field name="code">group.v2.participants</field>
+        <field name="sequence">160</field>
+    </record>
+    <record id="waha_webhook_event_presence_update" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Presence Update</field>
+        <field name="code">presence.update</field>
+        <field name="sequence">170</field>
+    </record>
+    <record id="waha_webhook_event_poll_vote" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Poll Vote</field>
+        <field name="code">poll.vote</field>
+        <field name="sequence">180</field>
+    </record>
+    <record id="waha_webhook_event_poll_vote_failed" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Poll Vote Failed</field>
+        <field name="code">poll.vote.failed</field>
+        <field name="sequence">190</field>
+    </record>
+    <record id="waha_webhook_event_chat_archive" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Chat Archive</field>
+        <field name="code">chat.archive</field>
+        <field name="sequence">200</field>
+    </record>
+    <record id="waha_webhook_event_call_received" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Call Received</field>
+        <field name="code">call.received</field>
+        <field name="sequence">210</field>
+    </record>
+    <record id="waha_webhook_event_call_accepted" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Call Accepted</field>
+        <field name="code">call.accepted</field>
+        <field name="sequence">220</field>
+    </record>
+    <record id="waha_webhook_event_call_rejected" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Call Rejected</field>
+        <field name="code">call.rejected</field>
+        <field name="sequence">230</field>
+    </record>
+    <record id="waha_webhook_event_label_upsert" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Label Upsert</field>
+        <field name="code">label.upsert</field>
+        <field name="sequence">240</field>
+    </record>
+    <record id="waha_webhook_event_label_deleted" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Label Deleted</field>
+        <field name="code">label.deleted</field>
+        <field name="sequence">250</field>
+    </record>
+    <record id="waha_webhook_event_label_chat_added" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Label Chat Added</field>
+        <field name="code">label.chat.added</field>
+        <field name="sequence">260</field>
+    </record>
+    <record id="waha_webhook_event_label_chat_deleted" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Label Chat Deleted</field>
+        <field name="code">label.chat.deleted</field>
+        <field name="sequence">270</field>
+    </record>
+    <record id="waha_webhook_event_event_response" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Event Response</field>
+        <field name="code">event.response</field>
+        <field name="sequence">280</field>
+    </record>
+    <record id="waha_webhook_event_event_response_failed" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Event Response Failed</field>
+        <field name="code">event.response.failed</field>
+        <field name="sequence">290</field>
+    </record>
+    <record id="waha_webhook_event_engine_event" model="mail.gateway.whatsapp_waha.webhook_event">
+        <field name="name">Engine Event</field>
+        <field name="code">engine.event</field>
+        <field name="sequence">300</field>
+    </record>
+</odoo>

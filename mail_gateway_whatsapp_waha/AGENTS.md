@@ -18,7 +18,12 @@ Gateway WhatsApp via WAHA.
 - `token` e usado como API key da WAHA (header `X-Api-Key`).
 - `waha_api_url` deve ser o base URL (sem barra final).
 - `waha_session` default e `default` (WAHA Core suporta apenas esta sessao).
-- Webhook inbound suporta apenas evento `message` (texto).
+- Webhook inbound suporta `message`/`message.any` e `engine.event` com
+  `payload.event=message_create` (texto).
+- WAHA envia timestamps em epoch (segundos/ms); normalize para `datetime`
+  no provider para evitar falhas no common.
+- Eventos de webhook podem ser configurados no Settings do gateway, mas eventos fora
+  de `message`/`message.any` e `engine.event(message_create)` ainda sao ignorados pelo provider.
 - `webhook_secret` vira HMAC SHA-256 (`X-Webhook-Hmac`) nos webhooks.
 - Common e o unico ponto de conexao com o Odoo; este modulo nao escreve no Odoo.
 - Outbound e' roteado pelo common; este modulo so implementa `_send_outbound` (API externa).

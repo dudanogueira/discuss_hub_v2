@@ -1,4 +1,5 @@
 from odoo import fields, models
+from odoo.addons.mail.tools.discuss import Store
 
 
 class MailMessage(models.Model):
@@ -33,6 +34,38 @@ class MailMessage(models.Model):
             "Gateway message already exists.",
         )
     ]
+
+    def _to_store(
+        self,
+        store: Store,
+        /,
+        *,
+        fields=None,
+        format_reply=True,
+        msg_vals=None,
+        for_current_user=False,
+        add_followers=False,
+        followers=None,
+    ):
+        result = super()._to_store(
+            store,
+            fields=fields,
+            format_reply=format_reply,
+            msg_vals=msg_vals,
+            for_current_user=for_current_user,
+            add_followers=add_followers,
+            followers=followers,
+        )
+        for record in self:
+            store.add(
+                record,
+                {
+                    "gateway_message_status": record.gateway_message_status,
+                    "gateway_message_status_raw": record.gateway_message_status_raw,
+                    "gateway_from_me": record.gateway_from_me,
+                },
+            )
+        return result
 
     def _message_reaction(self, content, action, partner, guest, store=None):
         res = super()._message_reaction(content, action, partner, guest, store=store)

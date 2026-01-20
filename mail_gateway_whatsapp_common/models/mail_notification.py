@@ -1,10 +1,17 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 from odoo import models
+from odoo.addons.mail.tools.discuss import Store
 
 
 class MailNotification(models.Model):
     _inherit = "mail.notification"
+
+    def _to_store(self, store: Store, /):
+        result = super()._to_store(store)
+        for record in self:
+            store.add(record, {"is_read": record.is_read})
+        return result
 
     def send_gateway(self, auto_commit=False, raise_exception=False, parse_mode="HTML"):
         common = self.env["mail.gateway.whatsapp.common"]

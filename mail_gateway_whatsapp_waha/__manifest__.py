@@ -9,6 +9,8 @@
     "website": "https://github.com/lcsztl/discuss_hub",
     "depends": ["mail_gateway", "mail_gateway_whatsapp_common"],
     "data": [
+        "security/ir.model.access.csv",
+        "data/waha_webhook_event.xml",
         "views/mail_gateway_waha.xml",
     ],
     "installable": True,

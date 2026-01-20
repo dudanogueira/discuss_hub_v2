@@ -9,6 +9,27 @@
                 <field name="waha_api_url" invisible="gateway_type != 'whatsapp_waha'" />
                 <field name="waha_session" invisible="gateway_type != 'whatsapp_waha'" />
             </field>
+            <notebook position="inside">
+                <page string="Settings" invisible="gateway_type != 'whatsapp_waha'">
+                    <group string="Webhook">
+                        <group>
+                            <button
+                                name="action_select_all_waha_webhook_events"
+                                type="object"
+                                string="Mark All"
+                                class="btn-secondary"
+                            />
+                            <button
+                                name="action_clear_waha_webhook_events"
+                                type="object"
+                                string="Unmark All"
+                                class="btn-secondary"
+                            />
+                        </group>
+                        <field name="waha_webhook_event_ids" widget="many2many_checkboxes" />
+                    </group>
+                </page>
+            </notebook>
         </field>
     </record>
 </odoo>

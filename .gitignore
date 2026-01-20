@@ -14,5 +14,5 @@ node_modules/
 .mypy_cache/
 .ruff_cache/
 
-# Local-only dev environment notes
-AGENTS.local.md
+
+*.md

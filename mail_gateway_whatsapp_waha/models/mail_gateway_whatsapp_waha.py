@@ -4,6 +4,7 @@ import hashlib
 import hmac
 import logging
 import re
+from datetime import datetime
 
 import requests
 
@@ -35,12 +36,16 @@ class MailGatewayWhatsappWaha(models.AbstractModel):
         return response
 
     def _receive_update(self, gateway, update):
-        canonical_event = self._normalize_event(update)
-        if not canonical_event:
-            return {"status": "ignored", "reason": "event_not_supported"}
         payload = update.get("payload") or {}
         if isinstance(payload, list):
             payload = payload[0] if payload else {}
+        canonical_event = self._normalize_event(update, payload)
+        if not canonical_event:
+            return {"status": "ignored", "reason": "event_not_supported"}
+        if update.get("event") == "engine.event" and isinstance(payload, dict):
+            payload = payload.get("data") or {}
+            if isinstance(payload, list):
+                payload = payload[0] if payload else {}
         if not payload:
             return {"status": "ignored", "reason": "missing_payload"}
         dto = self._build_message_dto(update, gateway, payload, canonical_event)
@@ -169,14 +174,19 @@ class MailGatewayWhatsappWaha(models.AbstractModel):
             return f"{digits}@c.us"
         return chat_id
 
-    def _normalize_event(self, update):
+    def _normalize_event(self, update, payload=None):
         event = (update.get("event") or "").strip().lower()
         if event in ("message", "message.any"):
             return "message.upsert"
+        if event == "engine.event":
+            engine_event = (payload or {}).get("event") or ""
+            engine_event = engine_event.strip().lower()
+            if engine_event in ("message_create", "message"):
+                return "message.upsert"
         return None
 
     def _build_message_dto(self, update, gateway, payload, canonical_event):
-        message_id = (payload.get("id") or "").strip()
+        message_id = self._extract_message_id(payload)
         from_me = bool(payload.get("fromMe"))
         chat_id = self._get_chat_id(payload, from_me)
         if not message_id or not chat_id:
@@ -196,13 +206,52 @@ class MailGatewayWhatsappWaha(models.AbstractModel):
             sender_jid=sender_jid,
             sender_participant_jid=sender_participant,
             sender_name=self._get_sender_name(payload),
-            timestamp=payload.get("timestamp") or update.get("timestamp"),
+            timestamp=self._coerce_timestamp(
+                payload.get("timestamp") or update.get("timestamp")
+            ),
             message_type=self._get_message_type(payload),
             text=payload.get("body"),
             quote_id=reply_to.get("id"),
             quote_text=reply_to.get("body"),
             raw=update,
         )
+
+    def _coerce_timestamp(self, value):
+        if value is None:
+            return None
+        if isinstance(value, (int, float)):
+            if value > 1e11:
+                value = value / 1000.0
+            return datetime.utcfromtimestamp(value)
+        if isinstance(value, str):
+            value = value.strip()
+            if not value:
+                return None
+            if value.isdigit():
+                numeric = int(value)
+                if numeric > 1e11:
+                    numeric = numeric / 1000.0
+                return datetime.utcfromtimestamp(numeric)
+        return value
+
+    def _extract_message_id(self, payload):
+        if not isinstance(payload, dict):
+            return False
+        candidates = [
+            payload.get("id"),
+            (payload.get("_data") or {}).get("id"),
+        ]
+        for candidate in candidates:
+            if isinstance(candidate, dict):
+                for key in ("_serialized", "id"):
+                    value = candidate.get(key)
+                    if value:
+                        return value
+            elif isinstance(candidate, str):
+                value = candidate.strip()
+                if value:
+                    return value
+        return False
 
     def _get_chat_id(self, payload, from_me):
         if from_me:
@@ -243,13 +292,13 @@ class MailGatewayWhatsappWaha(models.AbstractModel):
                     return candidate
         return False
 
-    def _get_webhook_events(self):
-        return ["message"]
+    def _get_webhook_events(self, gateway):
+        return gateway._get_waha_webhook_events()
 
     def _build_webhook_config(self, gateway):
         webhook = {
             "url": gateway._get_webhook_url(),
-            "events": self._get_webhook_events(),
+            "events": self._get_webhook_events(gateway),
         }
         if gateway.webhook_secret:
             webhook["hmac"] = {"key": gateway.webhook_secret}

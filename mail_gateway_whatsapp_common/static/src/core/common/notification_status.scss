@@ -1,0 +1,16 @@
+.o-whatsapp-check-double {
+    position: relative;
+}
+
+.o-whatsapp-check-double::after {
+    content: "\f00c";
+    font-family: "FontAwesome";
+    position: absolute;
+    left: 0.45em;
+    top: 0;
+}
+
+.o-whatsapp-status-icon {
+    font-size: 0.85em;
+    margin-left: 0.25rem;
+}

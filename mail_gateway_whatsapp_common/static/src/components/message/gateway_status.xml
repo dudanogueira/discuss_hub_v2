@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+    <t t-inherit="mail.Message" t-inherit-mode="extension">
+        <xpath expr="//div[@name='header']/span[contains(@class, 'o-mail-Message-author')]" position="after">
+            <t t-if="message.gatewayStatusIcon">
+                <i
+                    t-att-class="message.gatewayStatusIcon + ' o-whatsapp-status-icon'"
+                    t-att-title="message.gatewayStatusTitle"
+                    role="img"
+                />
+            </t>
+        </xpath>
+    </t>
+</templates>

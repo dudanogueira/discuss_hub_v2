@@ -113,6 +113,7 @@ docker compose restart odoo
 - Em listas, use `column_invisible="condition"` quando precisar controlar colunas.
 - Attachments em `message_post` devem ser bytes (nao base64).
 - Para audio, passe info `{"voice": True}` nas attachments para criar `discuss.voice.metadata`.
+- Checks de envio/leitura no Discuss usam `mail.notification` (status + `is_read`) para gateways WhatsApp.
 - Reacoes criadas via webhook precisam chamar `_bus_send_reaction_group` para atualizar UI em tempo real.
 - Reacoes feitas no Odoo (UI) disparam `_message_reaction` e devem ser enviadas ao provider (sendReaction).
 
@@ -141,6 +142,8 @@ Recomendacao para inbox/routing
   O database deve ser fixo no `odoo.conf`.
 - Para WAHA, o webhook e configurado via API de sessao (events `message`) e
   valida HMAC quando `webhook_secret` estiver definido (header `X-Webhook-Hmac`).
+- Para WAHA (WEBJS), mensagens inbound podem chegar como `engine.event` com
+  `payload.event=message_create`; o provider deve usar `payload.data`.
 
 ## Evolution API references (repo)
 
@@ -156,6 +159,11 @@ Use estes arquivos como referencia de payloads e endpoints:
 - https://www.postman.com/agenciadgcode/evolution-api/collection/nm0wqgt/evolution-api-v2-3
 - https://doc.evolution-api.com/v2/api-reference/get-information
 
+## WAHA references
+
+- https://waha.devlike.pro/
+- https://github.com/devlikeapro/waha
+
 ## Evolution API (local)
 
 - A Evolution API roda no mesmo servidor via Docker.
@@ -164,6 +172,15 @@ Use estes arquivos como referencia de payloads e endpoints:
 - Evolution API Manager auto-remove `/manager` ao salvar a Base URL (para evitar erro de JSON).
 - Webhooks podem enviar `data` como lista; processe item a item.
 - Outbound `sendMedia` requer base64 em string; `attachment.datas` em bytes quebra o JSON.
+
+## WAHA (local)
+
+- WAHA roda no mesmo servidor via Docker (container `waha`, imagem `devlikeapro/waha:latest`, porta 3000).
+- Base URL atual (Traefik): `https://waha.soloz.com.br` (ajuste se mudar).
+- Credenciais ficam nas env vars do container (`WAHA_API_KEY`, `WAHA_DASHBOARD_USERNAME`, `WAHA_DASHBOARD_PASSWORD`); nao registrar em repo.
+- Sessao principal: `default` (WAHA Core).
+- Bug observado: `_get_webhook_url` do OCA pode duplicar `/gateway/.../update` quando `webhook_url` ja esta preenchido no cache; WAHA acaba com URL repetida.
+  - Fix local: override em `mail_gateway_whatsapp_waha` para usar `web.base.url` como base.
 
 ## Guia por addon (o que preservar)
 

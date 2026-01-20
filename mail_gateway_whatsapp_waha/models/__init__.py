@@ -2,3 +2,4 @@
 
 from . import mail_gateway
 from . import mail_gateway_whatsapp_waha
+from . import waha_webhook_event

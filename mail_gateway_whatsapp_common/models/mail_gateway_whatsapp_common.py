@@ -56,6 +56,8 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
             return {"status": "ignored", "reason": "missing_chat_id"}
         message_key = self._build_message_key(gateway, dto)
         existing = self._find_existing_message(gateway, dto, message_key=message_key)
+        status_raw = (dto.status_raw or dto.status or "").strip()
+        normalized = self._normalize_status(status_raw)
         if existing:
             update_vals = {}
             webhook_log_id = self.env.context.get("gateway_webhook_log_id")
@@ -84,6 +86,12 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
                 "gateway_quote_external_id": (dto.quote_id or "").strip() or False,
                 "gateway_quote_text": dto.quote_text,
             }
+            if status_raw and "gateway_message_status_raw" in existing._fields:
+                if existing.gateway_message_status_raw != status_raw:
+                    update_vals["gateway_message_status_raw"] = status_raw
+            if normalized and "gateway_message_status" in existing._fields:
+                if self._should_update_status(existing.gateway_message_status, normalized):
+                    update_vals["gateway_message_status"] = normalized
             # Backfill metadata only when missing to keep idempotent updates cheap.
             for field_name, value in backfill_values.items():
                 if field_name not in existing._fields:
@@ -141,6 +149,10 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
             "gateway_quote_external_id": (dto.quote_id or "").strip() or False,
             "gateway_quote_text": dto.quote_text,
         }
+        if status_raw and "gateway_message_status_raw" in self.env["mail.message"]._fields:
+            msg_kwargs["gateway_message_status_raw"] = status_raw
+        if normalized and "gateway_message_status" in self.env["mail.message"]._fields:
+            msg_kwargs["gateway_message_status"] = normalized
         webhook_log_id = self.env.context.get("gateway_webhook_log_id")
         if webhook_log_id and "gateway_webhook_log_id" in self.env["mail.message"]._fields:
             msg_kwargs["gateway_webhook_log_id"] = webhook_log_id
@@ -314,6 +326,9 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         updated_notifications = self._update_gateway_notification_status(
             gateway, message_id, normalized, status_raw
         )
+        if message and (updated_message or updated_notifications):
+            if hasattr(message, "_notify_message_notification_update"):
+                message._notify_message_notification_update()
         if updated_message or updated_notifications:
             return {
                 "status": "ok",
@@ -569,6 +584,15 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
             update_vals["gateway_sender_name"] = sender_name
         mail_message.write(update_vals)
         record.sudo().write({"gateway_message_id": message_id})
+
+    def _mark_outbound_message_status(self, record, status):
+        mail_message = record.mail_message_id.sudo() if record else False
+        if not mail_message or "gateway_message_status" not in mail_message._fields:
+            return
+        current = mail_message.gateway_message_status
+        if current:
+            return
+        mail_message.write({"gateway_message_status": status})
 
     def _ensure_guest_member(self, channel, author):
         """Ensure a guest author is a member of the channel."""
@@ -862,12 +886,18 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         status = (status_raw or "").strip().lower()
         if not status:
             return False
-        compact = status.replace("_", "").replace(" ", "")
+        compact = status.replace("_", "").replace(" ", "").replace("-", "")
         if compact in {"read", "readself", "seen"}:
+            return "read"
+        if compact in {"readack"}:
             return "read"
         if compact in {"delivered"}:
             return "delivered"
+        if compact in {"deliveryack"}:
+            return "delivered"
         if compact in {"sent"}:
+            return "sent"
+        if compact in {"serverack"}:
             return "sent"
         if compact in {"failed", "error", "exception", "canceled", "cancelled"}:
             return "failed"

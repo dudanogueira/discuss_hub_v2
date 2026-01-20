@@ -11,5 +11,13 @@
     "data": [
         "views/mail_guest_views.xml",
     ],
+    "assets": {
+        "web.assets_backend": [
+            "mail_gateway_whatsapp_common/static/src/core/common/message_model_patch.esm.js",
+            "mail_gateway_whatsapp_common/static/src/core/common/notification_model_patch.esm.js",
+            "mail_gateway_whatsapp_common/static/src/core/common/notification_status.scss",
+            "mail_gateway_whatsapp_common/static/src/components/message/gateway_status.xml",
+        ],
+    },
     "installable": True,
 }
