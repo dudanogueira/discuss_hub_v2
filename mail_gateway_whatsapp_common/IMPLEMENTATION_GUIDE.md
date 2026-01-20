@@ -61,6 +61,7 @@ Este documento guia o passo a passo da implementacao. Atualize apos cada etapa.
   - Teste: arquivo abre no discuss
 - [x] Etapa 4 - reaction.upsert / reaction.delete
   - Vincular reacao ao autor correto
+  - Disparar `_bus_send_reaction_group` para atualizar UI
   - Teste: reacao aparece e some
 - [x] Etapa 5 - message.status
   - Atualizar status (sent/delivered/read/failed)
@@ -72,6 +73,9 @@ Este documento guia o passo a passo da implementacao. Atualize apos cada etapa.
   - mail.notification.send_gateway roteia para o common
   - common cria OutboundPayload e delega `_send_outbound` do provider
   - provider envia para API externa; common atualiza mail.message/mail.notification
+- [x] Etapa 8 - outbound reactions (UI)
+  - Override de `_message_reaction` no common para enviar reaction ao provider
+  - Provider Evolution usa `/message/sendReaction`
 
 ## Observacoes
 - Manter o common independente de API externa.

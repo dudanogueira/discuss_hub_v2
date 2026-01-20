@@ -33,3 +33,30 @@ class MailMessage(models.Model):
             "Gateway message already exists.",
         )
     ]
+
+    def _message_reaction(self, content, action, partner, guest, store=None):
+        res = super()._message_reaction(content, action, partner, guest, store=store)
+        if self.env.context.get("gateway_reaction_inbound"):
+            return res
+        for message in self:
+            if not message.gateway_type or not message.gateway_message_external_id:
+                continue
+            if message.model != "discuss.channel" or not message.res_id:
+                continue
+            channel = self.env["discuss.channel"].browse(message.res_id)
+            gateway = channel.gateway_id if channel else False
+            if not gateway or gateway.gateway_type != message.gateway_type:
+                continue
+            chat_id = message.gateway_chat_id or channel.gateway_channel_token
+            instance = message.gateway_instance
+            common = self.env["mail.gateway.whatsapp.common"]
+            common._send_reaction_outbound(
+                gateway,
+                message=message,
+                reaction=content,
+                action=action,
+                chat_id=chat_id,
+                message_external_id=message.gateway_message_external_id,
+                instance=instance,
+            )
+        return res

@@ -202,7 +202,9 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         if not author:
             return {"status": "ignored", "reason": "author_not_found"}
 
-        reaction_model = self.env["mail.message.reaction"].sudo()
+        reaction_model = self.env["mail.message.reaction"].sudo().with_context(
+            gateway_reaction_inbound=True
+        )
         domain = [("message_id", "=", message.id), ("content", "=", reaction)]
         if author._name == "mail.guest":
             domain.append(("guest_id", "=", author.id))
@@ -210,6 +212,7 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
             domain.append(("partner_id", "=", author.id))
         existing = reaction_model.search(domain, limit=1)
         if existing:
+            self._notify_reaction_change(message, reaction)
             return {"status": "duplicate", "reaction_id": existing.id, "message_id": message.id}
 
         vals = {"message_id": message.id, "content": reaction}
@@ -226,6 +229,7 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
                 return {"status": "duplicate", "reaction_id": existing.id, "message_id": message.id}
             raise
 
+        self._notify_reaction_change(message, reaction)
         return {"status": "ok", "reaction_id": new_reaction.id, "message_id": message.id}
 
     def _handle_reaction_delete(self, gateway, dto, channel, author=None):
@@ -247,7 +251,9 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         if not author:
             return {"status": "ignored", "reason": "author_not_found"}
 
-        reaction_model = self.env["mail.message.reaction"].sudo()
+        reaction_model = self.env["mail.message.reaction"].sudo().with_context(
+            gateway_reaction_inbound=True
+        )
         domain = [("message_id", "=", message.id)]
         if author._name == "mail.guest":
             domain.append(("guest_id", "=", author.id))
@@ -260,9 +266,20 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         reactions = reaction_model.search(domain)
         if not reactions:
             return {"status": "ignored", "reason": "reaction_not_found"}
+        contents = set(reactions.mapped("content"))
+        if reaction:
+            contents.add(reaction)
         count = len(reactions)
-        reactions.unlink()
+        reactions.with_context(gateway_reaction_inbound=True).unlink()
+        for content in contents:
+            self._notify_reaction_change(message, content)
         return {"status": "ok", "message_id": message.id, "deleted": count}
+
+    def _notify_reaction_change(self, message, content):
+        if not message or not content:
+            return
+        if hasattr(message, "_bus_send_reaction_group"):
+            message._bus_send_reaction_group(content)
 
     def _handle_message_status(self, gateway, dto, channel, author=None):
         """Update delivery/read status for a gateway message."""
@@ -380,6 +397,42 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         if auto_commit:
             record._cr.commit()
         return result or {"status": "sent"}
+
+    def _send_reaction_outbound(
+        self,
+        gateway,
+        message,
+        reaction,
+        action,
+        chat_id=None,
+        message_external_id=None,
+        instance=None,
+    ):
+        if not gateway or not message or not reaction:
+            return {"status": "ignored", "reason": "missing_payload"}
+        provider = self._get_outbound_provider(gateway)
+        if provider is False:
+            return {"status": "ignored", "reason": "provider_not_supported"}
+        message_external_id = message_external_id or message.gateway_message_external_id
+        chat_id = chat_id or message.gateway_chat_id
+        instance = instance or message.gateway_instance
+        if not message_external_id or not chat_id:
+            return {"status": "ignored", "reason": "missing_target"}
+        if not hasattr(provider, "_send_reaction_outbound"):
+            return {"status": "ignored", "reason": "provider_no_reaction"}
+        try:
+            return provider._send_reaction_outbound(
+                gateway,
+                message=message,
+                reaction=reaction,
+                action=action,
+                chat_id=chat_id,
+                message_external_id=message_external_id,
+                instance=instance,
+            )
+        except Exception as exc:
+            self._logger.exception("Unable to send gateway reaction")
+            return {"status": "exception", "error": str(exc)}
 
     def _handle_outbound_failure(self, record, reason, raise_exception):
         message = self._format_outbound_failure(reason)

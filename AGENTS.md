@@ -113,6 +113,8 @@ docker compose restart odoo
 - Em listas, use `column_invisible="condition"` quando precisar controlar colunas.
 - Attachments em `message_post` devem ser bytes (nao base64).
 - Para audio, passe info `{"voice": True}` nas attachments para criar `discuss.voice.metadata`.
+- Reacoes criadas via webhook precisam chamar `_bus_send_reaction_group` para atualizar UI em tempo real.
+- Reacoes feitas no Odoo (UI) disparam `_message_reaction` e devem ser enviadas ao provider (sendReaction).
 
 ## Insight: aba "Privacidade" em `discuss.channel` (Odoo core)
 
@@ -202,6 +204,7 @@ Use estes arquivos como referencia de payloads e endpoints:
 - Eventos canonicos no common: message.upsert, message.status, reaction.upsert, reaction.delete, message.delete (provider mapeia).
 - Contato padrao: usar `mail.guest` e promover para `res.partner` quando vincular.
 - Infra padrao: usar `mail.gateway` + `mail.notification` para id externo e status.
+- Ao criar canal, o common adiciona `gateway.member_ids` como membros (`_build_channel_members`). Evite usar `gateway.member_ids` como "time" se nao quiser auto-incluir todos nos canais.
 
 ### `mail_gateway_whatsapp_evolution_api`
 

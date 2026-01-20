@@ -133,6 +133,18 @@ class MailGatewayWhatsappWaha(models.AbstractModel):
             "responses": [message] if message else [],
         }
 
+    def _send_reaction_outbound(
+        self,
+        gateway,
+        message,
+        reaction,
+        action,
+        chat_id=None,
+        message_external_id=None,
+        instance=None,
+    ):
+        return {"status": "ignored", "reason": "reaction_not_supported"}
+
     def _ensure_gateway_ready(self, gateway):
         if not gateway.waha_api_url or not gateway.token:
             raise UserError(_("WAHA API URL and API key are required."))

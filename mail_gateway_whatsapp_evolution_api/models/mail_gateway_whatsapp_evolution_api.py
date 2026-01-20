@@ -518,6 +518,44 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             "responses": responses,
         }
 
+    def _send_reaction_outbound(
+        self,
+        gateway,
+        message,
+        reaction,
+        action,
+        chat_id=None,
+        message_external_id=None,
+        instance=None,
+    ):
+        self._ensure_gateway_ready(gateway)
+        instance = instance or self._instance_name(gateway)
+        chat_id = chat_id or message.gateway_chat_id
+        message_external_id = message_external_id or message.gateway_message_external_id
+        if not chat_id or not message_external_id:
+            return {"status": "ignored", "reason": "missing_target"}
+        payload = {
+            "key": {
+                "remoteJid": chat_id,
+                "fromMe": True,
+                "id": message_external_id,
+            },
+            "reaction": reaction if action == "add" else "",
+        }
+        response = self._send_api_request(
+            gateway,
+            "POST",
+            f"/message/sendReaction/{instance}",
+            payload,
+        )
+        return {
+            "status": "sent",
+            "instance": instance,
+            "chat_id": chat_id,
+            "message_id": message_external_id,
+            "response": response,
+        }
+
     def _ensure_gateway_ready(self, gateway):
         if not gateway.evolution_api_url or not gateway.token:
             raise UserError(_("Evolution API URL and token are required."))
