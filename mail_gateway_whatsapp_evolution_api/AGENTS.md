@@ -34,6 +34,14 @@ Gateway WhatsApp via Evolution API.
   payload nao traz `subject/desc/picture` e o canal local esta incompleto
   (nome fallback, nome igual ao sender, descricao ou imagem vazias). A consulta
   so acontece em `message.upsert`.
+- Campos de id no webhook (Evolution):
+  - `messages.upsert`: `data.key.remoteJid` (jid), `data.key.remoteJidAlt` (pode ser `@lid`),
+    `data.key.participant` (pode ser `@lid`) e `data.key.participantAlt` (jid quando presente).
+  - `messages.update`: `data.remoteJid` pode vir como `@lid`.
+  - `contacts.update`/`chats.*`: `data.remoteJid` ou `data[0].remoteJid` (jid).
+  - `connection.update`: `data.wuid` (jid).
+- Prioridade de sender JID: preferir JIDs com `@s.whatsapp.net`/`@c.us`, depois `@lid`,
+  e por ultimo `@g.us`. Isso evita salvar `@lid` quando existe `participantAlt` valido.
 
 ## Arquivos principais
 

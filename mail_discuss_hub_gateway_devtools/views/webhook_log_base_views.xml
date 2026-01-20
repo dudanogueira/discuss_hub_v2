@@ -5,6 +5,7 @@
         <field name="model">mail.gateway.webhook.log</field>
         <field name="arch" type="xml">
             <list string="Webhook Logs">
+                <field name="id" />
                 <field name="create_date" />
                 <field name="gateway_id" />
                 <field name="direction" />
@@ -22,6 +23,9 @@
         <field name="model">mail.gateway.webhook.log</field>
         <field name="arch" type="xml">
             <form string="Webhook Log">
+                <header>
+                    <button name="action_replay_webhook" type="object" string="Replay Webhook" class="btn-primary"/>
+                </header>
                 <sheet>
                     <group>
                         <field name="gateway_id" />

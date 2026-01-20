@@ -77,9 +77,17 @@ class CleanupWizard(models.TransientModel):
         channel_ids = channels.ids
 
         counts = {}
+        guest_ids = []
+        Member = env["discuss.channel.member"]
+        member_domain = [("channel_id", "in", channel_ids)]
+        if self.clear_guests:
+            guest_ids = (
+                Member.search(member_domain)
+                .filtered(lambda m: m.guest_id)
+                .mapped("guest_id")
+                .ids
+            )
         if self.clear_members:
-            Member = env["discuss.channel.member"]
-            member_domain = [("channel_id", "in", channel_ids)]
             counts["members"] = Member.search_count(member_domain)
             Member.search(member_domain).unlink()
 
@@ -97,16 +105,22 @@ class CleanupWizard(models.TransientModel):
 
         if self.clear_guests:
             Guest = env["mail.guest"]
-            guest_domain = [("id", "=", 0)]
+            guest_domain = [("id", "in", guest_ids)] if guest_ids else []
             gateway_ids = channels.mapped("gateway_id").ids
             tokens = channels.mapped("gateway_channel_token")
+            gateway_domain = []
             if gateway_ids and tokens:
-                guest_domain = [
+                gateway_domain = [
+                    "|",
                     ("gateway_id", "in", gateway_ids),
                     ("gateway_token", "in", tokens),
                 ]
             elif gateway_ids:
-                guest_domain = [("gateway_id", "in", gateway_ids)]
+                gateway_domain = [("gateway_id", "in", gateway_ids)]
+            if guest_domain and gateway_domain:
+                guest_domain = ["|"] + guest_domain + gateway_domain
+            elif not guest_domain:
+                guest_domain = gateway_domain or [("id", "=", 0)]
             counts["guests"] = Guest.search_count(guest_domain)
             Guest.search(guest_domain).unlink()
 

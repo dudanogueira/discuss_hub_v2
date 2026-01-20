@@ -24,10 +24,13 @@ Gateway WhatsApp via WAHA.
   no provider para evitar falhas no common.
 - Eventos de webhook podem ser configurados no Settings do gateway, mas eventos fora
   de `message`/`message.any` e `engine.event(message_create)` ainda sao ignorados pelo provider.
+- WAHA pode enviar `engine.event` com remetente em `@lid` (sem numero). Nesse caso,
+  o telefone nao vem no payload; use API de contatos da WAHA para resolver o `lid`
+  (ou aceite `@lid` como id externo).
 - `webhook_secret` vira HMAC SHA-256 (`X-Webhook-Hmac`) nos webhooks.
 - Common e o unico ponto de conexao com o Odoo; este modulo nao escreve no Odoo.
 - Outbound e' roteado pelo common; este modulo so implementa `_send_outbound` (API externa).
 - Anexos/medias ainda nao suportados no envio nem no inbound.
 - Devtools e opcional e nunca deve ser dependencia de modulo algum.
-- Gateway lookup para WAHA evita cache do OCA (`_get_gateway`) para nao falhar com
-  "Gateway was not found" em webhooks.
+- Fix generico para cache de `_get_gateway_map` fica no addon
+  `mail_gateway_fix`.

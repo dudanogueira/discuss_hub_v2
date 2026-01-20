@@ -3,9 +3,20 @@
     <record id="mail_guest_view_form_whatsapp_common" model="ir.ui.view">
         <field name="name">mail.guest.view.form.whatsapp.common</field>
         <field name="model">mail.guest</field>
-        <field name="inherit_id" ref="mail_gateway.mail_guest_view_form" />
+        <field name="inherit_id" ref="mail.mail_guest_view_form" />
         <field name="arch" type="xml">
-            <field name="gateway_token" position="after">
+            <field name="name" position="after">
+                <field name="gateway_phone" readonly="1" />
+            </field>
+        </field>
+    </record>
+
+    <record id="mail_guest_view_tree_whatsapp_common" model="ir.ui.view">
+        <field name="name">mail.guest.view.tree.whatsapp.common</field>
+        <field name="model">mail.guest</field>
+        <field name="inherit_id" ref="mail.mail_guest_view_tree" />
+        <field name="arch" type="xml">
+            <field name="name" position="after">
                 <field name="gateway_phone" readonly="1" />
             </field>
         </field>

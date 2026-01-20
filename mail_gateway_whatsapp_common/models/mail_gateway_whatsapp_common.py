@@ -361,6 +361,14 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         if "gateway_deleted_at" in message._fields:
             update_vals["gateway_deleted_at"] = fields.Datetime.now()
         message.sudo().write(update_vals)
+        if hasattr(message, "_bus_send_store"):
+            message._bus_send_store(
+                message,
+                {
+                    "body": message.body,
+                    "write_date": message.write_date,
+                },
+            )
         return {"status": "ok", "message_id": message.id}
 
     # -------------------------------------------------------------------------
@@ -765,7 +773,7 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
             return {"status": "ignored", "reason": "group_contact_ignored"}
         if not dto.chat_id:
             dto.chat_id = contact_jid
-        guest = self._find_guest_by_tokens(gateway, dto)
+        guest = self._find_guest_by_phone(dto)
         if not guest:
             if not dto.contact_name:
                 return {"status": "ignored", "reason": "guest_not_found"}
@@ -984,18 +992,18 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
     def _build_deleted_body(self, body):
         body_text = str(body or "")
         if not body_text:
-            return Markup("<p><s>This message was deleted</s></p>")
+            return Markup("<p><s>This message was deleted</s> <em>(mensagem apagada)</em></p>")
         if "<s>" in body_text or "<del>" in body_text:
             return body_text
         updated = re.sub(
             r"(<p[^>]*>)(.*?)(</p>)",
-            lambda m: f"{m.group(1)}<s>{m.group(2)}</s>{m.group(3)}",
+            lambda m: f"{m.group(1)}<s>{m.group(2)}</s> <em>(mensagem apagada)</em>{m.group(3)}",
             body_text,
             flags=re.DOTALL,
         )
         if updated != body_text:
             return Markup(updated)
-        return Markup(f"<p><s>{body_text}</s></p>")
+        return Markup(f"<p><s>{body_text}</s> <em>(mensagem apagada)</em></p>")
 
     def _resolve_author(self, gateway, dto):
         """Resolve the author as a partner (outbound) or guest (inbound)."""
@@ -1005,37 +1013,48 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         return self._get_or_create_guest(gateway, dto)
 
     def _get_or_create_guest(self, gateway, dto):
-        """Find or create a mail.guest using gateway identifiers."""
+        """Find or create a mail.guest using a canonical phone identifier."""
         token_candidates = self._get_guest_token_candidates(dto)
-        if not token_candidates:
+        phone = self._get_guest_phone(dto, token_candidates=token_candidates)
+        if not phone:
             return False
-        primary_token = token_candidates[0]
+        primary_token = token_candidates[0] if token_candidates else False
         guest_model = self.env["mail.guest"].sudo()
-        guest = self._find_guest_by_tokens(gateway, dto, token_candidates)
-        if guest and guest.gateway_token != primary_token:
-            guest.write({"gateway_token": primary_token})
+        guest = self._find_guest_by_phone(dto, phone=phone)
         name = self._get_guest_name(dto)
         if guest:
+            update_vals = {}
             if name and guest.name != name:
-                guest.write({"name": name})
+                update_vals["name"] = name
+            if primary_token and "gateway_token" in guest._fields:
+                if guest.gateway_token != primary_token:
+                    update_vals["gateway_token"] = primary_token
+            if "gateway_phone" in guest._fields and not guest.gateway_phone:
+                update_vals["gateway_phone"] = phone
+            if update_vals:
+                guest.write(update_vals)
             return guest
-        return guest_model.create(
-            {
-                "name": name,
-                "gateway_id": gateway.id,
-                "gateway_token": primary_token,
-            }
-        )
+        create_vals = {"name": name, "gateway_phone": phone}
+        if primary_token and "gateway_token" in guest_model._fields:
+            create_vals["gateway_token"] = primary_token
+        return guest_model.create(create_vals)
 
-    def _find_guest_by_tokens(self, gateway, dto, tokens=None):
-        token_candidates = tokens or self._get_guest_token_candidates(dto)
-        if not token_candidates:
+    def _find_guest_by_phone(self, dto, phone=None):
+        phone = phone or self._get_guest_phone(dto)
+        if not phone:
             return False
         guest_model = self.env["mail.guest"].sudo()
-        return guest_model.search(
-            [("gateway_id", "=", gateway.id), ("gateway_token", "in", token_candidates)],
-            limit=1,
-        )
+        if "gateway_phone" not in guest_model._fields:
+            return False
+        return guest_model.search([("gateway_phone", "=", phone)], limit=1)
+
+    def _get_guest_phone(self, dto, token_candidates=None):
+        token_candidates = token_candidates or self._get_guest_token_candidates(dto)
+        for token in token_candidates:
+            phone = self._normalize_phone_token(token)
+            if phone:
+                return phone
+        return False
 
     def _get_guest_token_candidates(self, dto):
         if dto.is_group:
@@ -1050,6 +1069,15 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         if dto.chat_id:
             return [(dto.chat_id or "").strip()]
         return []
+
+    def _normalize_phone_token(self, token):
+        token = (token or "").strip()
+        if not token:
+            return False
+        if "@" in token:
+            token = token.split("@", 1)[0]
+        digits = re.sub(r"\D", "", token)
+        return digits or False
 
     def _get_guest_name(self, dto):
         if dto.sender_name:

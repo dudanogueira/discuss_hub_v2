@@ -34,3 +34,6 @@ Ferramentas tecnicas opcionais para desenvolvimento:
   para diagnostico (resultado interno e rotina acionada).
 - O replay limpa `internal_result`/`internal_routine` dos logs selecionados antes
   de reprocessar, para refletir o comportamento atual.
+- O cleanup remove `mail.guest` ligados aos canais selecionados
+  (`clear_guests` default True); prioriza membros de canal (guest_id) e faz
+  fallback por `gateway_id`/`gateway_token`.

@@ -4,7 +4,7 @@ import difflib
 import html
 import json
 
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 class MailGatewayWebhookLog(models.Model):
@@ -16,6 +16,11 @@ class MailGatewayWebhookLog(models.Model):
     )
     response_payload_pretty = fields.Text(
         compute="_compute_pretty_payloads",
+        readonly=True,
+    )
+    request_payload_search = fields.Text(
+        compute="_compute_request_payload_search",
+        search="_search_request_payload_search",
         readonly=True,
     )
     analysis_enabled = fields.Boolean(
@@ -91,6 +96,39 @@ class MailGatewayWebhookLog(models.Model):
         for record in self:
             record.request_payload_pretty = self._pretty_json(record.request_payload)
             record.response_payload_pretty = self._pretty_json(record.response_payload)
+
+    @api.depends("request_payload")
+    def _compute_request_payload_search(self):
+        for record in self:
+            record.request_payload_search = self._normalize_payload_for_search(
+                record.request_payload
+            )
+
+    def _search_request_payload_search(self, operator, value):
+        if not value:
+            return []
+        term = str(value)
+        escaped = json.dumps(term, ensure_ascii=True)[1:-1]
+        terms = {term}
+        if escaped and escaped != term:
+            terms.add(escaped)
+        domain = []
+        for idx, token in enumerate(terms):
+            domain.extend(["|" if idx else None, ("request_payload", operator, token)])
+        return [item for item in domain if item is not None]
+
+    @staticmethod
+    def _normalize_payload_for_search(raw_value):
+        if not raw_value:
+            return ""
+        try:
+            parsed = json.loads(raw_value)
+        except Exception:
+            return raw_value
+        try:
+            return json.dumps(parsed, ensure_ascii=False, sort_keys=True)
+        except Exception:
+            return raw_value
 
     def _compute_webhook_analysis(self):
         for record in self:
@@ -187,6 +225,19 @@ class MailGatewayWebhookLog(models.Model):
         self.analysis_mapping_table_html = self._build_mapping_table_html(
             payload, mapping, dto
         )
+
+    def action_replay_webhook(self):
+        self.ensure_one()
+        action = self.env.ref(
+            "mail_discuss_hub_gateway_devtools.action_webhook_replay_wizard"
+        ).read()[0]
+        action["target"] = "new"
+        action["context"] = {
+            "default_log_ids": [(6, 0, self.ids)],
+            "default_gateway_id": self.gateway_id.id if self.gateway_id else False,
+            "default_direction": self.direction or "in",
+        }
+        return action
 
     def _evolution_mapping(self, payload, gateway, dto):
         data = payload.get("data", {}) or {}

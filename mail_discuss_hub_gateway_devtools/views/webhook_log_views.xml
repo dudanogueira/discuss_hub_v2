@@ -14,6 +14,7 @@
                 <field name="internal_routine"/>
                 <field name="http_status"/>
                 <field name="create_date"/>
+                <field name="request_payload_search" string="Request Payload" filter_domain="[('request_payload_search', 'ilike', self)]"/>
                 <separator/>
                 <filter string="Inbound" name="direction_in" domain="[('direction', '=', 'in')]"/>
                 <filter string="Outbound" name="direction_out" domain="[('direction', '=', 'out')]"/>

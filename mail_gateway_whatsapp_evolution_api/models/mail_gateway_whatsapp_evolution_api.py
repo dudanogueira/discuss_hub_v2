@@ -148,6 +148,7 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
         chat_name, chat_description, chat_picture_url = self._get_group_metadata(
             update, gateway, chat_id, sender_name, dto_event
         )
+        sender_jid, sender_jid_alt, sender_participant_jid = self._extract_sender_jids(key_data)
         return NormalizedPayload(
             provider="evolution",
             instance=self._instance_name(gateway),
@@ -159,9 +160,9 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             chat_picture_url=chat_picture_url,
             is_group=is_group,
             from_me=bool(key_data.get("fromMe")),
-            sender_jid=key_data.get("participant") or key_data.get("remoteJid"),
-            sender_jid_alt=key_data.get("participantAlt") or key_data.get("remoteJidAlt"),
-            sender_participant_jid=key_data.get("participant"),
+            sender_jid=sender_jid,
+            sender_jid_alt=sender_jid_alt,
+            sender_participant_jid=sender_participant_jid,
             sender_name=sender_name,
             timestamp=message.get("messageTimestamp") or data.get("timestamp"),
             message_type=message.get("messageType")
@@ -435,6 +436,46 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             key_data.get("remoteJidAlt"),
             key_data.get("participant"),
         )
+
+    @staticmethod
+    def _extract_sender_jids(key_data):
+        participant = key_data.get("participant")
+        participant_alt = key_data.get("participantAlt")
+        remote_jid = key_data.get("remoteJid")
+        remote_jid_alt = key_data.get("remoteJidAlt")
+
+        def _jid_rank(value):
+            value = str(value or "")
+            if value.endswith("@s.whatsapp.net") or value.endswith("@c.us"):
+                return 3
+            if value.endswith("@lid"):
+                return 2
+            if value.endswith("@g.us"):
+                return 1
+            return 0
+
+        def _pick_best(candidates):
+            best = None
+            best_rank = -1
+            for candidate in candidates:
+                if not candidate:
+                    continue
+                rank = _jid_rank(candidate)
+                if rank > best_rank:
+                    best = candidate
+                    best_rank = rank
+            return best
+
+        sender_jid = _pick_best([participant_alt, participant]) or _pick_best(
+            [remote_jid_alt, remote_jid]
+        )
+        alt_candidates = [
+            candidate
+            for candidate in [participant_alt, participant, remote_jid_alt, remote_jid]
+            if candidate and candidate != sender_jid
+        ]
+        sender_jid_alt = _pick_best(alt_candidates)
+        return sender_jid, sender_jid_alt, participant
 
     # -------------------------------------------------------------------------
     # Outgoing
