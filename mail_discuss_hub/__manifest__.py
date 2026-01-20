@@ -16,11 +16,13 @@
     "website": "https://github.com/lcsztl/discuss_hub",
     "depends": ["mail"],
     "data": [
+        "data/discuss_hub_groups.xml",
         "security/ir.model.access.csv",
         "views/res_config_settings_views.xml",
         "views/discuss_channel_views.xml",
         "views/mail_discuss_team_views.xml",
         "views/mail_discuss_team_menus.xml",
     ],
+    "post_init_hook": "post_init_hook",
     "installable": True,
 }

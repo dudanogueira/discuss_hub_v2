@@ -1,0 +1,17 @@
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
+
+from odoo import Command, models
+
+
+class MailGatewayWhatsappCommon(models.AbstractModel):
+    _inherit = "mail.gateway.whatsapp.common"
+
+    def _build_channel_members(self, gateway, author):
+        members = []
+        if author and author._name == "res.partner":
+            members.append(Command.create({"partner_id": author.id, "unpin_dt": False}))
+        elif author and author._name == "mail.guest":
+            member_model = self.env["discuss.channel.member"]
+            if "guest_id" in member_model._fields:
+                members.append(Command.create({"guest_id": author.id, "unpin_dt": False}))
+        return members

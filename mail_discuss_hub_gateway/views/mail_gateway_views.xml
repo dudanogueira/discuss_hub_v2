@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="mail_gateway_form_view_discuss_team" model="ir.ui.view">
+        <field name="name">mail.gateway.form.discuss.team</field>
+        <field name="model">mail.gateway</field>
+        <field name="inherit_id" ref="mail_gateway.mail_gateway_form_view" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='gateway_type']" position="after">
+                <field
+                    name="discuss_team_id"
+                    options="{'no_create': True}"
+                    domain="[('company_id', '=', company_id)]"
+                />
+            </xpath>
+        </field>
+    </record>
+</odoo>

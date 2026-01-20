@@ -255,6 +255,7 @@ These payloads come directly from the local server schemas. They represent the s
 | `/chat/findContacts` | none required | Uses `where` object. |
 | `/chat/findMessages` | none required | Uses `where` object. |
 | `/chat/findStatusMessage` | none required | Uses `where` object. |
+| `/chat/getBase64FromMediaMessage` | `message` | Payload: `{"message": {"key": {...}, "message": {...}}}`. Returns `base64`, `mimetype`, `fileName`. |
 | `/chat/findChats` | none required | Uses `where` object. |
 | `/chat/fetchBusinessProfile` | none required | Accepts `number` or profile fields. |
 | `/chat/fetchProfile` | none required | Accepts `wuid`, `name`, `picture`, `status`, `isBusiness`. |

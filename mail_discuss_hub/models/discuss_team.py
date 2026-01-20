@@ -24,6 +24,12 @@ class MailDiscussTeam(models.Model):
         "res.users",
         string="Members",
     )
+    access_group_id = fields.Many2one(
+        "res.groups",
+        string="Access Group",
+        readonly=True,
+        help="Access group managed automatically for this team.",
+    )
     color = fields.Integer(default=0)
     description = fields.Text()
 
@@ -43,15 +49,67 @@ class MailDiscussTeam(models.Model):
     def create(self, vals_list):
         teams = super().create(vals_list)
         teams._ensure_team_leader_in_members()
+        if not self.env.context.get("mail_discuss_hub_skip_group_sync"):
+            teams._sync_access_group()
         return teams
 
     def write(self, vals):
         result = super().write(vals)
-        if "user_id" in vals or "member_ids" in vals:
-            self._ensure_team_leader_in_members()
+        if not self.env.context.get("mail_discuss_hub_skip_group_sync"):
+            if (
+                not self.env.context.get("mail_discuss_hub_skip_team_leader_check")
+                and ("user_id" in vals or "member_ids" in vals)
+            ):
+                self._ensure_team_leader_in_members()
+            if {"name", "member_ids", "user_id"} & set(vals):
+                self._sync_access_group()
         return result
 
     def _ensure_team_leader_in_members(self):
         for team in self:
             if team.user_id and team.user_id not in team.member_ids:
-                team.sudo().write({"member_ids": [(4, team.user_id.id)]})
+                team.sudo().with_context(
+                    mail_discuss_hub_skip_team_leader_check=True
+                ).write({"member_ids": [(4, team.user_id.id)]})
+
+    def _get_access_group_name(self):
+        self.ensure_one()
+        return f"Discuss Team: {self.name}"
+
+    def _ensure_access_group(self):
+        self.ensure_one()
+        if self.access_group_id:
+            return self.access_group_id
+        vals = {"name": self._get_access_group_name()}
+        category = self.env.ref(
+            "mail_discuss_hub.module_category_discuss_hub", raise_if_not_found=False
+        )
+        if category:
+            vals["category_id"] = category.id
+        group = self.env["res.groups"].sudo().create(vals)
+        self.sudo().with_context(mail_discuss_hub_skip_group_sync=True).write(
+            {"access_group_id": group.id}
+        )
+        return group
+
+    def _sync_access_group(self):
+        for team in self:
+            group = team._ensure_access_group()
+            desired_user_ids = team.member_ids.ids
+            updates = {"users": [(6, 0, desired_user_ids)]}
+            desired_name = team._get_access_group_name()
+            if group.name != desired_name:
+                updates["name"] = desired_name
+            group.sudo().write(updates)
+
+    def unlink(self):
+        groups = self.mapped("access_group_id")
+        result = super().unlink()
+        if groups:
+            remaining = self.env["mail.discuss.team"].with_context(
+                active_test=False
+            ).search([("access_group_id", "in", groups.ids)])
+            groups_to_remove = groups - remaining.mapped("access_group_id")
+            if groups_to_remove:
+                groups_to_remove.sudo().unlink()
+        return result

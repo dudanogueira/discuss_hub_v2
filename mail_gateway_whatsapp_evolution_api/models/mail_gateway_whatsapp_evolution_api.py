@@ -132,7 +132,7 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             data = data[0] if data else {}
         message = data.get("message", {}) or {}
         key_data = data.get("key", {}) or {}
-        body, attachments, text_is_html = self._prepare_message(message, data)
+        body, attachments, text_is_html = self._prepare_message(message, data, gateway)
         dto_event = canonical_event or self._normalize_event(update)
         if not dto_event:
             return False
@@ -211,7 +211,7 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             raw=update,
         )
 
-    def _prepare_message(self, message, data):
+    def _prepare_message(self, message, data, gateway):
         body = ""
         attachments = []
         text_is_html = False
@@ -232,15 +232,20 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             if caption:
                 body = caption
             payload_base64 = message.get("base64") or message.get(key, {}).get("base64")
+            filename = None
+            mimetype = message.get(key, {}).get("mimetype")
+            if not payload_base64:
+                payload_base64, mimetype, filename = self._fetch_media_base64_from_api(
+                    gateway, data, message
+                )
             decoded = self._decode_base64_payload(payload_base64)
             if decoded:
-                filename = self._get_attachment_name(message, key, data)
+                filename = filename or self._get_attachment_name(message, key, data)
                 attachments.append(
                     {
                         "name": filename,
                         "datas": decoded,
-                        "mimetype": message.get(key, {}).get("mimetype")
-                        or message.get(key, {}).get("mimetype", ""),
+                        "mimetype": mimetype or "",
                     }
                 )
         if message.get("locationMessage"):
@@ -254,6 +259,27 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
                 )
                 text_is_html = True
         return body, attachments, text_is_html
+
+    def _fetch_media_base64_from_api(self, gateway, data, message):
+        if not gateway or not data or not message:
+            return False, None, None
+        key_data = data.get("key") or {}
+        if not key_data:
+            return False, None, None
+        endpoint = f"/chat/getBase64FromMediaMessage/{self._instance_name(gateway)}"
+        payload = {"message": {"key": key_data, "message": message}}
+        try:
+            response = self._send_api_request(gateway, "POST", endpoint, payload=payload)
+        except UserError as exc:
+            _logger.warning("Failed to fetch media base64: %s", exc)
+            return False, None, None
+        if not response or not isinstance(response, dict):
+            return False, None, None
+        return (
+            response.get("base64"),
+            response.get("mimetype"),
+            response.get("fileName") or response.get("filename"),
+        )
 
     def _get_group_metadata(self, update, gateway, chat_id, sender_name, event):
         if not self._is_group_chat(chat_id):

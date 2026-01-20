@@ -7,8 +7,10 @@
     "license": "AGPL-3",
     "author": "Soloz Technologies",
     "website": "https://github.com/lcsztl/discuss_hub",
-    "depends": ["mail_gateway", "mail_discuss_hub"],
-    "data": [],
+    "depends": ["mail_gateway", "mail_gateway_whatsapp_common", "mail_discuss_hub"],
+    "data": [
+        "views/mail_gateway_views.xml",
+    ],
     "assets": {
         "web.assets_backend": [
             "mail_discuss_hub_gateway/static/src/js/gateway_instance_sidebar.esm.js",

@@ -45,11 +45,14 @@
                     <field name="color" invisible="1" />
                     <notebook>
                         <page string="Members">
-                            <field
-                                name="member_ids"
-                                widget="many2many_avatar_user"
-                                options="{'no_create': True}"
-                            />
+                            <group>
+                                <field
+                                    name="member_ids"
+                                    widget="many2many_avatar_user"
+                                    options="{'no_create': True}"
+                                />
+                                <field name="access_group_id" readonly="1" />
+                            </group>
                         </page>
                         <page
                             string="Integrations"
