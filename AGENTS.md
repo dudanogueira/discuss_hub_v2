@@ -24,6 +24,7 @@ nos addons do `discuss-hub` (ou novos addons locais).
 - `mail_gateway_whatsapp_common` (gateway core WhatsApp): DTO/servico unificado para mensagens/status/reactions.
 - `mail_gateway_whatsapp_evolution_api` (provider): integra Evolution API, delega processamento ao common.
 - `mail_gateway_whatsapp_evolution_api_manager` (manager): gerencia servidores/instancias Evolution.
+- `mail_gateway_whatsapp_waha` (provider): integra WAHA, envio e webhook de texto.
 
 ## Regras de trabalho (Odoo 18)
 
@@ -106,6 +107,8 @@ docker compose restart odoo
   - `invisible="gateway_type != 'whatsapp_evolution_api'"`
   - `invisible="not field_name or state == 'draft'"`
 - Em listas, use `column_invisible="condition"` quando precisar controlar colunas.
+- Attachments em `message_post` devem ser bytes (nao base64).
+- Para audio, passe info `{"voice": True}` nas attachments para criar `discuss.voice.metadata`.
 
 ## Insight: aba "Privacidade" em `discuss.channel` (Odoo core)
 
@@ -130,6 +133,8 @@ Recomendacao para inbox/routing
   para validacao.
 - Para Evolution API, nao use `?db=` na URL do webhook (a API nao preserva a querystring).
   O database deve ser fixo no `odoo.conf`.
+- Para WAHA, o webhook e configurado via API de sessao (events `message`) e
+  valida HMAC quando `webhook_secret` estiver definido (header `X-Webhook-Hmac`).
 
 ## Evolution API references (repo)
 
@@ -151,6 +156,7 @@ Use estes arquivos como referencia de payloads e endpoints:
 - Mantenha o webhook apontando para a URL do gateway no Odoo (sem `?db=`).
 - Base URL da Evolution API deve ser o root da API (sem `/manager`), ou o sync de instancias retorna HTML e quebra o JSON.
 - Evolution API Manager auto-remove `/manager` ao salvar a Base URL (para evitar erro de JSON).
+- Webhooks podem enviar `data` como lista; processe item a item.
 
 ## Guia por addon (o que preservar)
 

@@ -18,5 +18,6 @@ Gateway WhatsApp via WAHA.
 - `token` e usado como API key da WAHA (header `X-Api-Key`).
 - `waha_api_url` deve ser o base URL (sem barra final).
 - `waha_session` default e `default` (WAHA Core suporta apenas esta sessao).
-- Webhook inbound ainda nao implementado (somente envio de texto).
-- Anexos/medias ainda nao suportados no envio.
+- Webhook inbound suporta apenas evento `message` (texto).
+- `webhook_secret` vira HMAC SHA-256 (`X-Webhook-Hmac`) nos webhooks.
+- Anexos/medias ainda nao suportados no envio nem no inbound.

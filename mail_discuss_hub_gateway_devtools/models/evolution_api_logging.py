@@ -4,10 +4,45 @@ import json
 
 from odoo import models
 from odoo.tools import html2plaintext
+from odoo.http import request
 
 
 class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
     _inherit = "mail.gateway.whatsapp_evolution_api"
+
+    def _receive_update(self, gateway, update):
+        log_record = self._devtools_log_webhook(
+            gateway,
+            direction="in",
+            status="received",
+            event=update.get("event") if isinstance(update, dict) else None,
+            endpoint=self._devtools_inbound_endpoint(),
+            payload=update,
+        )
+        dispatcher = self
+        if log_record:
+            dispatcher = dispatcher.with_context(gateway_webhook_log_id=log_record.id)
+        try:
+            result = super(
+                MailGatewayWhatsappEvolutionApi, dispatcher
+            )._receive_update(gateway, update) or {}
+        except Exception as exc:
+            if log_record:
+                log_record.sudo().write(
+                    {
+                        "status": "error",
+                        "error_message": str(exc),
+                    }
+                )
+            raise
+        if log_record:
+            status = (
+                "processed"
+                if result.get("status") in ("ok", "duplicate")
+                else "received"
+            )
+            log_record.sudo().write({"status": status})
+        return result
 
     def _send(
         self,
@@ -67,6 +102,13 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
                     }
                 )
         return res
+
+    @staticmethod
+    def _devtools_inbound_endpoint():
+        try:
+            return request.httprequest.path
+        except Exception:
+            return False
 
     def _devtools_log_webhook(
         self,

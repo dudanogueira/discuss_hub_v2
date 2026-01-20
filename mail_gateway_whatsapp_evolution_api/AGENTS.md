@@ -23,7 +23,8 @@ Gateway WhatsApp via Evolution API.
 - Divergencias entre doc/modulos/servidor devem ser reconferidas e atualizadas no guia.
 - Persistencia de logs de webhook e' controlada pela flag
   `mail_discuss_hub_gateway_devtools.webhook_log_enabled` (Devtools > Recursos)
-  e acontece via hook `_devtools_log_webhook` do devtools.
+  e acontece via override de `_receive_update` no devtools, chamando
+  `_devtools_log_webhook` quando disponivel.
 - Status do webhook: `processed` apenas quando `_process_normalized` retorna `ok` ou `duplicate`;
   caso contrario fica `received` (sem acao no Odoo).
 
@@ -31,5 +32,4 @@ Gateway WhatsApp via Evolution API.
 
 - `models/mail_gateway.py` (campos Evolution e defaults)
 - `models/mail_gateway_whatsapp_evolution_api.py` (integra API)
-- `controllers/gateway.py` (webhook receiver)
 - `views/mail_gateway_evolution.xml`

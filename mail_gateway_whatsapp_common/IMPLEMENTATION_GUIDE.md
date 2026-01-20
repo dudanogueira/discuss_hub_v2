@@ -42,22 +42,24 @@ Este documento guia o passo a passo da implementacao. Atualize apos cada etapa.
   - Criar mail.message com id externo
   - Idempotencia por message_id
   - Teste: replay nao duplica
-- [ ] Etapa 2 - reply/quote
+- [x] Etapa 2 - reply/quote
   - Mapear quote_id -> parent_id quando existir
   - Teste: mensagem aparece encadeada
-- [ ] Etapa 3 - attachments (image/video/audio/document)
+- [x] Etapa 3 - attachments (image/video/audio/document)
   - Criar ir.attachment + discuss.voice.metadata para audio
   - Teste: arquivo abre no discuss
-- [ ] Etapa 4 - reaction.upsert / reaction.delete
+- [x] Etapa 4 - reaction.upsert / reaction.delete
   - Vincular reacao ao autor correto
   - Teste: reacao aparece e some
-- [ ] Etapa 5 - message.status
+- [x] Etapa 5 - message.status
   - Atualizar status (sent/delivered/read/failed)
   - Teste: replay nao duplica status
-- [ ] Etapa 6 - message.delete
+- [x] Etapa 6 - message.delete
   - Marcar mensagem como apagada (nao apagar registro)
   - Teste: corpo indica apagado
 
 ## Observacoes
 - Manter o common independente de API externa.
 - Preferir alteracoes pequenas e validar em cada etapa.
+- Attachments devem ser enviados ao message_post como bytes (nao base64).
+- Audio deve incluir info={"voice": True} para gerar discuss.voice.metadata.

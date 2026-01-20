@@ -16,6 +16,7 @@ Features:
 
 - Configure WAHA API URL and session.
 - Send outbound text messages from Discuss.
+- Receive inbound text messages via WAHA webhooks.
 
 Dependencies
 ============
@@ -30,6 +31,11 @@ Configuration
 2. Create a gateway with type "WhatsApp (WAHA)".
 3. Set the WAHA API URL and session.
 4. Use the Gateway ``token`` field as the WAHA API key.
+5. Click **Update Webhook** to register the WAHA webhook for the session.
+
+.. note::
+   If ``webhook_secret`` is set, WAHA will sign webhooks with
+   ``X-Webhook-Hmac`` (SHA-256) and Odoo will verify it.
 
 .. note::
    WAHA Core supports only the ``default`` session. For multiple sessions,
@@ -38,14 +44,14 @@ Configuration
 Usage
 =====
 
-Use Discuss to send text messages. Inbound webhooks and media sending are not
-implemented yet.
+Use Discuss to send text messages. Inbound webhooks are handled for text
+messages (media is ignored for now).
 
 Roadmap (TODO)
 ==============
 
-- Support inbound webhooks (NormalizedPayload -> common).
 - Support media/attachments and status updates.
+- Add reaction and ack handling.
 
 Credits
 =======

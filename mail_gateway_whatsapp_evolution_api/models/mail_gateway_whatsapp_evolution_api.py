@@ -90,7 +90,28 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             return {"status": "ignored", "reason": "event_not_supported"}
         data = update.get("data", {}) or {}
         if isinstance(data, list):
-            data = data[0] if data else {}
+            results = []
+            for item in data:
+                if not item:
+                    continue
+                item_update = dict(update)
+                item_update["data"] = item
+                results.append(
+                    self._receive_update_item(gateway, item_update, canonical_event)
+                )
+            if not results:
+                return {"status": "ignored", "reason": "missing_data"}
+            status = "ok" if any(
+                result.get("status") in ("ok", "duplicate") for result in results
+            ) else "ignored"
+            return {"status": status, "results": results}
+        return self._receive_update_item(gateway, update, canonical_event)
+
+    def _receive_update_item(self, gateway, update, canonical_event=None):
+        canonical_event = canonical_event or self._normalize_event(update)
+        if not canonical_event:
+            return {"status": "ignored", "reason": "event_not_supported"}
+        data = update.get("data", {}) or {}
         if not data:
             return {"status": "ignored", "reason": "missing_data"}
         if canonical_event == "message.upsert":

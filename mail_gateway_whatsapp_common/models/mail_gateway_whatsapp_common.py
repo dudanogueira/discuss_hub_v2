@@ -1,6 +1,8 @@
 import base64
+import binascii
 import json
 import logging
+import mimetypes
 import re
 from datetime import datetime
 
@@ -77,6 +79,8 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
                 "gateway_from_me": bool(dto.from_me),
                 "gateway_type": gateway.gateway_type,
                 "gateway_message_key": message_key,
+                "gateway_quote_external_id": (dto.quote_id or "").strip() or False,
+                "gateway_quote_text": dto.quote_text,
             }
             # Backfill metadata only when missing to keep idempotent updates cheap.
             for field_name, value in backfill_values.items():
@@ -104,9 +108,11 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         self._apply_channel_metadata(channel, dto)
         self._ensure_guest_member(channel, author)
 
+        attachments = self._prepare_attachments(dto)
         body = self._render_message_body(dto)
-        if not body and not dto.has_attachments():
+        if not body and not attachments:
             return {"status": "ignored", "reason": "empty_body"}
+        parent_message = self._find_quoted_message(gateway, dto)
 
         ctx = dict(self.env.context or {})
         ctx["no_gateway_notification"] = True
@@ -130,6 +136,8 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
             "gateway_from_me": bool(dto.from_me),
             "gateway_type": gateway.gateway_type,
             "gateway_message_key": message_key,
+            "gateway_quote_external_id": (dto.quote_id or "").strip() or False,
+            "gateway_quote_text": dto.quote_text,
         }
         webhook_log_id = self.env.context.get("gateway_webhook_log_id")
         if webhook_log_id and "gateway_webhook_log_id" in self.env["mail.message"]._fields:
@@ -144,11 +152,13 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         try:
             with self.env.cr.savepoint():
                 message = post_channel.sudo().message_post(
-                    body=body or None,
+                    body=body or "",
                     body_is_html=True,
                     author_id=author_id,
                     message_type="comment",
                     subtype_xmlid="mail.mt_comment",
+                    parent_id=parent_message.id if parent_message else False,
+                    attachments=attachments or None,
                 )
         except IntegrityError:
             existing = self._find_existing_message(gateway, dto)
@@ -168,6 +178,157 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
             "channel_id": channel.id,
         }
 
+    def _handle_reaction_upsert(self, gateway, dto, channel, author=None):
+        """Create or update reactions on an existing message."""
+        target_id = (dto.reaction_target_id or dto.message_id or "").strip()
+        reaction = (dto.reaction or "").strip()
+        if not target_id:
+            return {"status": "ignored", "reason": "missing_reaction_target"}
+        if not reaction:
+            return {"status": "ignored", "reason": "missing_reaction"}
+
+        message = self._find_message_by_external_id(
+            gateway,
+            target_id,
+            chat_id=dto.chat_id,
+            instance=dto.instance,
+        )
+        if not message:
+            return {"status": "ignored", "reason": "message_not_found"}
+
+        author = author or self._resolve_author(gateway, dto)
+        if not author:
+            return {"status": "ignored", "reason": "author_not_found"}
+
+        reaction_model = self.env["mail.message.reaction"].sudo()
+        domain = [("message_id", "=", message.id), ("content", "=", reaction)]
+        if author._name == "mail.guest":
+            domain.append(("guest_id", "=", author.id))
+        else:
+            domain.append(("partner_id", "=", author.id))
+        existing = reaction_model.search(domain, limit=1)
+        if existing:
+            return {"status": "duplicate", "reaction_id": existing.id, "message_id": message.id}
+
+        vals = {"message_id": message.id, "content": reaction}
+        if author._name == "mail.guest":
+            vals["guest_id"] = author.id
+        else:
+            vals["partner_id"] = author.id
+        try:
+            with self.env.cr.savepoint():
+                new_reaction = reaction_model.create(vals)
+        except IntegrityError:
+            existing = reaction_model.search(domain, limit=1)
+            if existing:
+                return {"status": "duplicate", "reaction_id": existing.id, "message_id": message.id}
+            raise
+
+        return {"status": "ok", "reaction_id": new_reaction.id, "message_id": message.id}
+
+    def _handle_reaction_delete(self, gateway, dto, channel, author=None):
+        """Remove reactions from an existing message."""
+        target_id = (dto.reaction_target_id or dto.message_id or "").strip()
+        if not target_id:
+            return {"status": "ignored", "reason": "missing_reaction_target"}
+
+        message = self._find_message_by_external_id(
+            gateway,
+            target_id,
+            chat_id=dto.chat_id,
+            instance=dto.instance,
+        )
+        if not message:
+            return {"status": "ignored", "reason": "message_not_found"}
+
+        author = author or self._resolve_author(gateway, dto)
+        if not author:
+            return {"status": "ignored", "reason": "author_not_found"}
+
+        reaction_model = self.env["mail.message.reaction"].sudo()
+        domain = [("message_id", "=", message.id)]
+        if author._name == "mail.guest":
+            domain.append(("guest_id", "=", author.id))
+        else:
+            domain.append(("partner_id", "=", author.id))
+        reaction = (dto.reaction or "").strip()
+        if reaction:
+            domain.append(("content", "=", reaction))
+
+        reactions = reaction_model.search(domain)
+        if not reactions:
+            return {"status": "ignored", "reason": "reaction_not_found"}
+        count = len(reactions)
+        reactions.unlink()
+        return {"status": "ok", "message_id": message.id, "deleted": count}
+
+    def _handle_message_status(self, gateway, dto, channel, author=None):
+        """Update delivery/read status for a gateway message."""
+        message_id = (dto.message_id or "").strip()
+        if not message_id:
+            return {"status": "ignored", "reason": "missing_message_id"}
+        status_raw = (dto.status_raw or dto.status or "").strip()
+        normalized = self._normalize_status(status_raw)
+
+        updated_message = False
+        message = self._find_message_by_external_id(
+            gateway,
+            message_id,
+            chat_id=dto.chat_id,
+            instance=dto.instance,
+        )
+        if message:
+            update_vals = {}
+            if (
+                status_raw
+                and "gateway_message_status_raw" in message._fields
+                and message.gateway_message_status_raw != status_raw
+            ):
+                update_vals["gateway_message_status_raw"] = status_raw
+            if normalized and "gateway_message_status" in message._fields:
+                if self._should_update_status(message.gateway_message_status, normalized):
+                    update_vals["gateway_message_status"] = normalized
+            if update_vals:
+                message.sudo().write(update_vals)
+                updated_message = True
+
+        updated_notifications = self._update_gateway_notification_status(
+            gateway, message_id, normalized, status_raw
+        )
+        if updated_message or updated_notifications:
+            return {
+                "status": "ok",
+                "message_id": message.id if message else False,
+                "notification_count": updated_notifications,
+            }
+        return {"status": "ignored", "reason": "message_not_found"}
+
+    def _handle_message_delete(self, gateway, dto, channel, author=None):
+        """Mark a gateway message as deleted without removing it."""
+        message_id = (dto.message_id or "").strip()
+        if not message_id:
+            return {"status": "ignored", "reason": "missing_message_id"}
+
+        message = self._find_message_by_external_id(
+            gateway,
+            message_id,
+            chat_id=dto.chat_id,
+            instance=dto.instance,
+        )
+        if not message:
+            return {"status": "ignored", "reason": "message_not_found"}
+        if "gateway_is_deleted" in message._fields and message.gateway_is_deleted:
+            return {"status": "duplicate", "message_id": message.id}
+
+        updated_body = self._build_deleted_body(message.body)
+        update_vals = {"body": updated_body}
+        if "gateway_is_deleted" in message._fields:
+            update_vals["gateway_is_deleted"] = True
+        if "gateway_deleted_at" in message._fields:
+            update_vals["gateway_deleted_at"] = fields.Datetime.now()
+        message.sudo().write(update_vals)
+        return {"status": "ok", "message_id": message.id}
+
     def _ensure_guest_member(self, channel, author):
         """Ensure a guest author is a member of the channel."""
         if not channel or not author or author._name != "mail.guest":
@@ -182,6 +343,86 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
             return
         member_model.create({"channel_id": channel.id, "guest_id": author.id, "unpin_dt": False})
 
+    def _find_quoted_message(self, gateway, dto):
+        quote_id = (dto.quote_id or "").strip()
+        if not quote_id:
+            return False
+        message = self._find_message_by_external_id(
+            gateway,
+            quote_id,
+            chat_id=dto.chat_id,
+            instance=dto.instance,
+        )
+        if message:
+            return message
+        if dto.chat_id:
+            return self._find_message_by_external_id(
+                gateway,
+                quote_id,
+                chat_id=None,
+                instance=dto.instance,
+            )
+        return False
+
+    def _prepare_attachments(self, dto):
+        attachments = []
+        for attachment in dto.attachments or []:
+            if not isinstance(attachment, dict):
+                continue
+            payload = attachment.get("datas")
+            if not payload:
+                continue
+            decoded = self._decode_attachment_payload(payload)
+            if not decoded:
+                continue
+            mimetype = (attachment.get("mimetype") or "").strip()
+            name = self._normalize_attachment_name(
+                attachment.get("name"), mimetype, dto
+            )
+            info = {}
+            is_voice = bool(mimetype.startswith("audio/"))
+            if not is_voice and dto.message_type:
+                is_voice = "audio" in (dto.message_type or "").lower()
+            if is_voice:
+                info["voice"] = True
+            if info:
+                attachments.append((name, decoded, info))
+            else:
+                attachments.append((name, decoded))
+        return attachments
+
+    def _decode_attachment_payload(self, payload):
+        if isinstance(payload, bytes):
+            return payload
+        if isinstance(payload, bytearray):
+            return bytes(payload)
+        if isinstance(payload, str):
+            payload = payload.strip()
+            if not payload:
+                return False
+            if "base64," in payload:
+                payload = payload.split("base64,", 1)[1]
+            try:
+                return base64.b64decode(payload)
+            except (binascii.Error, ValueError):
+                return payload.encode("utf-8")
+        return False
+
+    def _normalize_attachment_name(self, name, mimetype, dto):
+        filename = (name or "").strip()
+        if not filename:
+            filename = (dto.message_id or "").strip() or "attachment"
+        extension = self._guess_attachment_extension(mimetype)
+        if extension and "." not in filename:
+            filename = f"{filename}{extension}"
+        return filename
+
+    def _guess_attachment_extension(self, mimetype):
+        if not mimetype:
+            return ".bin"
+        extension = mimetypes.guess_extension(mimetype)
+        return extension or ".bin"
+
     def _apply_message_timestamp(self, message, dto):
         """Apply gateway timestamps to preserve chronological ordering."""
         if not message or not dto or not dto.timestamp:
@@ -194,6 +435,8 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
 
     def _render_message_body(self, dto):
         text = (dto.text or "").strip()
+        if not text:
+            text = (dto.caption or "").strip()
         if not text:
             return ""
         if dto.text_is_html:
@@ -305,6 +548,34 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
             channel.sudo().write(update_vals)
         return {"status": "ok", "channel_id": channel.id}
 
+    def _find_message_by_external_id(
+        self, gateway, message_id, chat_id=None, instance=None
+    ):
+        message_id = (message_id or "").strip()
+        if not message_id:
+            return False
+        message_model = self.env["mail.message"].sudo()
+        if "gateway_message_key" in message_model._fields and gateway:
+            key = self._build_message_key_from_values(
+                gateway, instance, chat_id, message_id
+            )
+            if key:
+                existing = message_model.search(
+                    [("gateway_message_key", "=", key)], limit=1
+                )
+                if existing:
+                    return existing
+        if "gateway_message_external_id" not in message_model._fields:
+            return False
+        domain = [("gateway_message_external_id", "=", message_id)]
+        if "gateway_type" in message_model._fields and gateway:
+            domain.append(("gateway_type", "=", gateway.gateway_type))
+        if instance and "gateway_instance" in message_model._fields:
+            domain.append(("gateway_instance", "=", instance))
+        if chat_id and "gateway_chat_id" in message_model._fields:
+            domain.append(("gateway_chat_id", "=", chat_id))
+        return message_model.search(domain, limit=1)
+
     def _find_existing_message(self, gateway, dto, message_key=None):
         # Prefer gateway_message_key for strict idempotency when available.
         message_model = self.env["mail.message"].sudo()
@@ -330,14 +601,130 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         """Stable key to dedupe message upserts across retries."""
         if not gateway or not dto:
             return False
+        return self._build_message_key_from_values(
+            gateway, dto.instance, dto.chat_id, dto.message_id
+        )
+
+    def _build_message_key_from_values(self, gateway, instance, chat_id, message_id):
+        if not gateway:
+            return False
         parts = [
             gateway.gateway_type or "",
             str(gateway.id or ""),
-            dto.instance or "",
-            dto.chat_id or "",
-            dto.message_id or "",
+            instance or "",
+            chat_id or "",
+            message_id or "",
         ]
         return "|".join(parts)
+
+    def _normalize_status(self, status_raw):
+        status = (status_raw or "").strip().lower()
+        if not status:
+            return False
+        compact = status.replace("_", "").replace(" ", "")
+        if compact in {"read", "readself", "seen"}:
+            return "read"
+        if compact in {"delivered"}:
+            return "delivered"
+        if compact in {"sent"}:
+            return "sent"
+        if compact in {"failed", "error", "exception", "canceled", "cancelled"}:
+            return "failed"
+        if compact in {"pending", "processing", "process"}:
+            return "pending"
+        return False
+
+    def _status_rank(self, status):
+        rank = {
+            "pending": 1,
+            "sent": 2,
+            "delivered": 3,
+            "read": 4,
+            "failed": 99,
+        }
+        return rank.get(status or "", 0)
+
+    def _should_update_status(self, current, incoming):
+        if not incoming:
+            return False
+        if not current:
+            return True
+        return self._status_rank(incoming) >= self._status_rank(current)
+
+    def _notification_status_rank(self, status):
+        rank = {
+            "ready": 0,
+            "process": 0,
+            "pending": 1,
+            "sent": 2,
+            "bounce": 98,
+            "exception": 99,
+            "canceled": -1,
+        }
+        return rank.get(status or "", 0)
+
+    def _map_notification_status(self, normalized):
+        if normalized == "pending":
+            return "pending"
+        if normalized in {"sent", "delivered", "read"}:
+            return "sent"
+        if normalized == "failed":
+            return "exception"
+        return False
+
+    def _update_gateway_notification_status(
+        self, gateway, message_id, normalized, status_raw
+    ):
+        notification_model = self.env["mail.notification"].sudo()
+        if "gateway_message_id" not in notification_model._fields:
+            return 0
+        domain = [("gateway_message_id", "=", message_id)]
+        if "gateway_type" in notification_model._fields and gateway:
+            domain.append(("gateway_type", "=", gateway.gateway_type))
+        notifications = notification_model.search(domain)
+        if not notifications:
+            return 0
+        mapped_status = self._map_notification_status(normalized)
+        updated = 0
+        for notification in notifications:
+            update_vals = {}
+            if mapped_status:
+                if self._notification_status_rank(mapped_status) >= self._notification_status_rank(
+                    notification.notification_status
+                ):
+                    update_vals["notification_status"] = mapped_status
+            if (
+                normalized == "failed"
+                and status_raw
+                and "gateway_failure_reason" in notification._fields
+            ):
+                update_vals["gateway_failure_reason"] = status_raw
+            read_updated = False
+            if normalized == "read" and hasattr(notification, "_set_read_gateway"):
+                notification._set_read_gateway()
+                read_updated = True
+            if update_vals:
+                notification.write(update_vals)
+                updated += 1
+            elif read_updated:
+                updated += 1
+        return updated
+
+    def _build_deleted_body(self, body):
+        body_text = str(body or "")
+        if not body_text:
+            return Markup("<p><s>This message was deleted</s></p>")
+        if "<s>" in body_text or "<del>" in body_text:
+            return body_text
+        updated = re.sub(
+            r"(<p[^>]*>)(.*?)(</p>)",
+            lambda m: f"{m.group(1)}<s>{m.group(2)}</s>{m.group(3)}",
+            body_text,
+            flags=re.DOTALL,
+        )
+        if updated != body_text:
+            return Markup(updated)
+        return Markup(f"<p><s>{body_text}</s></p>")
 
     def _resolve_author(self, gateway, dto):
         """Resolve the author as a partner (outbound) or guest (inbound)."""

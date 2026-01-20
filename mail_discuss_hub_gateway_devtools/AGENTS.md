@@ -25,8 +25,8 @@ Ferramentas tecnicas opcionais para desenvolvimento:
 - Evitar fallbacks legados; projeto greenfield.
 - Persistencia de logs de webhook deve respeitar a flag de configuracao
   `mail_discuss_hub_gateway_devtools.webhook_log_enabled` (Devtools > Recursos).
-- Log de webhook e' injetado via override de `_devtools_log_webhook` no
-  `mail.gateway.whatsapp_evolution_api`.
+- Log de webhook e' injetado via override de `_receive_update` nos providers
+  (somente quando o devtools esta instalado), chamando `_devtools_log_webhook`.
 - Logs de envio (saida) sao adicionados via override de `_send` no provider
   quando o devtools esta instalado.
 - Devtools grava `internal_result` e `internal_routine` em `mail.gateway.webhook.log`
