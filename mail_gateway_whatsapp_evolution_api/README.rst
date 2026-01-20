@@ -64,6 +64,15 @@ Use Discuss to send messages. Inbound webhooks are parsed into a
 logs no menu Discuss Dev. O devtools e opcional e nunca pode ser dependencia
 de nenhum modulo.
 
+Group metadata enrichment
+=========================
+
+For group chats, the provider only calls the Evolution API to fetch group
+details when the webhook payload does not include ``subject/desc/picture`` and
+the local channel is still incomplete (fallback name, name equal to sender,
+missing description, or missing avatar). The external fetch is only triggered
+on ``message.upsert`` events.
+
 Roadmap (TODO)
 ==============
 

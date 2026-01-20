@@ -48,6 +48,22 @@ class MailGateway(models.Model):
             return super()._get_webhook_url()
         return f"{base_url}/gateway/{self.gateway_type}/{self.webhook_key}/update"
 
+    @api.model
+    def _get_gateway(self, key, state="integrated", gateway_type=False):
+        if gateway_type != "whatsapp_waha":
+            return super()._get_gateway(key, state=state, gateway_type=gateway_type)
+        if not key:
+            return False
+        record = self.sudo().search(
+            [
+                ("integrated_webhook_state", "=", state),
+                ("gateway_type", "=", gateway_type),
+                ("webhook_key", "=", key),
+            ],
+            limit=1,
+        )
+        return record._get_gateway_data() if record else False
+
     def _default_waha_webhook_event_ids(self):
         codes = ["message"]
         return self.env["mail.gateway.whatsapp_waha.webhook_event"].search(

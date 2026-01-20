@@ -29,3 +29,5 @@ Gateway WhatsApp via WAHA.
 - Outbound e' roteado pelo common; este modulo so implementa `_send_outbound` (API externa).
 - Anexos/medias ainda nao suportados no envio nem no inbound.
 - Devtools e opcional e nunca deve ser dependencia de modulo algum.
+- Gateway lookup para WAHA evita cache do OCA (`_get_gateway`) para nao falhar com
+  "Gateway was not found" em webhooks.

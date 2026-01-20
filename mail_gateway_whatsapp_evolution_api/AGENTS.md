@@ -30,6 +30,10 @@ Gateway WhatsApp via Evolution API.
 - Status do webhook: `processed` apenas quando `_process_normalized` retorna `ok` ou `duplicate`;
   caso contrario fica `received` (sem acao no Odoo).
 - Devtools e opcional e nunca deve ser dependencia de modulo algum.
+- Enriquecimento de grupos: o provider consulta a Evolution API apenas quando o
+  payload nao traz `subject/desc/picture` e o canal local esta incompleto
+  (nome fallback, nome igual ao sender, descricao ou imagem vazias). A consulta
+  so acontece em `message.upsert`.
 
 ## Arquivos principais
 
