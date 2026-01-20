@@ -29,6 +29,8 @@ Overview
 Currently adds a Discuss Team field on CRM Teams and keeps teams
 synchronized between CRM and Discuss. Additional CRM integration
 features are planned.
+Adds a Discuss side panel for creating CRM leads from a channel and
+keeps a lightweight link between leads and Discuss sessions.
 
 Dependencies
 ============
@@ -47,6 +49,10 @@ Usage
 Open CRM Team and set the "Discuss Team" field. Team changes are
 synchronized between CRM and Discuss. Other CRM integration features
 are under development.
+
+Inside Discuss, use the "Lead" side panel to create a CRM lead from the
+current channel. The lead keeps a link to the Discuss session for quick
+navigation later.
 
 Roadmap (TODO)
 ==============

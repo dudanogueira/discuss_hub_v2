@@ -15,8 +15,15 @@
     "depends": ["mail_discuss_hub", "crm"],
     "post_init_hook": "post_init_hook",
     "data": [
+        "views/crm_lead_views.xml",
         "views/crm_team_views.xml",
         "views/mail_discuss_team_views.xml",
     ],
+    "assets": {
+        "web.assets_backend": [
+            "mail_discuss_hub_crm/static/src/discuss/*.js",
+            "mail_discuss_hub_crm/static/src/discuss/*.xml",
+        ],
+    },
     "installable": True,
 }
