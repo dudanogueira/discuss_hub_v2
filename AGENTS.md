@@ -157,6 +157,7 @@ Use estes arquivos como referencia de payloads e endpoints:
 - Base URL da Evolution API deve ser o root da API (sem `/manager`), ou o sync de instancias retorna HTML e quebra o JSON.
 - Evolution API Manager auto-remove `/manager` ao salvar a Base URL (para evitar erro de JSON).
 - Webhooks podem enviar `data` como lista; processe item a item.
+- Outbound `sendMedia` requer base64 em string; `attachment.datas` em bytes quebra o JSON.
 
 ## Guia por addon (o que preservar)
 

@@ -463,11 +463,16 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             headers = self._get_headers(gateway)
             for attachment in record.mail_message_id.attachment_ids:
                 media_type = self._guess_media_type(attachment.mimetype)
+                media = attachment.datas
+                if isinstance(media, bytes):
+                    media = media.decode("utf-8")
+                if not media and getattr(attachment, "raw", None):
+                    media = base64.b64encode(attachment.raw).decode("ascii")
                 payload = {
                     "number": number,
                     "mediatype": media_type,
                     "mimetype": attachment.mimetype,
-                    "media": attachment.datas,
+                    "media": media,
                     "fileName": attachment.name or "attachment",
                 }
                 response = requests.post(
