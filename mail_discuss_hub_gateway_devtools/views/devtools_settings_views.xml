@@ -6,38 +6,36 @@
         <field name="priority">95</field>
         <field name="inherit_id" ref="base_setup.res_config_settings_view_form" />
         <field name="arch" type="xml">
-            <xpath expr="//form" position="inside">
-                <app data-string="Devtools" string="Devtools" name="mail_discuss_hub_gateway_devtools">
-                    <block title="Webhooks" id="devtools_webhooks">
-                        <setting id="devtools_webhook_log_enabled" string="Persist webhook logs" help="Store inbound/outbound webhook payloads for debugging.">
-                            <field name="webhook_log_enabled"/>
-                        </setting>
-                        <setting id="devtools_webhook_analysis_enabled" string="Webhook analysis panel">
-                            <field name="webhook_analysis_enabled"/>
-                        </setting>
-                        <setting id="devtools_payload_inspector_enabled" string="Payload inspector">
-                            <field name="payload_inspector_enabled"/>
-                        </setting>
-                        <setting id="devtools_controlled_replay_enabled" string="Controlled replay">
-                            <field name="controlled_replay_enabled"/>
-                        </setting>
-                        <setting id="devtools_unified_timeline_enabled" string="Unified timeline">
-                            <field name="unified_timeline_enabled"/>
-                        </setting>
-                        <setting id="devtools_error_panel_enabled" string="Error panel">
-                            <field name="error_panel_enabled"/>
-                        </setting>
-                        <setting id="devtools_connection_simulator_enabled" string="Connection simulator">
-                            <field name="connection_simulator_enabled"/>
-                        </setting>
-                        <setting id="devtools_provider_comparator_enabled" string="Provider comparator">
-                            <field name="provider_comparator_enabled"/>
-                        </setting>
-                        <setting id="devtools_gap_checklist_enabled" string="Gap checklist">
-                            <field name="gap_checklist_enabled"/>
-                        </setting>
-                    </block>
-                </app>
+            <xpath expr="//app[@name='mail_discuss_hub']" position="inside">
+                <block title="Devtools" id="devtools_webhooks">
+                    <setting id="devtools_webhook_log_enabled" string="Persist webhook logs" help="Store inbound/outbound webhook payloads for debugging.">
+                        <field name="webhook_log_enabled"/>
+                    </setting>
+                    <setting id="devtools_webhook_analysis_enabled" string="Webhook analysis panel">
+                        <field name="webhook_analysis_enabled"/>
+                    </setting>
+                    <setting id="devtools_payload_inspector_enabled" string="Payload inspector">
+                        <field name="payload_inspector_enabled"/>
+                    </setting>
+                    <setting id="devtools_controlled_replay_enabled" string="Controlled replay">
+                        <field name="controlled_replay_enabled"/>
+                    </setting>
+                    <setting id="devtools_unified_timeline_enabled" string="Unified timeline">
+                        <field name="unified_timeline_enabled"/>
+                    </setting>
+                    <setting id="devtools_error_panel_enabled" string="Error panel">
+                        <field name="error_panel_enabled"/>
+                    </setting>
+                    <setting id="devtools_connection_simulator_enabled" string="Connection simulator">
+                        <field name="connection_simulator_enabled"/>
+                    </setting>
+                    <setting id="devtools_provider_comparator_enabled" string="Provider comparator">
+                        <field name="provider_comparator_enabled"/>
+                    </setting>
+                    <setting id="devtools_gap_checklist_enabled" string="Gap checklist">
+                        <field name="gap_checklist_enabled"/>
+                    </setting>
+                </block>
             </xpath>
         </field>
     </record>
@@ -47,7 +45,7 @@
         <field name="res_model">res.config.settings</field>
         <field name="view_mode">form</field>
         <field name="target">inline</field>
-        <field name="context">{'module': 'mail_discuss_hub_gateway_devtools', 'bin_size': False}</field>
+        <field name="context">{'module': 'mail_discuss_hub', 'bin_size': False}</field>
     </record>
 
     <menuitem

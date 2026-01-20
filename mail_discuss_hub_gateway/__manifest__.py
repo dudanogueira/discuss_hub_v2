@@ -16,5 +16,6 @@
             "mail_discuss_hub_gateway/static/src/js/gateway_instance_sidebar.esm.js",
         ],
     },
+    "post_init_hook": "post_init_hook",
     "installable": True,
 }

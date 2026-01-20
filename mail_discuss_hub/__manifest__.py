@@ -23,6 +23,5 @@
         "views/mail_discuss_team_views.xml",
         "views/mail_discuss_team_menus.xml",
     ],
-    "post_init_hook": "post_init_hook",
     "installable": True,
 }

@@ -130,7 +130,7 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
         data = update.get("data", {}) or {}
         if isinstance(data, list):
             data = data[0] if data else {}
-        message = data.get("message", {}) or {}
+        message = self._unwrap_message(data.get("message", {}) or {})
         key_data = data.get("key", {}) or {}
         body, attachments, text_is_html = self._prepare_message(message, data, gateway)
         dto_event = canonical_event or self._normalize_event(update)
@@ -231,7 +231,7 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             caption = message.get(key, {}).get("caption", "")
             if caption:
                 body = caption
-            payload_base64 = message.get("base64") or message.get(key, {}).get("base64")
+            payload_base64 = message.get(key, {}).get("base64") or message.get("base64")
             filename = None
             mimetype = message.get(key, {}).get("mimetype")
             if not payload_base64:
@@ -247,6 +247,13 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
                         "datas": decoded,
                         "mimetype": mimetype or "",
                     }
+                )
+            elif payload_base64 is False:
+                _logger.warning(
+                    "Missing media payload for %s (%s) on %s",
+                    data.get("key", {}).get("id"),
+                    key,
+                    data.get("key", {}).get("remoteJid"),
                 )
         if message.get("locationMessage"):
             location = message.get("locationMessage", {})
@@ -280,6 +287,19 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             response.get("mimetype"),
             response.get("fileName") or response.get("filename"),
         )
+
+    def _unwrap_message(self, message):
+        current = message or {}
+        for wrapper in (
+            "ephemeralMessage",
+            "viewOnceMessage",
+            "viewOnceMessageV2",
+            "viewOnceMessageV2Extension",
+        ):
+            nested = current.get(wrapper)
+            if isinstance(nested, dict) and nested.get("message"):
+                current = nested.get("message") or {}
+        return current
 
     def _get_group_metadata(self, update, gateway, chat_id, sender_name, event):
         if not self._is_group_chat(chat_id):
@@ -601,12 +621,15 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
         message_external_id = message_external_id or message.gateway_message_external_id
         if not chat_id or not message_external_id:
             return {"status": "ignored", "reason": "missing_target"}
+        key_payload = {
+            "remoteJid": chat_id,
+            "fromMe": bool(message.gateway_from_me),
+            "id": message_external_id,
+        }
+        if chat_id.endswith("@g.us") and message.gateway_sender_jid:
+            key_payload["participant"] = message.gateway_sender_jid
         payload = {
-            "key": {
-                "remoteJid": chat_id,
-                "fromMe": True,
-                "id": message_external_id,
-            },
+            "key": key_payload,
             "reaction": reaction if action == "add" else "",
         }
         response = self._send_api_request(

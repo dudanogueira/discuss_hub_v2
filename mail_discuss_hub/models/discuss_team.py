@@ -100,7 +100,16 @@ class MailDiscussTeam(models.Model):
             desired_name = team._get_access_group_name()
             if group.name != desired_name:
                 updates["name"] = desired_name
-            group.sudo().write(updates)
+            group.sudo().with_context(mail_discuss_hub_skip_group_sync=True).write(updates)
+
+    def _sync_members_from_access_group(self):
+        for team in self:
+            group = team.access_group_id
+            if not group:
+                continue
+            desired_user_ids = group.users.ids
+            if set(team.member_ids.ids) != set(desired_user_ids):
+                team.write({"member_ids": [(6, 0, desired_user_ids)]})
 
     def unlink(self):
         groups = self.mapped("access_group_id")

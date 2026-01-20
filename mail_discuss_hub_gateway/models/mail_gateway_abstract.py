@@ -27,4 +27,11 @@ class MailGatewayAbstract(models.AbstractModel):
         }
         if "discuss_team_id" in self.env["discuss.channel"]._fields:
             vals["discuss_team_id"] = gateway.discuss_team_id.id or False
+        if "group_public_id" in self.env["discuss.channel"]._fields:
+            group_id = (
+                gateway.discuss_team_id.access_group_id.id
+                if gateway.discuss_team_id and gateway.discuss_team_id.access_group_id
+                else False
+            )
+            vals["group_public_id"] = group_id
         return vals

@@ -20,7 +20,9 @@ class MailMessage(models.Model):
         related="gateway_webhook_log_id.direction", readonly=True
     )
     gateway_webhook_status = fields.Selection(
-        related="gateway_webhook_log_id.status", readonly=True
+        related="gateway_webhook_log_id.status",
+        readonly=True,
+        string="Webhook Status",
     )
     gateway_webhook_event = fields.Char(
         related="gateway_webhook_log_id.event", readonly=True
