@@ -1,4 +1,4 @@
 [submodule "vendor/oca-social"]
-	path = vendor/oca-social
-	url = https://github.com/OCA/social.git
+	path = mail_gateway
+	url = https://github.com/OCA/social/tree/18.0/mail_gateway.git
 	branch = 18.0
