@@ -1,7 +1,7 @@
 import {DiscussAppCategory} from "@mail/core/public_web/discuss_app_category_model";
 import {Thread} from "@mail/core/common/thread_model";
 import {DiscussSidebarChannel} from "@mail/discuss/core/public_web/discuss_sidebar_categories";
-import {compareDatetime} from "@mail/utils/common/misc";
+import {assignIn, compareDatetime} from "@mail/utils/common/misc";
 import {_t} from "@web/core/l10n/translation";
 import {useService} from "@web/core/utils/hooks";
 import {patch} from "@web/core/utils/patch";
@@ -37,24 +37,45 @@ function getGatewayCategory(thread) {
     return category;
 }
 
+function syncGatewayCategory(thread) {
+    if (!thread || thread.channel_type !== "gateway") {
+        return;
+    }
+    const category = getGatewayCategory(thread);
+    const globalCategory = thread.store?.discuss?.gateway;
+    if (category) {
+        if (globalCategory) {
+            globalCategory.threads.delete(thread);
+        }
+        category.threads.add(thread);
+        return;
+    }
+    if (globalCategory) {
+        globalCategory.threads.add(thread);
+    }
+}
+
 patch(Thread, {
     _insert(data) {
         const thread = super._insert(...arguments);
-        if (thread.channel_type === "gateway") {
-            const category = getGatewayCategory(thread);
-            if (category) {
-                const globalCategory = thread.store?.discuss?.gateway;
-                if (globalCategory) {
-                    globalCategory.threads.delete(thread);
-                }
-                category.threads.add(thread);
-            }
+        if (data && thread.channel_type === "gateway") {
+            assignIn(thread, data, ["anonymous_name", "gateway"]);
         }
+        syncGatewayCategory(thread);
         return thread;
     },
 });
 
 patch(Thread.prototype, {
+    update(data) {
+        super.update(data);
+        if (data && this.channel_type === "gateway") {
+            assignIn(this, data, ["anonymous_name", "gateway"]);
+        }
+        if (data && ("gateway" in data || "gateway_id" in data || "channel_type" in data)) {
+            syncGatewayCategory(this);
+        }
+    },
     _computeDiscussAppCategory() {
         if (this.channel_type === "gateway") {
             return getGatewayCategory(this) || super._computeDiscussAppCategory(...arguments);

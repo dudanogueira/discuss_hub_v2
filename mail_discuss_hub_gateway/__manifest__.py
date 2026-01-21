@@ -9,8 +9,10 @@
     "website": "https://github.com/lcsztl/discuss_hub",
     "depends": ["mail_gateway", "mail_gateway_whatsapp_common", "mail_discuss_hub"],
     "data": [
+        "data/rule_update.xml",
         "security/mail_discuss_hub_gateway_security.xml",
         "views/discuss_channel_views.xml",
+        "views/discuss_inbox_views.xml",
         "views/mail_gateway_views.xml",
     ],
     "assets": {
@@ -19,6 +21,5 @@
             "mail_discuss_hub_gateway/static/src/js/gateway_sidebar_filter_provider.esm.js",
         ],
     },
-    "post_init_hook": "post_init_hook",
     "installable": True,
 }

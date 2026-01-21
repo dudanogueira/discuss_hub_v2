@@ -22,7 +22,6 @@ Integrações Discuss + mail_gateway (UI e regras comuns de canais gateway).
 - `models/mail_gateway_abstract.py` (cria canal sem membros em massa)
 - `models/mail_gateway_whatsapp_common.py` (cria canal sem membros em massa)
 - `views/mail_gateway_views.xml` (campo do time no form do gateway)
-- `hooks.py` (backfill group_public_id e discuss_team_id em canais existentes)
 
 ## Regras
 
@@ -30,4 +29,5 @@ Integrações Discuss + mail_gateway (UI e regras comuns de canais gateway).
 - Manter o modulo focado em regras genericas de gateway.
 - Canais gateway nao devem adicionar membros automaticamente (apenas autor/guest).
 - Canais gateway devem herdar `group_public_id` do time para controle de acesso.
+- Greenfield: sem hooks de backfill.
 - TODO: Avaliar constraint em `discuss.channel.member` para bloquear usuarios internos fora do `group_public_id` em canais gateway, considerando bypass para guests/autores e promocao de visitante -> contato.

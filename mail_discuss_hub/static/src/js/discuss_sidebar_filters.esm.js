@@ -1,9 +1,19 @@
+import { Record } from "@mail/core/common/record";
 import { discussSidebarItemsRegistry } from "@mail/core/public_web/discuss_sidebar";
+import { DiscussApp } from "@mail/core/public_web/discuss_app_model";
 import { _t } from "@web/core/l10n/translation";
 import { registry } from "@web/core/registry";
 import { rpc } from "@web/core/network/rpc";
+import { patch } from "@web/core/utils/patch";
 import { useService } from "@web/core/utils/hooks";
 import { Component, useEffect, useState } from "@odoo/owl";
+
+patch(DiscussApp.prototype, {
+    setup(env) {
+        super.setup(env);
+        this.discussHubSidebarFilter = Record.attr("mine");
+    },
+});
 
 export class DiscussHubSidebarFilters extends Component {
     static template = "mail_discuss_hub.DiscussHubSidebarFilters";

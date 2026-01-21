@@ -7,10 +7,65 @@
             <list>
                 <field name="name" />
                 <field name="login" />
+                <field name="discuss_role" />
                 <field name="email" />
                 <field name="company_id" />
                 <field name="active" />
             </list>
+        </field>
+    </record>
+
+    <record id="mail_discuss_agent_view_form" model="ir.ui.view">
+        <field name="name">res.users.form.discuss.agent</field>
+        <field name="model">res.users</field>
+        <field name="arch" type="xml">
+            <form string="Discuss Agent">
+                <sheet>
+                    <field
+                        name="image_1920"
+                        widget="image"
+                        class="oe_avatar"
+                        options="{'preview_image': 'avatar_128'}"
+                    />
+                    <div class="oe_title">
+                        <label for="name" />
+                        <h1>
+                            <field name="name" required="1" />
+                        </h1>
+                        <field name="email" invisible="1" />
+                        <label for="login" string="Email Address" />
+                        <h2>
+                            <field name="login" />
+                        </h2>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="phone" string="Telefone" />
+                            <field name="mobile" string="Celular" />
+                            <field name="discuss_role" string="Role" invisible="share" />
+                        </group>
+                        <group>
+                            <field
+                                name="discuss_message_signature"
+                                string="Assinatura de mensagem"
+                            />
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="mail_discuss_hub_res_users_view_form" model="ir.ui.view">
+        <field name="name">res.users.form.discuss.hub.role</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='access_rights']" position="inside">
+                <group>
+                    <field name="discuss_role" invisible="share"/>
+                </group>
+            </xpath>
         </field>
     </record>
 
@@ -20,5 +75,19 @@
         <field name="view_mode">list,form</field>
         <field name="view_id" ref="mail_discuss_agent_view_list" />
         <field name="domain">[('share', '=', False)]</field>
+    </record>
+
+    <record id="mail_discuss_agent_action_view_list" model="ir.actions.act_window.view">
+        <field name="sequence" eval="10"/>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="mail_discuss_agent_view_list" />
+        <field name="act_window_id" ref="mail_discuss_agent_action"/>
+    </record>
+
+    <record id="mail_discuss_agent_action_view_form" model="ir.actions.act_window.view">
+        <field name="sequence" eval="20"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="mail_discuss_agent_view_form" />
+        <field name="act_window_id" ref="mail_discuss_agent_action"/>
     </record>
 </odoo>

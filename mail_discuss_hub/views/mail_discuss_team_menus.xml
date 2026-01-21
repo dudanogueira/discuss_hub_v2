@@ -7,7 +7,7 @@
             parent="mail.menu_configuration"
             action="mail_discuss_hub.mail_discuss_team_action"
             sequence="30"
-            groups="base.group_system"
+            groups="base.group_system,mail_discuss_hub.group_discuss_hub_manager"
         />
     </data>
 </odoo>

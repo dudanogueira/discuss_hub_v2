@@ -9,7 +9,9 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
     def _build_channel_members(self, gateway, author):
         members = []
         if author and author._name == "res.partner":
-            members.append(Command.create({"partner_id": author.id, "unpin_dt": False}))
+            webhook_partner = gateway.webhook_user_id.partner_id if gateway.webhook_user_id else False
+            if not webhook_partner or author.id != webhook_partner.id:
+                members.append(Command.create({"partner_id": author.id, "unpin_dt": False}))
         elif author and author._name == "mail.guest":
             member_model = self.env["discuss.channel.member"]
             if "guest_id" in member_model._fields:

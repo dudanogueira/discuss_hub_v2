@@ -17,6 +17,7 @@
     "depends": ["mail"],
     "data": [
         "data/discuss_hub_groups.xml",
+        "data/discuss_hub_roles.xml",
         "security/ir.model.access.csv",
         "views/res_config_settings_views.xml",
         "views/discuss_channel_views.xml",

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="mail_discuss_hub_gateway_inbox_view_list" model="ir.ui.view">
+        <field name="name">discuss.channel.list.inbox</field>
+        <field name="model">discuss.channel</field>
+        <field name="arch" type="xml">
+            <list string="Inbox" create="false" delete="false">
+                <field name="name" />
+                <field name="gateway_display_name" string="Gateway" />
+                <field name="discuss_team_id" />
+                <field name="member_count" />
+                <field name="last_interest_dt" />
+                <field name="group_public_id" />
+                <field name="active" />
+            </list>
+        </field>
+    </record>
+
+    <record id="mail_discuss_hub_gateway_inbox_view_search" model="ir.ui.view">
+        <field name="name">discuss.channel.search.inbox</field>
+        <field name="model">discuss.channel</field>
+        <field name="arch" type="xml">
+            <search string="Inbox">
+                <field name="name" />
+                <field name="gateway_id" />
+                <field name="discuss_team_id" />
+                <field name="group_public_id" />
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="mail_discuss_hub_gateway_inbox_action" model="ir.actions.act_window">
+        <field name="name">Inbox</field>
+        <field name="res_model">discuss.channel</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="mail_discuss_hub_gateway_inbox_view_list" />
+        <field name="search_view_id" ref="mail_discuss_hub_gateway_inbox_view_search" />
+        <field name="domain">[('channel_type', '=', 'gateway')]</field>
+    </record>
+
+    <menuitem
+        id="mail_discuss_hub_gateway_inbox_menu"
+        name="Inbox"
+        parent="mail.menu_root_discuss"
+        action="mail_discuss_hub_gateway.mail_discuss_hub_gateway_inbox_action"
+        sequence="2"
+        groups="base.group_system"
+    />
+</odoo>
