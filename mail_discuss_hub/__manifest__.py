@@ -20,8 +20,17 @@
         "security/ir.model.access.csv",
         "views/res_config_settings_views.xml",
         "views/discuss_channel_views.xml",
+        "views/res_users_views.xml",
         "views/mail_discuss_team_views.xml",
         "views/mail_discuss_team_menus.xml",
+        "views/mail_discuss_agent_menus.xml",
     ],
+    "assets": {
+        "web.assets_backend": [
+            "mail_discuss_hub/static/src/xml/discuss_sidebar_filters.xml",
+            "mail_discuss_hub/static/src/js/discuss_sidebar_filters.esm.js",
+            "mail_discuss_hub/static/src/js/discuss_sidebar_filter_registry.esm.js",
+        ],
+    },
     "installable": True,
 }

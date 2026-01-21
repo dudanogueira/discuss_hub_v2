@@ -43,7 +43,7 @@
                     <notebook>
                         <page string="Instances">
                             <field name="instance_ids">
-                                <list>
+                                <list delete="false">
                                     <field name="name" />
                                     <field
                                         name="status"

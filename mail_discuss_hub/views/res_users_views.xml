@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="mail_discuss_agent_view_list" model="ir.ui.view">
+        <field name="name">res.users.list.discuss.agent</field>
+        <field name="model">res.users</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name" />
+                <field name="login" />
+                <field name="email" />
+                <field name="company_id" />
+                <field name="active" />
+            </list>
+        </field>
+    </record>
+
+    <record id="mail_discuss_agent_action" model="ir.actions.act_window">
+        <field name="name">Discuss Agents</field>
+        <field name="res_model">res.users</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="mail_discuss_agent_view_list" />
+        <field name="domain">[('share', '=', False)]</field>
+    </record>
+</odoo>

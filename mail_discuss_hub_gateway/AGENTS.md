@@ -30,3 +30,4 @@ Integrações Discuss + mail_gateway (UI e regras comuns de canais gateway).
 - Manter o modulo focado em regras genericas de gateway.
 - Canais gateway nao devem adicionar membros automaticamente (apenas autor/guest).
 - Canais gateway devem herdar `group_public_id` do time para controle de acesso.
+- TODO: Avaliar constraint em `discuss.channel.member` para bloquear usuarios internos fora do `group_public_id` em canais gateway, considerando bypass para guests/autores e promocao de visitante -> contato.

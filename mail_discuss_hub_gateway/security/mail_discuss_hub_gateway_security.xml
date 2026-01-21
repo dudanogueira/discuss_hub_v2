@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="mail.ir_rule_discuss_channel_all" model="ir.rule">
+        <field name="domain_force">
+            [
+                "|",
+                    "&amp;",
+                        ("channel_type", "not in", ("channel", "gateway")),
+                        ("is_member", "=", True),
+                    "&amp;",
+                        ("channel_type", "in", ("channel", "gateway")),
+                        "|",
+                            "&amp;",
+                                ("parent_channel_id", "=", False),
+                                "|",
+                                    ("group_public_id", "=", False),
+                                    ("group_public_id", "in", user.groups_id.ids),
+                            "&amp;",
+                                ("parent_channel_id", "!=", False),
+                                "|",
+                                    ("parent_channel_id.group_public_id", "=", False),
+                                    ("parent_channel_id.group_public_id", "in", user.groups_id.ids),
+            ]
+        </field>
+    </record>
+
+    <record id="mail.ir_rule_discuss_channel_member_is_self_all" model="ir.rule">
+        <field name="domain_force">
+            [
+                ("is_self", "=", True),
+                "|",
+                    ("channel_id.channel_type", "not in", ("channel", "gateway")),
+                    "|",
+                        "&amp;",
+                            ("channel_id.parent_channel_id", "=", False),
+                            "|",
+                                ("channel_id.group_public_id", "=", False),
+                                ("channel_id.group_public_id", "in", user.groups_id.ids),
+                        "&amp;",
+                            ("channel_id.parent_channel_id", "!=", False),
+                            "|",
+                                ("channel_id.parent_channel_id.group_public_id", "=", False),
+                                ("channel_id.parent_channel_id.group_public_id", "in", user.groups_id.ids),
+            ]
+        </field>
+    </record>
+
+    <record id="mail.ir_rule_discuss_channel_member_read_all" model="ir.rule">
+        <field name="domain_force">
+            [
+                "|",
+                    "&amp;",
+                        ("channel_id.channel_type", "not in", ("channel", "gateway")),
+                        ("channel_id.is_member", "=", True),
+                    "&amp;",
+                        ("channel_id.channel_type", "in", ("channel", "gateway")),
+                        "|",
+                            "&amp;",
+                                ("channel_id.parent_channel_id", "=", False),
+                                "|",
+                                    ("channel_id.group_public_id", "=", False),
+                                    ("channel_id.group_public_id", "in", user.groups_id.ids),
+                            "&amp;",
+                                ("channel_id.parent_channel_id", "!=", False),
+                                "|",
+                                    ("channel_id.parent_channel_id.group_public_id", "=", False),
+                                    ("channel_id.parent_channel_id.group_public_id", "in", user.groups_id.ids),
+            ]
+        </field>
+    </record>
+
+    <record id="mail.ir_rule_discuss_channel_member_create_is_group_matching_all" model="ir.rule">
+        <field name="domain_force">
+            [
+                ("is_self", "=", True),
+                ("channel_id.channel_type", "in", ("channel", "gateway")),
+                "|",
+                    ("channel_id.group_public_id", "=", False),
+                    ("channel_id.group_public_id", "in", user.groups_id.ids)
+            ]
+        </field>
+    </record>
+
+    <record id="mail.ir_rule_discuss_channel_member_create_is_group_matching_group_user" model="ir.rule">
+        <field name="domain_force">
+            [
+                ("is_self", "=", False),
+                ("channel_id.channel_type", "in", ("channel", "gateway")),
+                "|",
+                    ("channel_id.group_public_id", "=", False),
+                    ("channel_id.group_public_id", "in", user.groups_id.ids)
+            ]
+        </field>
+    </record>
+
+    <record id="mail.ir_rule_discuss_channel_member_create_is_member_group_user" model="ir.rule">
+        <field name="domain_force">
+            [
+                ("is_self", "=", False),
+                ("channel_id.channel_type", "not in", ("channel", "chat", "gateway")),
+                ("channel_id.is_member", "=", True)
+            ]
+        </field>
+    </record>
+</odoo>

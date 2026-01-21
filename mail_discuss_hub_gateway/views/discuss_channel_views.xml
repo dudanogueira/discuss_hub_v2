@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="mail_discuss_hub_gateway_discuss_channel_view_form_instance" model="ir.ui.view">
+        <field name="name">discuss.channel.form.gateway.info</field>
+        <field name="model">discuss.channel</field>
+        <field name="inherit_id" ref="mail.discuss_channel_view_form"/>
+        <field name="priority" eval="90"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[hasclass('o_label_nowrap')]/field[@name='description']" position="after">
+                <field name="gateway_id" invisible="channel_type != 'gateway'" readonly="1"/>
+                <field name="gateway_display_name" invisible="channel_type != 'gateway'" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

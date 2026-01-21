@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="mail_discuss_hub.DiscussHubSidebarFilters" owl="1">
+        <div class="o-discuss-hub-sidebar-filters px-2 mb-2">
+            <div class="btn-group btn-group-sm w-100" role="group">
+                <button
+                    type="button"
+                    t-attf-class="btn btn-secondary #{activeFilter === 'mine' ? 'active' : ''}"
+                    t-on-click="() => this.setFilter('mine')"
+                >
+                    <t t-esc="labels.mine"/>
+                </button>
+                <button
+                    type="button"
+                    t-attf-class="btn btn-secondary #{activeFilter === 'unassigned' ? 'active' : ''}"
+                    t-on-click="() => this.setFilter('unassigned')"
+                >
+                    <t t-esc="labels.unassigned"/>
+                </button>
+                <button
+                    type="button"
+                    t-attf-class="btn btn-secondary #{activeFilter === 'all' ? 'active' : ''}"
+                    t-on-click="() => this.setFilter('all')"
+                >
+                    <t t-esc="labels.all"/>
+                </button>
+            </div>
+        </div>
+    </t>
+</templates>

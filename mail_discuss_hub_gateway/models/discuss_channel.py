@@ -1,10 +1,16 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-from odoo import api, models
+from odoo import api, fields, models
 
 
 class DiscussChannel(models.Model):
     _inherit = "discuss.channel"
+
+    gateway_display_name = fields.Char(
+        related="gateway_id.display_name",
+        string="Gateway Name",
+        readonly=True,
+    )
 
     _sql_constraints = [
         (

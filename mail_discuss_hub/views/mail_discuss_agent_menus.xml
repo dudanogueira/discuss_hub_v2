@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <menuitem
+            id="mail_discuss_agent_menu"
+            name="Agentes"
+            parent="mail.menu_configuration"
+            action="mail_discuss_hub.mail_discuss_agent_action"
+            sequence="31"
+            groups="base.group_system"
+        />
+    </data>
+</odoo>
