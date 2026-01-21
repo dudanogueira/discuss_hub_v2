@@ -19,4 +19,4 @@ Docker Compose
 No momento temos um arquivo docker-compose-dev.yaml para facilitar o
 desenvolvimento local.
 
-```docker compose -f compose-dev.yaml up -d odoo evolution```
+``docker compose -f compose-dev.yaml up -d odoo evolution``
