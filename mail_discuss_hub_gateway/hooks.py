@@ -9,17 +9,13 @@ def post_init_hook(env):
     gateway_model = env["mail.gateway"]
 
     for gateway in gateway_model.search([]):
-        group_id = (
-            gateway.discuss_team_id.access_group_id.id
-            if gateway.discuss_team_id and gateway.discuss_team_id.access_group_id
-            else False
-        )
+        group = gateway._ensure_access_group()
+        group_id = group.id if group else False
         channels = channel_model.search([("gateway_id", "=", gateway.id)])
         if not channels:
             continue
         channels.write(
             {
-                "discuss_team_id": gateway.discuss_team_id.id or False,
                 "group_public_id": group_id,
             }
         )
