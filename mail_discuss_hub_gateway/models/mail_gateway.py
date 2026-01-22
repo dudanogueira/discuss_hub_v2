@@ -47,6 +47,62 @@ class MailGateway(models.Model):
                     mail_discuss_hub_gateway_skip_group_sync=True
                 ).write({"name": desired_name})
 
+    def _sync_access_group_implied_groups(self):
+        Team = self.env["mail.discuss.team"].sudo()
+        gateways = self.sudo()
+        for gateway in gateways.filtered(lambda record: not record.access_group_id):
+            gateway._ensure_access_group()
+
+        gateway_group_ids = gateways.mapped("access_group_id").ids
+        if not gateway_group_ids:
+            return
+
+        linked_teams = gateways.mapped("discuss_team_ids")
+        implied_teams = Team.search(
+            [("access_group_id.implied_ids", "in", gateway_group_ids)]
+        )
+        teams = (linked_teams | implied_teams).sudo()
+        for team in teams.filtered(lambda record: not record.access_group_id):
+            team._ensure_access_group()
+
+        team_group_ids = teams.mapped("access_group_id").ids
+        if team_group_ids:
+            for group in gateways.mapped("access_group_id"):
+                invalid_implied = group.implied_ids.filtered(
+                    lambda implied: implied.id in team_group_ids
+                )
+                if invalid_implied:
+                    group.sudo().write(
+                        {"implied_ids": [(3, group_id) for group_id in invalid_implied.ids]}
+                    )
+
+        all_gateway_group_ids = set(
+            self.env["mail.gateway"]
+            .sudo()
+            .search([("access_group_id", "!=", False)])
+            .mapped("access_group_id")
+            .ids
+        )
+        for team in teams:
+            if not team.access_group_id:
+                continue
+            gateways_for_team = self.env["mail.gateway"].sudo().search(
+                [("discuss_team_ids", "in", team.id)]
+            )
+            desired_gateway_group_ids = set(
+                gateways_for_team.mapped("access_group_id").ids
+            )
+            current_gateway_group_ids = set(
+                team.access_group_id.implied_ids.ids
+            ) & all_gateway_group_ids
+            to_add = desired_gateway_group_ids - current_gateway_group_ids
+            to_remove = current_gateway_group_ids - desired_gateway_group_ids
+            updates = [(4, group_id) for group_id in to_add] + [
+                (3, group_id) for group_id in to_remove
+            ]
+            if updates:
+                team.access_group_id.sudo().write({"implied_ids": updates})
+
     def _sync_channels_access_group(self):
         channel_model = self.env["discuss.channel"].sudo()
         for gateway in self:
@@ -59,6 +115,7 @@ class MailGateway(models.Model):
     def create(self, vals_list):
         gateways = super().create(vals_list)
         gateways._sync_access_group()
+        gateways._sync_access_group_implied_groups()
         gateways._sync_channels_access_group()
         return gateways
 
@@ -67,6 +124,7 @@ class MailGateway(models.Model):
         if not self.env.context.get("mail_discuss_hub_gateway_skip_group_sync"):
             if "name" in vals:
                 self._sync_access_group()
+            self._sync_access_group_implied_groups()
         if "access_group_id" in vals:
             self._sync_channels_access_group()
         return result

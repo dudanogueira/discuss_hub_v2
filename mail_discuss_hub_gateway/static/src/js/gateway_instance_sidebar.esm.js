@@ -9,6 +9,16 @@ import {patch} from "@web/core/utils/patch";
 const GATEWAY_CATEGORY_PREFIX = "mail_gateway_instance_";
 const GATEWAY_CATEGORY_SEQUENCE = 24;
 
+function removeThreadFromCategory(category, thread) {
+    if (!category || !thread) {
+        return;
+    }
+    if (!thread.in(category.threads)) {
+        return;
+    }
+    category.threads._.deleteNoinv(category.threads, thread);
+}
+
 function getGatewayInfo(thread) {
     const gateway = thread.gateway;
     const rawGateway = thread.gateway_id;
@@ -42,7 +52,7 @@ function getGatewayCategory(thread) {
             id: categoryId,
             name: fallbackName,
             extraClass: "o-mail-DiscussSidebarCategory-gateway",
-            hideWhenEmpty: true,
+            hideWhenEmpty: false,
             canView: false,
             canAdd: true,
             addTitle: _t("Search Gateway Channel"),
@@ -54,13 +64,44 @@ function getGatewayCategory(thread) {
     return category;
 }
 
+function getExistingGatewayCategory(thread) {
+    const gatewayInfo = getGatewayInfo(thread);
+    const store = thread.store;
+    if (!gatewayInfo || !store || !store.DiscussAppCategory) {
+        return null;
+    }
+    const categoryId = `${GATEWAY_CATEGORY_PREFIX}${gatewayInfo.id}`;
+    return store.DiscussAppCategory.get({id: categoryId});
+}
+
 function syncGatewayCategory(thread) {
     if (!thread || thread.channel_type !== "gateway") {
         return;
     }
+    const store = thread.store;
+    const channelsCategory = store?.discuss?.channels;
+    const chatsCategory = store?.discuss?.chats;
+    const globalCategory = store?.discuss?.gateway;
+    if (thread.active === false) {
+        const existingCategory = getExistingGatewayCategory(thread);
+        removeThreadFromCategory(channelsCategory, thread);
+        removeThreadFromCategory(chatsCategory, thread);
+        removeThreadFromCategory(globalCategory, thread);
+        removeThreadFromCategory(existingCategory, thread);
+        return;
+    }
     const category = getGatewayCategory(thread);
+    removeThreadFromCategory(channelsCategory, thread);
+    removeThreadFromCategory(chatsCategory, thread);
+    if (category && globalCategory) {
+        removeThreadFromCategory(globalCategory, thread);
+    }
     if (category) {
         category.threads.add(thread);
+        return;
+    }
+    if (globalCategory) {
+        globalCategory.threads.add(thread);
     }
 }
 
@@ -81,11 +122,17 @@ patch(Thread.prototype, {
         if (data && this.channel_type === "gateway") {
             assignIn(this, data, ["anonymous_name", "gateway"]);
         }
-        if (data && ("gateway" in data || "gateway_id" in data || "channel_type" in data)) {
+        if (
+            data &&
+            ("gateway" in data || "gateway_id" in data || "channel_type" in data || "active" in data)
+        ) {
             syncGatewayCategory(this);
         }
     },
     _computeDiscussAppCategory() {
+        if (this.active === false) {
+            return;
+        }
         if (this.channel_type === "gateway") {
             return getGatewayCategory(this) || super._computeDiscussAppCategory(...arguments);
         }

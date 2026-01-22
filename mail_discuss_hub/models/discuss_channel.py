@@ -38,3 +38,8 @@ class DiscussChannel(models.Model):
             raise ValidationError(
                 _("Group authorization is only supported on channels and gateway channels.")
             )
+
+    def _channel_basic_info(self):
+        info = super()._channel_basic_info()
+        info["active"] = self.active
+        return info

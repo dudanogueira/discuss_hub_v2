@@ -35,25 +35,23 @@
         <field name="mode">primary</field>
         <field name="arch" type="xml">
             <xpath expr="//sheet/div[hasclass('oe_button_box')]" position="after">
-                <div class="oe_title">
+                <div class="oe_title" name="inbox_title">
                     <label for="name" string="Caixa de entrada" />
-                    <h1>
-                        <xpath expr="//field[@name='name']" position="move" />
-                    </h1>
+                    <h1 />
                 </div>
-                <group>
-                    <field name="discuss_team_ids" widget="many2many_tags" />
-                </group>
+                <group name="inbox_primary" />
+            </xpath>
+            <xpath expr="//div[@name='inbox_title']/h1" position="inside">
+                <xpath expr="//field[@name='name']" position="move" />
+            </xpath>
+            <xpath expr="//group[@name='inbox_primary']" position="inside">
+                <xpath expr="//field[@name='discuss_team_ids']" position="move" />
             </xpath>
             <xpath expr="//notebook" position="inside">
-                <page string="Gateway" name="gateway">
-                    <group>
-                        <xpath expr="//field[@name='gateway_type']" position="move" />
-                        <xpath expr="//field[@name='company_id']" position="move" />
-                        <field name="access_group_id" readonly="1" />
-                    </group>
-                    <xpath expr="//sheet/group[field[@name='token']]" position="move" />
-                </page>
+                <page string="Gateway" name="gateway" />
+            </xpath>
+            <xpath expr="//page[@name='gateway']" position="inside">
+                <xpath expr="//sheet/group[field[@name='token']]" position="move" />
             </xpath>
             <xpath expr="//page[@name='member']" position="attributes">
                 <attribute name="invisible">1</attribute>

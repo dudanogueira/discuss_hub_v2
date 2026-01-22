@@ -1,3 +1,5 @@
+import { Record } from "@mail/core/common/record";
+import { Thread } from "@mail/core/common/thread_model";
 import { DiscussAppCategory } from "@mail/core/public_web/discuss_app_category_model";
 import { DiscussSidebarCategories } from "@mail/discuss/core/public_web/discuss_sidebar_categories";
 import { cleanTerm } from "@mail/utils/common/format";
@@ -6,16 +8,21 @@ import { patch } from "@web/core/utils/patch";
 
 const discussHubSidebarFilterRegistry = registry.category("discuss_hub.sidebar_filters");
 
+function isThreadArchived(thread) {
+    return thread?.active === false;
+}
+
 function applyDiscussHubSidebarFilter(threads, activeFilter) {
+    const visibleThreads = threads.filter((thread) => !isThreadArchived(thread));
     if (activeFilter === "all") {
-        return threads;
+        return visibleThreads;
     }
     const providers = discussHubSidebarFilterRegistry.getAll();
     if (!providers.length) {
-        return threads;
+        return visibleThreads;
     }
     const filterKey = activeFilter === "unassigned" ? "isUnassigned" : "isMine";
-    return threads.filter((thread) => {
+    return visibleThreads.filter((thread) => {
         const matchingProviders = providers.filter(
             (provider) => provider.appliesTo && provider.appliesTo(thread)
         );
@@ -25,6 +32,21 @@ function applyDiscussHubSidebarFilter(threads, activeFilter) {
         return matchingProviders.some((provider) => provider[filterKey]?.(thread));
     });
 }
+
+patch(Thread.prototype, {
+    setup() {
+        super.setup(...arguments);
+        if (!("active" in this)) {
+            this.active = Record.attr(true);
+        }
+    },
+    _computeDiscussAppCategory() {
+        if (this.active === false) {
+            return;
+        }
+        return super._computeDiscussAppCategory(...arguments);
+    },
+});
 
 patch(DiscussSidebarCategories.prototype, {
     filteredThreads(threads) {
@@ -55,6 +77,16 @@ patch(DiscussSidebarCategories.prototype, {
 
 patch(DiscussAppCategory.prototype, {
     get isVisible() {
+        if (this.hideWhenEmpty) {
+            const hasVisibleThreads = this.threads.some(
+                (thread) =>
+                    !isThreadArchived(thread) &&
+                    (thread.displayToSelf || thread.isLocallyPinned)
+            );
+            if (!hasVisibleThreads) {
+                return false;
+            }
+        }
         const visible = super.isVisible;
         if (visible) {
             return visible;
@@ -64,8 +96,10 @@ patch(DiscussAppCategory.prototype, {
             return false;
         }
         const providers = discussHubSidebarFilterRegistry.getAll();
-        return this.threads.some((thread) =>
-            providers.some((provider) => provider.appliesTo && provider.appliesTo(thread))
+        return this.threads.some(
+            (thread) =>
+                !isThreadArchived(thread) &&
+                providers.some((provider) => provider.appliesTo && provider.appliesTo(thread))
         );
     },
 });
