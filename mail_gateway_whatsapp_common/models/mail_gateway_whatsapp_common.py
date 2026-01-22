@@ -1031,12 +1031,16 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
                     update_vals["gateway_token"] = primary_token
             if "gateway_phone" in guest._fields and not guest.gateway_phone:
                 update_vals["gateway_phone"] = phone
+            if "gateway_id" in guest._fields and not guest.gateway_id:
+                update_vals["gateway_id"] = gateway.id
             if update_vals:
                 guest.write(update_vals)
             return guest
         create_vals = {"name": name, "gateway_phone": phone}
         if primary_token and "gateway_token" in guest_model._fields:
             create_vals["gateway_token"] = primary_token
+        if "gateway_id" in guest_model._fields:
+            create_vals["gateway_id"] = gateway.id
         return guest_model.create(create_vals)
 
     def _find_guest_by_phone(self, dto, phone=None):
