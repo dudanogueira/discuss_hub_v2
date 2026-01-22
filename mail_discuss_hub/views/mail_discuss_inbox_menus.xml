@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <menuitem
+            id="mail_discuss_hub_inbox_menu_root"
+            name="Caixas de entrada"
+            parent="mail.menu_configuration"
+            sequence="20"
+            groups="base.group_system"
+        />
+    </data>
+</odoo>

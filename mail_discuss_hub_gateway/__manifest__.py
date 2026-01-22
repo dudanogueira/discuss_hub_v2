@@ -19,6 +19,7 @@
         "web.assets_backend": [
             "mail_discuss_hub_gateway/static/src/js/gateway_instance_sidebar.esm.js",
             "mail_discuss_hub_gateway/static/src/js/gateway_sidebar_filter_provider.esm.js",
+            "mail_discuss_hub_gateway/static/src/js/thread_actions.esm.js",
         ],
     },
     "installable": True,

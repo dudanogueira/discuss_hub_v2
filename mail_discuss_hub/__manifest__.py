@@ -24,6 +24,7 @@
         "views/res_users_views.xml",
         "views/mail_discuss_team_views.xml",
         "views/mail_discuss_team_menus.xml",
+        "views/mail_discuss_inbox_menus.xml",
         "views/mail_discuss_agent_menus.xml",
     ],
     "assets": {

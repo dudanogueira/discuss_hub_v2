@@ -322,6 +322,46 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             info.get("pictureUrl") or info.get("picture_url"),
         )
 
+    def _fetch_contact_metadata(self, gateway, dto):
+        chat_id = (dto.contact_jid or dto.chat_id or "").strip()
+        if not chat_id:
+            return False
+        instance = self._instance_name(gateway)
+        endpoint = f"/chat/findContacts/{instance}"
+        payload = {"where": {"remoteJid": chat_id}}
+        try:
+            response = self._send_api_request(gateway, "POST", endpoint, payload=payload)
+        except Exception as exc:
+            _logger.warning("Failed to fetch contact info: %s", exc)
+            return False
+        contact = self._select_contact_from_response(response, chat_id)
+        if not contact:
+            return False
+        contact_name = (contact.get("pushName") or contact.get("name") or "").strip()
+        contact_pic = contact.get("profilePicUrl") or contact.get("pictureUrl")
+        return {
+            "contact_name": contact_name,
+            "contact_profile_pic_url": contact_pic,
+        }
+
+    @staticmethod
+    def _select_contact_from_response(response, chat_id):
+        contacts = []
+        if isinstance(response, dict):
+            for key in ("data", "contacts", "results"):
+                data = response.get(key)
+                if isinstance(data, list):
+                    contacts = data
+                    break
+        elif isinstance(response, list):
+            contacts = response
+        if not contacts:
+            return False
+        for contact in contacts:
+            if isinstance(contact, dict) and contact.get("remoteJid") == chat_id:
+                return contact
+        return contacts[0] if contacts else False
+
     def _extract_group_metadata_from_payload(self, update):
         data = update.get("data", {}) or {}
         if isinstance(data, list):

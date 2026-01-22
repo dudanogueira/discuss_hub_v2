@@ -9,21 +9,38 @@ import {patch} from "@web/core/utils/patch";
 const GATEWAY_CATEGORY_PREFIX = "mail_gateway_instance_";
 const GATEWAY_CATEGORY_SEQUENCE = 24;
 
-function getGatewayCategory(thread) {
+function getGatewayInfo(thread) {
     const gateway = thread.gateway;
-    if (!gateway || !gateway.id) {
+    const rawGateway = thread.gateway_id;
+    const rawGatewayId =
+        rawGateway && typeof rawGateway === "object" ? rawGateway.id : rawGateway;
+    const gatewayId = gateway?.id || rawGatewayId;
+    if (!gatewayId) {
+        return null;
+    }
+    const gatewayName =
+        gateway?.name ||
+        (rawGateway && typeof rawGateway === "object" ? rawGateway.name : undefined) ||
+        thread.gateway_name;
+    return { id: gatewayId, name: gatewayName };
+}
+
+function getGatewayCategory(thread) {
+    const gatewayInfo = getGatewayInfo(thread);
+    if (!gatewayInfo) {
         return null;
     }
     const store = thread.store;
     if (!store || !store.DiscussAppCategory) {
         return null;
     }
-    const categoryId = `${GATEWAY_CATEGORY_PREFIX}${gateway.id}`;
+    const categoryId = `${GATEWAY_CATEGORY_PREFIX}${gatewayInfo.id}`;
     let category = store.DiscussAppCategory.get({id: categoryId});
+    const fallbackName = gatewayInfo.name || _t("Gateway");
     if (!category) {
         category = store.DiscussAppCategory.insert({
             id: categoryId,
-            name: gateway.name || _t("Gateway"),
+            name: fallbackName,
             extraClass: "o-mail-DiscussSidebarCategory-gateway",
             hideWhenEmpty: true,
             canView: false,
@@ -31,8 +48,8 @@ function getGatewayCategory(thread) {
             addTitle: _t("Search Gateway Channel"),
             sequence: GATEWAY_CATEGORY_SEQUENCE,
         });
-    } else if (gateway.name && category.name !== gateway.name) {
-        category.update({name: gateway.name});
+    } else if (gatewayInfo.name && category.name !== gatewayInfo.name) {
+        category.update({name: gatewayInfo.name});
     }
     return category;
 }
@@ -42,16 +59,8 @@ function syncGatewayCategory(thread) {
         return;
     }
     const category = getGatewayCategory(thread);
-    const globalCategory = thread.store?.discuss?.gateway;
     if (category) {
-        if (globalCategory) {
-            globalCategory.threads.delete(thread);
-        }
         category.threads.add(thread);
-        return;
-    }
-    if (globalCategory) {
-        globalCategory.threads.add(thread);
     }
 }
 

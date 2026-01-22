@@ -112,10 +112,12 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         if not author:
             return {"status": "ignored", "reason": "author_not_found"}
 
+        self._maybe_enrich_contact_metadata(gateway, dto, channel=channel)
         channel = channel or self._get_or_create_channel(gateway, dto, author)
         if not channel:
             return {"status": "ignored", "reason": "channel_not_found"}
         self._apply_channel_metadata(channel, dto)
+        self._apply_contact_metadata(gateway, dto, channel=channel)
         self._ensure_guest_member(channel, author)
 
         attachments = self._prepare_attachments(dto)
@@ -780,24 +782,131 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
             guest = self._get_or_create_guest(gateway, dto)
         if not guest:
             return {"status": "ignored", "reason": "guest_not_found"}
-        update_vals = {}
-        if (
-            dto.contact_profile_pic_url
-            and "gateway_profile_pic_url" in guest._fields
-            and guest.gateway_profile_pic_url != dto.contact_profile_pic_url
-        ):
-            update_vals["gateway_profile_pic_url"] = dto.contact_profile_pic_url
-        if update_vals:
-            guest.sudo().write(update_vals)
-        if dto.contact_profile_pic_url:
-            channel_id = gateway._get_channel_id(contact_jid)
-            if channel_id:
-                channel = self.env["discuss.channel"].browse(channel_id)
-                if channel and not channel.image_128:
-                    image_base64 = self._fetch_image_base64(dto.contact_profile_pic_url)
-                    if image_base64:
-                        channel.sudo().write({"image_128": image_base64})
+        self._apply_contact_metadata(gateway, dto, channel=channel, guest=guest)
         return {"status": "ok", "guest_id": guest.id}
+
+    def _maybe_enrich_contact_metadata(self, gateway, dto, channel=None, guest=None):
+        if not self._should_fetch_contact_metadata(gateway, dto, channel, guest):
+            return False
+        metadata = self._fetch_contact_metadata(gateway, dto)
+        if not metadata:
+            return False
+        chat_id = (dto.chat_id or "").strip()
+        if not chat_id:
+            return False
+        contact_name = (metadata.get("contact_name") or "").strip()
+        contact_pic = (metadata.get("contact_profile_pic_url") or "").strip()
+        fallback = self._format_chat_id(chat_id)
+        if contact_name and contact_name != fallback:
+            dto.contact_name = contact_name
+        if contact_pic:
+            dto.contact_profile_pic_url = contact_pic
+        return True
+
+    def _should_fetch_contact_metadata(self, gateway, dto, channel=None, guest=None):
+        if not gateway or not dto:
+            return False
+        if dto.is_group or not dto.from_me:
+            return False
+        chat_id = (dto.chat_id or "").strip()
+        if not chat_id:
+            return False
+        contact_name = (dto.contact_name or "").strip()
+        fallback = self._format_chat_id(chat_id)
+        if contact_name == fallback:
+            contact_name = ""
+        channel = channel or self._get_channel_by_chat_id(gateway, chat_id)
+        guest = guest or self._find_guest_by_phone(dto)
+        needs_name = not contact_name
+        if needs_name:
+            if channel and not self._is_fallback_contact_name(channel.name, chat_id):
+                needs_name = False
+            if guest and not self._is_fallback_contact_name(guest.name, chat_id):
+                needs_name = False
+        return needs_name
+
+    def _fetch_contact_metadata(self, gateway, dto):
+        provider = self._get_outbound_provider(gateway)
+        if provider is False or not hasattr(provider, "_fetch_contact_metadata"):
+            return False
+        try:
+            return provider._fetch_contact_metadata(gateway, dto)
+        except Exception:
+            self._logger.warning("Failed to fetch contact metadata.", exc_info=True)
+            return False
+
+    def _apply_contact_metadata(self, gateway, dto, channel=None, guest=None):
+        chat_id = (dto.chat_id or dto.contact_jid or "").strip()
+        if not chat_id or self._is_group_chat(chat_id):
+            return
+        contact_name = (dto.contact_name or "").strip()
+        if not contact_name and not dto.from_me:
+            contact_name = (dto.sender_name or "").strip()
+        contact_pic = (dto.contact_profile_pic_url or "").strip()
+        guest = guest or self._find_guest_by_phone(dto)
+        if not contact_name and not contact_pic:
+            if not guest or self._is_fallback_contact_name(guest.name, chat_id):
+                return
+        if guest:
+            update_vals = {}
+            if contact_name and self._should_update_guest_name(guest, contact_name, chat_id):
+                update_vals["name"] = contact_name
+            if (
+                contact_pic
+                and "gateway_profile_pic_url" in guest._fields
+                and guest.gateway_profile_pic_url != contact_pic
+            ):
+                update_vals["gateway_profile_pic_url"] = contact_pic
+            if update_vals:
+                guest.sudo().write(update_vals)
+        channel_name = contact_name
+        if not channel_name and guest and not self._is_fallback_contact_name(guest.name, chat_id):
+            channel_name = (guest.name or "").strip()
+        channel = channel or self._get_channel_by_chat_id(gateway, chat_id)
+        if channel:
+            update_vals = {}
+            if channel_name and self._should_update_contact_name(channel.name, channel_name, chat_id):
+                update_vals["name"] = channel_name
+            if contact_pic and not channel.image_128:
+                image_base64 = self._fetch_image_base64(contact_pic)
+                if image_base64:
+                    update_vals["image_128"] = image_base64
+            if update_vals:
+                channel.sudo().write(update_vals)
+
+    def _is_fallback_contact_name(self, name, chat_id):
+        name = (name or "").strip()
+        if not name:
+            return True
+        fallback = self._format_chat_id(chat_id)
+        return name == fallback
+
+    def _should_update_contact_name(self, current_name, contact_name, chat_id):
+        contact_name = (contact_name or "").strip()
+        if not contact_name:
+            return False
+        fallback = self._format_chat_id(chat_id)
+        if contact_name == fallback:
+            return False
+        current_name = (current_name or "").strip()
+        if not current_name:
+            return True
+        return current_name == fallback
+
+    def _should_update_guest_name(self, guest, contact_name, chat_id):
+        if not guest:
+            return False
+        if "partner_id" in guest._fields and guest.partner_id:
+            return False
+        return self._should_update_contact_name(guest.name, contact_name, chat_id)
+
+    def _get_channel_by_chat_id(self, gateway, chat_id):
+        if not gateway or not chat_id:
+            return False
+        channel_id = gateway._get_channel_id(chat_id)
+        if not channel_id:
+            return False
+        return self.env["discuss.channel"].browse(channel_id)
 
     def _handle_chat_update(self, gateway, dto, channel, author=None):
         """Update channel metadata such as name and unread count."""

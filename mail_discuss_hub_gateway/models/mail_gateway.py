@@ -6,6 +6,11 @@ from odoo import api, fields, models
 class MailGateway(models.Model):
     _inherit = "mail.gateway"
 
+    discuss_team_ids = fields.Many2many(
+        "mail.discuss.team",
+        string="Discuss Teams",
+        help="Teams allowed to handle this inbox.",
+    )
     access_group_id = fields.Many2one(
         "res.groups",
         string="Gateway Access Group",

@@ -15,8 +15,8 @@ threadActionsRegistry.add("crm-lead-panel", {
     componentProps(action, component) {
         return { thread: component.thread };
     },
-    icon: "fa fa-fw fa-briefcase",
-    iconLarge: "fa fa-fw fa-lg fa-briefcase",
+    icon: "fa fa-fw fa-handshake-o",
+    iconLarge: "fa fa-fw fa-lg fa-handshake-o",
     name: _t("Lead"),
     panelOuterClass: "o-discuss-CrmLeadPanel bg-inherit",
     sequence: 20,

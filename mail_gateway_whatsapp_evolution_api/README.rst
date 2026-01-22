@@ -78,6 +78,7 @@ Roadmap (TODO)
 
 - Support more webhook events and message statuses.
 - Improve group chat handling and naming conventions.
+- Cache group/contact metadata enrichment to reduce repeated API calls.
 - Add retry handling and delivery diagnostics.
 
 Bug Tracker
