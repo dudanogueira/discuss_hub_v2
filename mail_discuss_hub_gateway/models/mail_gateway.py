@@ -11,6 +11,14 @@ class MailGateway(models.Model):
         string="Discuss Teams",
         help="Teams allowed to handle this inbox.",
     )
+    discuss_agent_ids = fields.Many2many(
+        "res.users",
+        "mail_gateway_discuss_agent_rel",
+        "gateway_id",
+        "user_id",
+        string="Discuss Agents",
+        help="Agents allowed to handle this inbox.",
+    )
     access_group_id = fields.Many2one(
         "res.groups",
         string="Gateway Access Group",
@@ -103,6 +111,31 @@ class MailGateway(models.Model):
             if updates:
                 team.access_group_id.sudo().write({"implied_ids": updates})
 
+    def _sync_access_group_agents(self, previous_agent_ids=None):
+        previous_agent_ids = previous_agent_ids or {}
+        for gateway in self.sudo():
+            group = gateway._ensure_access_group()
+            if not group:
+                continue
+            desired_agent_ids = set(gateway.discuss_agent_ids.ids)
+            current_group_user_ids = set(group.users.ids)
+            to_add = desired_agent_ids - current_group_user_ids
+            to_remove = set()
+            if gateway.id in previous_agent_ids:
+                removed_agent_ids = set(previous_agent_ids[gateway.id]) - desired_agent_ids
+                if removed_agent_ids:
+                    team_user_ids = set(gateway.discuss_team_ids.mapped("member_ids").ids)
+                    to_remove = {
+                        user_id
+                        for user_id in removed_agent_ids
+                        if user_id not in team_user_ids
+                    }
+            if to_add or to_remove:
+                updates = [(4, user_id) for user_id in to_add] + [
+                    (3, user_id) for user_id in to_remove
+                ]
+                group.sudo().write({"users": updates})
+
     def _sync_channels_access_group(self):
         channel_model = self.env["discuss.channel"].sudo()
         for gateway in self:
@@ -116,15 +149,22 @@ class MailGateway(models.Model):
         gateways = super().create(vals_list)
         gateways._sync_access_group()
         gateways._sync_access_group_implied_groups()
+        gateways._sync_access_group_agents()
         gateways._sync_channels_access_group()
         return gateways
 
     def write(self, vals):
+        previous_agent_ids = {}
+        if "discuss_agent_ids" in vals:
+            for gateway in self:
+                previous_agent_ids[gateway.id] = gateway.discuss_agent_ids.ids
         result = super().write(vals)
         if not self.env.context.get("mail_discuss_hub_gateway_skip_group_sync"):
             if "name" in vals:
                 self._sync_access_group()
             self._sync_access_group_implied_groups()
+            if "discuss_agent_ids" in vals or "access_group_id" in vals:
+                self._sync_access_group_agents(previous_agent_ids)
         if "access_group_id" in vals:
             self._sync_channels_access_group()
         return result

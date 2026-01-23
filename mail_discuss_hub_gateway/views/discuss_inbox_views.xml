@@ -32,6 +32,7 @@
         <field name="name">mail.gateway.form.inbox</field>
         <field name="model">mail.gateway</field>
         <field name="inherit_id" ref="mail_gateway.mail_gateway_form_view" />
+        <field name="priority" eval="90" />
         <field name="mode">primary</field>
         <field name="arch" type="xml">
             <xpath expr="//sheet/div[hasclass('oe_button_box')]" position="after">
@@ -46,6 +47,17 @@
             </xpath>
             <xpath expr="//group[@name='inbox_primary']" position="inside">
                 <xpath expr="//field[@name='discuss_team_ids']" position="move" />
+                <xpath expr="//field[@name='discuss_agent_ids']" position="move" />
+            </xpath>
+            <xpath expr="//group[@name='inbox_primary']/field[@name='discuss_agent_ids']" position="after">
+                <field
+                    name="evolution_outgoing_signature"
+                    invisible="gateway_type != 'whatsapp_evolution_api'"
+                />
+                <field
+                    name="evolution_outgoing_signature_format"
+                    invisible="not evolution_outgoing_signature or gateway_type != 'whatsapp_evolution_api'"
+                />
             </xpath>
             <xpath expr="//notebook" position="inside">
                 <page string="Gateway" name="gateway" />
@@ -59,12 +71,27 @@
         </field>
     </record>
 
+    <record id="mail_gateway_form_view_evolution_inbox_hide_outbound" model="ir.ui.view">
+        <field name="name">mail.gateway.form.evolution.inbox.hide.outbound</field>
+        <field name="model">mail.gateway</field>
+        <field
+            name="inherit_id"
+            ref="mail_gateway_whatsapp_evolution_api.mail_gateway_form_view_evolution"
+        />
+        <field name="arch" type="xml">
+            <xpath expr="//group[group/field[@name='evolution_outgoing_signature']]" position="attributes">
+                <attribute name="invisible">context.get('discuss_hub_inbox_view')</attribute>
+            </xpath>
+        </field>
+    </record>
+
     <record id="mail_discuss_hub_gateway_inbox_action" model="ir.actions.act_window">
         <field name="name">Caixas de entrada</field>
         <field name="res_model">mail.gateway</field>
         <field name="view_mode">list,form</field>
         <field name="view_id" ref="mail_discuss_hub_gateway_inbox_view_list" />
         <field name="search_view_id" ref="mail_discuss_hub_gateway_inbox_view_search" />
+        <field name="context">{'discuss_hub_inbox_view': 1}</field>
         <field name="domain">[]</field>
     </record>
 

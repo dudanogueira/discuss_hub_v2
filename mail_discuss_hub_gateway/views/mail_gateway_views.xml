@@ -8,6 +8,7 @@
             <xpath expr="//field[@name='gateway_type']" position="after">
                 <field name="access_group_id" readonly="1" />
                 <field name="discuss_team_ids" widget="many2many_tags" />
+                <field name="discuss_agent_ids" widget="many2many_tags" domain="[('share', '=', False)]" />
             </xpath>
         </field>
     </record>
