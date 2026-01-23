@@ -16,6 +16,21 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
 
     def _build_channel_members(self, gateway, author):
         members = []
+        auto_users = (
+            gateway._get_auto_assign_users()
+            if hasattr(gateway, "_get_auto_assign_users")
+            else gateway.member_ids
+        )
+        for user in auto_users:
+            if user.partner_id:
+                members.append(
+                    Command.create(
+                        {
+                            "partner_id": user.partner_id.id,
+                            "unpin_dt": False,
+                        }
+                    )
+                )
         if author and author._name == "res.partner":
             webhook_partner = gateway.webhook_user_id.partner_id if gateway.webhook_user_id else False
             if not webhook_partner or author.id != webhook_partner.id:

@@ -13,14 +13,28 @@ patch(Message.prototype, {
             this.message.author.id
         );
     },
+    _isGatewayPartnerAuthor() {
+        return (
+            this.message.gateway_type &&
+            this.message.author?.type === "partner" &&
+            this.message.author.id
+        );
+    },
+    hasAuthorClickable() {
+        return super.hasAuthorClickable() || this._isGatewayPartnerAuthor();
+    },
     getAuthorText() {
         if (this._isGatewayGuestAuthor()) {
             return _t("Create partner");
         }
-        return this.hasAuthorClickable() ? _t("Open card") : undefined;
+        if (this._isGatewayPartnerAuthor() && !this.message.author?.userId) {
+            return _t("Open contact");
+        }
+        return super.getAuthorText();
     },
     onClickAuthor(ev) {
         if (this._isGatewayGuestAuthor()) {
+            markEventHandled(ev, "Message.ClickAuthor");
             ev.stopPropagation();
             return this.env.services.action.doAction({
                 name: _t("Manage guest"),
@@ -31,14 +45,16 @@ patch(Message.prototype, {
                 target: "new",
             });
         }
-        if (this.hasAuthorClickable()) {
+        if (this._isGatewayPartnerAuthor() && !this.message.author?.userId) {
             markEventHandled(ev, "Message.ClickAuthor");
-            const target = ev.currentTarget;
-            if (!this.avatarCard.isOpen) {
-                this.avatarCard.open(target, {
-                    id: this.message.author.userId,
-                });
-            }
+            return this.env.services.action.doAction({
+                type: "ir.actions.act_window",
+                res_model: "res.partner",
+                res_id: this.message.author.id,
+                views: [[false, "form"]],
+                target: "current",
+            });
         }
+        return super.onClickAuthor(ev);
     },
 });

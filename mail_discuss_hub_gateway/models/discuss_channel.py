@@ -1,6 +1,8 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-from odoo import api, fields, models
+from markupsafe import Markup
+
+from odoo import _, api, fields, models
 
 
 class DiscussChannel(models.Model):
@@ -50,3 +52,22 @@ class DiscussChannel(models.Model):
                 group = gateway._ensure_access_group() if gateway else False
                 vals["group_public_id"] = group.id if group else False
         return super().write(vals)
+
+    def action_archive(self):
+        to_log = self.filtered(
+            lambda channel: channel.active and channel.channel_type == "gateway"
+        )
+        result = super().action_archive()
+        if to_log:
+            partner = self.env.user.partner_id
+            notification = Markup('<div class="o_mail_notification">%s</div>') % _(
+                "archived the conversation"
+            )
+            for channel in to_log:
+                channel.sudo().message_post(
+                    author_id=partner.id,
+                    body=notification,
+                    message_type="notification",
+                    subtype_xmlid="mail.mt_comment",
+                )
+        return result

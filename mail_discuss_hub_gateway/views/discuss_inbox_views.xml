@@ -50,6 +50,12 @@
                 <xpath expr="//field[@name='discuss_agent_ids']" position="move" />
             </xpath>
             <xpath expr="//group[@name='inbox_primary']/field[@name='discuss_agent_ids']" position="after">
+                <field
+                    name="member_ids"
+                    string="Auto Assign"
+                    widget="many2many_tags"
+                    domain="[('groups_id', 'in', access_group_id)]"
+                />
                 <field name="outgoing_signature" />
                 <field
                     name="outgoing_signature_format"

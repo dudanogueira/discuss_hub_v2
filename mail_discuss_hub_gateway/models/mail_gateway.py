@@ -64,6 +64,14 @@ class MailGateway(models.Model):
         ).write({"access_group_id": group.id})
         return group
 
+    def _get_auto_assign_users(self):
+        self.ensure_one()
+        users = self.member_ids
+        group = self.access_group_id or self._ensure_access_group()
+        if group:
+            users = users.filtered(lambda user: group in user.groups_id)
+        return users
+
     def _apply_outgoing_signature(self, author_name, body):
         self.ensure_one()
         if not self.outgoing_signature or not author_name:

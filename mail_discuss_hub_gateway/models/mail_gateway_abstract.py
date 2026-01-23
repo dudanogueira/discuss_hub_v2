@@ -9,15 +9,36 @@ class MailGatewayAbstract(models.AbstractModel):
     def _get_channel_vals(self, gateway, token, update):
         author = self._get_author(gateway, update)
         members = []
-        if author:
-            members.append(
-                Command.create(
-                    {
-                        "partner_id": author._name == "res.partner" and author.id,
-                        "guest_id": author._name == "mail.guest" and author.id,
-                    }
+        auto_users = (
+            gateway._get_auto_assign_users()
+            if hasattr(gateway, "_get_auto_assign_users")
+            else gateway.member_ids
+        )
+        for user in auto_users:
+            if user.partner_id:
+                members.append(
+                    Command.create(
+                        {
+                            "partner_id": user.partner_id.id,
+                            "unpin_dt": False,
+                        }
+                    )
                 )
-            )
+        webhook_partner = gateway.webhook_user_id.partner_id if gateway.webhook_user_id else False
+        if author and author._name == "res.partner":
+            if not webhook_partner or author.id != webhook_partner.id:
+                members.append(
+                    Command.create(
+                        {
+                            "partner_id": author.id,
+                            "unpin_dt": False,
+                        }
+                    )
+                )
+        elif author and author._name == "mail.guest":
+            member_model = self.env["discuss.channel.member"]
+            if "guest_id" in member_model._fields:
+                members.append(Command.create({"guest_id": author.id, "unpin_dt": False}))
         vals = {
             "gateway_channel_token": token,
             "gateway_id": gateway.id,

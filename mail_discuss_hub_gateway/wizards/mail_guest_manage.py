@@ -33,7 +33,16 @@ class MailGuestManage(models.TransientModel):
             messages.invalidate_recordset(["author_id", "author_guest_id"])
             store = Store()
             messages._author_to_store(store)
+            # Update current user UI immediately.
             self.env.user._bus_send_store(store)
+            # Update all channel members listening to the channel bus.
+            channels = self.env["discuss.channel"].browse(
+                messages.filtered(
+                    lambda message: message.model == "discuss.channel" and message.res_id
+                ).mapped("res_id")
+            )
+            if channels:
+                channels._bus_send_store(store)
 
     def _sync_gateway_channels(self, partner):
         guest = self.guest_id

@@ -1,7 +1,10 @@
 /* @odoo-module */
 
 import { threadActionsRegistry } from "@mail/core/common/thread_actions";
+import { GatewayTransferPanel } from "./gateway_transfer_panel.esm";
 import { _t } from "@web/core/l10n/translation";
+import { usePopover } from "@web/core/popover/popover_hook";
+import { useComponent } from "@odoo/owl";
 
 threadActionsRegistry
     .add("join-channel", {
@@ -43,8 +46,36 @@ threadActionsRegistry
         icon: "fa fa-fw fa-share-square-o",
         iconLarge: "fa fa-fw fa-lg fa-share-square-o",
         name: _t("Transferir"),
+        component: GatewayTransferPanel,
+        componentProps(action, component) {
+            return { thread: component.thread, close: () => action.close() };
+        },
+        panelOuterClass(component) {
+            return `o-discuss-ChannelInvitation ${
+                component.props.chatWindow ? "bg-inherit" : ""
+            } bg-100 border border-secondary`;
+        },
+        setup(action) {
+            const component = useComponent();
+            if (!component.props.chatWindow) {
+                action.popover = usePopover(GatewayTransferPanel, {
+                    onClose: () => action.close(),
+                    popoverClass: action.panelOuterClass,
+                });
+            }
+        },
+        open(component, action) {
+            action.popover?.open(component.root.el.querySelector(`[name="${action.id}"]`), {
+                hasSizeConstraints: true,
+                thread: component.thread,
+            });
+        },
+        close(component, action) {
+            action.popover?.close();
+        },
         sequence: 12,
         sequenceGroup: 20,
+        toggle: true,
     })
     .add("leave-channel", {
         condition(component) {
@@ -92,6 +123,11 @@ threadActionsRegistry
                 await component.env.services.orm.call("discuss.channel", "action_archive", [[thread.id]]);
                 if ("active" in thread) {
                     thread.active = false;
+                }
+                if (component.props?.chatWindow) {
+                    component.props.chatWindow.close();
+                } else if (component.store?.inbox) {
+                    component.store.inbox.setAsDiscussThread();
                 }
             } catch {
                 component.env.services.notification.add(_t("Unable to archive channel."), {

@@ -17,10 +17,12 @@
     ],
     "assets": {
         "web.assets_backend": [
+            "mail_discuss_hub_gateway/static/src/js/gateway_transfer_panel.esm.js",
             "mail_discuss_hub_gateway/static/src/js/gateway_instance_sidebar.esm.js",
             "mail_discuss_hub_gateway/static/src/js/gateway_sidebar_filter_provider.esm.js",
             "mail_discuss_hub_gateway/static/src/js/message_patch.esm.js",
             "mail_discuss_hub_gateway/static/src/js/thread_actions.esm.js",
+            "mail_discuss_hub_gateway/static/src/xml/gateway_transfer_panel.xml",
         ],
     },
     "installable": True,
