@@ -82,14 +82,6 @@ class EvolutionApiInstance(models.Model):
         related="gateway_id.evolution_webhook_event_ids",
         readonly=False,
     )
-    evolution_outgoing_signature = fields.Boolean(
-        related="gateway_id.evolution_outgoing_signature",
-        readonly=False,
-    )
-    evolution_outgoing_signature_format = fields.Char(
-        related="gateway_id.evolution_outgoing_signature_format",
-        readonly=False,
-    )
     gateway_type = fields.Selection(related="gateway_id.gateway_type", readonly=True)
     gateway_token = fields.Char(related="gateway_id.token", readonly=True)
     gateway_integrated_webhook_state = fields.Selection(

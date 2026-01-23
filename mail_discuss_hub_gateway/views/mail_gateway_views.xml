@@ -9,6 +9,8 @@
                 <field name="access_group_id" readonly="1" />
                 <field name="discuss_team_ids" widget="many2many_tags" />
                 <field name="discuss_agent_ids" widget="many2many_tags" domain="[('share', '=', False)]" />
+                <field name="outgoing_signature" />
+                <field name="outgoing_signature_format" invisible="not outgoing_signature" />
             </xpath>
         </field>
     </record>

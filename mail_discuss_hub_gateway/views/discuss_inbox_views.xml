@@ -50,13 +50,10 @@
                 <xpath expr="//field[@name='discuss_agent_ids']" position="move" />
             </xpath>
             <xpath expr="//group[@name='inbox_primary']/field[@name='discuss_agent_ids']" position="after">
+                <field name="outgoing_signature" />
                 <field
-                    name="evolution_outgoing_signature"
-                    invisible="gateway_type != 'whatsapp_evolution_api'"
-                />
-                <field
-                    name="evolution_outgoing_signature_format"
-                    invisible="not evolution_outgoing_signature or gateway_type != 'whatsapp_evolution_api'"
+                    name="outgoing_signature_format"
+                    invisible="not outgoing_signature"
                 />
             </xpath>
             <xpath expr="//notebook" position="inside">
@@ -67,20 +64,6 @@
             </xpath>
             <xpath expr="//page[@name='member']" position="attributes">
                 <attribute name="invisible">1</attribute>
-            </xpath>
-        </field>
-    </record>
-
-    <record id="mail_gateway_form_view_evolution_inbox_hide_outbound" model="ir.ui.view">
-        <field name="name">mail.gateway.form.evolution.inbox.hide.outbound</field>
-        <field name="model">mail.gateway</field>
-        <field
-            name="inherit_id"
-            ref="mail_gateway_whatsapp_evolution_api.mail_gateway_form_view_evolution"
-        />
-        <field name="arch" type="xml">
-            <xpath expr="//group[group/field[@name='evolution_outgoing_signature']]" position="attributes">
-                <attribute name="invisible">context.get('discuss_hub_inbox_view')</attribute>
             </xpath>
         </field>
     </record>

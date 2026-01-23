@@ -29,17 +29,6 @@
                             <field name="read_status" />
                         </group>
                     </group>
-                    <group string="Outbound">
-                        <group>
-                            <field name="evolution_outgoing_signature" />
-                        </group>
-                        <group>
-                            <field
-                                name="evolution_outgoing_signature_format"
-                                invisible="not evolution_outgoing_signature"
-                            />
-                        </group>
-                    </group>
                     <group string="Webhook">
                         <group>
                             <field name="evolution_webhook_by_events" readonly="1" />

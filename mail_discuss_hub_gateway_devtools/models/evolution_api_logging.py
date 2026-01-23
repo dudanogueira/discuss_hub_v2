@@ -140,8 +140,6 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             return {}
         instance = self._instance_name(gateway)
         body = (dto.text or "").strip()
-        if body:
-            body = self._apply_outgoing_signature(gateway, dto.author_name, body)
         attachments = []
         for attachment in dto.attachments or []:
             attachments.append(
@@ -176,8 +174,6 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             return False
         instance = self._instance_name(gateway)
         body = (dto.text or "").strip()
-        if body:
-            body = self._apply_outgoing_signature(gateway, dto.author_name, body)
         has_attachments = bool(dto.attachments)
         if has_attachments and body:
             return f"/message/sendText/{instance}"

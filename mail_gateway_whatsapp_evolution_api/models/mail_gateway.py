@@ -48,25 +48,6 @@ class MailGateway(models.Model):
         default=lambda self: self._default_webhook_event_ids(),
     )
 
-    evolution_outgoing_signature = fields.Boolean(
-        string="Outgoing signature",
-        default=False,
-        help=(
-            "When enabled, Odoo prepends the message author name to outbound text "
-            "messages (e.g. '*Mitchel Admin:* Hello'). Useful when multiple internal "
-            "users share the same WhatsApp gateway."
-        ),
-    )
-    evolution_outgoing_signature_format = fields.Char(
-        string="Signature format",
-        default="*{author}:*\\n",
-        help=(
-            "Format used when 'Outgoing signature' is enabled. "
-            "Supports: {author}. Tip: you can use \\n for a new line. "
-            "Example: '*{author}:*\\n'."
-        ),
-    )
-
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:

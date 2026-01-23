@@ -19,6 +19,24 @@ class MailGateway(models.Model):
         string="Discuss Agents",
         help="Agents allowed to handle this inbox.",
     )
+    outgoing_signature = fields.Boolean(
+        string="Outgoing signature",
+        default=False,
+        help=(
+            "When enabled, Odoo prepends the message author name to outbound text "
+            "messages (e.g. '*Mitchel Admin:* Hello'). Useful when multiple internal "
+            "users share the same gateway."
+        ),
+    )
+    outgoing_signature_format = fields.Char(
+        string="Signature format",
+        default="*{author}:*\\n",
+        help=(
+            "Format used when 'Outgoing signature' is enabled. "
+            "Supports: {author}. Tip: you can use \\n for a new line. "
+            "Example: '*{author}:*\\n'."
+        ),
+    )
     access_group_id = fields.Many2one(
         "res.groups",
         string="Gateway Access Group",
@@ -45,6 +63,28 @@ class MailGateway(models.Model):
             mail_discuss_hub_gateway_skip_group_sync=True
         ).write({"access_group_id": group.id})
         return group
+
+    def _apply_outgoing_signature(self, author_name, body):
+        self.ensure_one()
+        if not self.outgoing_signature or not author_name:
+            return body
+        author = str(author_name or "").strip()
+        if not author:
+            return body
+        fmt = (self.outgoing_signature_format or "").strip()
+        if not fmt:
+            fmt = "*{author}:*\\n"
+        fmt = fmt.replace("\\n", "\n").replace("\\t", "\t")
+        try:
+            prefix = fmt.format(author=author)
+        except Exception:
+            prefix = "*{author}:*\\n".format(author=author)
+        if not prefix:
+            return body
+        normalized_body = (body or "").lstrip()
+        if normalized_body.startswith(prefix):
+            return body
+        return f"{prefix}{body or ''}"
 
     def _sync_access_group(self):
         for gateway in self:

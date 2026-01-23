@@ -492,25 +492,6 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             return message.get(key, {}).get("fileName")
         return f"{key}.bin"
 
-    def _apply_outgoing_signature(self, gateway, author_name, body):
-        if not gateway.evolution_outgoing_signature or not author_name:
-            return body
-        author = str(author_name or "").strip()
-        fmt = (getattr(gateway, "evolution_outgoing_signature_format", "") or "").strip()
-        if not fmt:
-            fmt = "*{author}:*\\n"
-        fmt = fmt.replace("\\n", "\n").replace("\\t", "\t")
-        try:
-            prefix = fmt.format(author=author)
-        except Exception:
-            prefix = "*{author}:*\\n".format(author=author)
-        if not prefix:
-            return body
-        normalized_body = body.lstrip()
-        if normalized_body.startswith(prefix):
-            return body
-        return f"{prefix}{body}"
-
     def _get_chat_token(self, data):
         remote_jid, remote_jid_alt, participant_jid = self._extract_jids(data)
         return remote_jid or remote_jid_alt or participant_jid
@@ -624,7 +605,6 @@ class MailGatewayWhatsappEvolutionApi(models.AbstractModel):
             responses.append(message)
         body = (dto.text or "").strip()
         if body:
-            body = self._apply_outgoing_signature(gateway, dto.author_name, body)
             payload = {"number": number, "text": body}
             response = requests.post(
                 self._join_url(

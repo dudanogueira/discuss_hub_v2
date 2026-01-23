@@ -86,4 +86,17 @@ threadActionsRegistry
         name: _t("Resolver/Arquivar"),
         sequence: 14,
         sequenceGroup: 20,
+        async open(component) {
+            const thread = component.thread;
+            try {
+                await component.env.services.orm.call("discuss.channel", "action_archive", [[thread.id]]);
+                if ("active" in thread) {
+                    thread.active = false;
+                }
+            } catch {
+                component.env.services.notification.add(_t("Unable to archive channel."), {
+                    type: "danger",
+                });
+            }
+        },
     });

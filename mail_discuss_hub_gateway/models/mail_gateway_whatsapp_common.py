@@ -6,6 +6,14 @@ from odoo import Command, models
 class MailGatewayWhatsappCommon(models.AbstractModel):
     _inherit = "mail.gateway.whatsapp.common"
 
+    def _build_outbound_dto(self, gateway, record):
+        dto = super()._build_outbound_dto(gateway, record)
+        if not dto or not dto.text or not gateway:
+            return dto
+        if "outgoing_signature" in gateway._fields:
+            dto.text = gateway._apply_outgoing_signature(dto.author_name, dto.text)
+        return dto
+
     def _build_channel_members(self, gateway, author):
         members = []
         if author and author._name == "res.partner":
