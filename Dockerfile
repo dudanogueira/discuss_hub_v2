@@ -12,6 +12,8 @@ RUN git clone --depth 1 https://github.com/OCA/social \
 # Move selected addons
 RUN mv \
     social/mail_gateway \
+    social/mail_gateway_whatsapp \
+    social/mail_gateway_telegram \
     helpdesk/helpdesk_mgmt \
     /mnt/extra-addons/
 
@@ -38,12 +40,14 @@ COPY mail_gateway_whatsapp_evolution_api ${ADDONS_DIR}/mail_gateway_whatsapp_evo
 COPY mail_gateway_whatsapp_evolution_api_chatwoot ${ADDONS_DIR}/mail_gateway_whatsapp_evolution_api_chatwoot
 COPY mail_gateway_whatsapp_evolution_api_manager ${ADDONS_DIR}/mail_gateway_whatsapp_evolution_api_manager
 COPY mail_gateway_whatsapp_waha ${ADDONS_DIR}/mail_gateway_whatsapp_waha
+COPY mail_discuss_hub_full ${ADDONS_DIR}/mail_discuss_hub_full
+COPY mail_gateway_fix ${ADDONS_DIR}/mail_gateway_fix
 
 # Install Python dependencies
 
 USER root
 RUN chown -R ${ODOO_USER}:${ODOO_USER} ${ADDONS_DIR} \
- && pip3 install --no-cache-dir --break-system-packages redis python-json-logger statsd boto
+ && pip3 install --no-cache-dir --break-system-packages redis python-json-logger statsd boto python-telegram-bot lottie cairosvg
 
 USER ${ODOO_USER}
 
