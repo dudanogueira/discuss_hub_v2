@@ -1,8 +1,6 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 # Based on concepts from:
 #   - https://github.com/discusshub/discuss_hub
-#   - https://github.com/diegofrodrigues/wa_conn
-#   - https://github.com/gerencialp-bit/odoo-whatsapp-evolution-api
 
 {
     "name": "Mail Gateway WhatsApp Evolution API Manager",
@@ -12,8 +10,6 @@
     "author": "Soloz Technologies",
     "contributors": [
         "DiscussHub Team <https://github.com/discusshub/discuss_hub>",
-        "Diego Rodrigues <https://github.com/diegofrodrigues/wa_conn>",
-        "Gerencial P <https://github.com/gerencialp-bit/odoo-whatsapp-evolution-api>",
     ],
     "website": "https://github.com/lcsztl/discuss_hub",
     "depends": ["mail_gateway_whatsapp_evolution_api"],

@@ -57,6 +57,7 @@
                     domain="[('groups_id', 'in', access_group_id)]"
                 />
                 <field name="outgoing_signature" />
+                <field name="reopen_archived_conversations" />
                 <field
                     name="outgoing_signature_format"
                     invisible="not outgoing_signature"

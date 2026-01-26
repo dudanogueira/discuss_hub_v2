@@ -28,6 +28,14 @@ class MailGateway(models.Model):
             "users share the same gateway."
         ),
     )
+    reopen_archived_conversations = fields.Boolean(
+        string="Reopen archived conversations",
+        default=True,
+        help=(
+            "When enabled, any inbound or outbound gateway message will reopen "
+            "archived conversations instead of creating a new one."
+        ),
+    )
     outgoing_signature_format = fields.Char(
         string="Signature format",
         default="*{author}:*\\n",
@@ -47,6 +55,26 @@ class MailGateway(models.Model):
     def _get_access_group_name(self):
         self.ensure_one()
         return f"Gateway: {self.name}"
+
+    def _get_channel_id(self, chat_token):
+        self.ensure_one()
+        if (
+            "reopen_archived_conversations" in self._fields
+            and self.reopen_archived_conversations
+        ):
+            return (
+                self.env["discuss.channel"]
+                .with_context(active_test=False)
+                .search(
+                    [
+                        ("gateway_channel_token", "=", str(chat_token)),
+                        ("gateway_id", "=", self.id),
+                    ],
+                    limit=1,
+                )
+                .id
+            )
+        return super()._get_channel_id(chat_token)
 
     def _ensure_access_group(self):
         self.ensure_one()
