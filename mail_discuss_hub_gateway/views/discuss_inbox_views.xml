@@ -38,30 +38,8 @@
         <field name="inherit_id" ref="mail_discuss_hub.discuss_hub_inbox_view_form" />
         <field name="priority" eval="90" />
         <field name="arch" type="xml">
-            <xpath expr="//sheet" position="before">
-                <div class="oe_button_box" name="button_box">
-                    <button
-                        type="object"
-                        string="Integrate Webhook"
-                        icon="fa-plug"
-                        name="action_set_webhook"
-                        invisible="not can_set_webhook or integrated_webhook_state"
-                    />
-                    <button
-                        type="object"
-                        string="Update Webhook"
-                        name="action_update_webhook"
-                        icon="fa-refresh"
-                        invisible="not can_set_webhook or integrated_webhook_state != 'integrated'"
-                    />
-                    <button
-                        type="object"
-                        string="Remove Webhook"
-                        name="action_remove_webhook"
-                        icon="fa-remove"
-                        invisible="not integrated_webhook_state"
-                    />
-                </div>
+            <xpath expr="//page[@name='settings']" position="attributes">
+                <attribute name="invisible">1</attribute>
             </xpath>
             <xpath expr="//group[@name='inbox_primary']" position="inside">
                 <field name="gateway_id" options="{'no_create': False}" />
@@ -79,25 +57,6 @@
                     name="outgoing_signature_format"
                     invisible="not outgoing_signature"
                 />
-            </xpath>
-            <xpath expr="//notebook[@name='inbox_notebook']" position="inside">
-                <page string="Gateway" name="gateway">
-                    <group>
-                        <group>
-                            <field name="gateway_type" />
-                            <field name="token" password="True" />
-                            <field name="integrated_webhook_state" />
-                            <field name="webhook_key" />
-                            <field name="webhook_secret" password="True" />
-                        </group>
-                        <group>
-                            <field name="webhook_user_id" />
-                            <field name="has_new_channel_security" />
-                            <field name="webhook_url" groups="base.group_no_one" />
-                            <field name="company_id" groups="base.group_multi_company" />
-                        </group>
-                    </group>
-                </page>
             </xpath>
         </field>
     </record>

@@ -185,7 +185,21 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
             return {"status": "ignored", "reason": "message_not_created"}
 
         # Store gateway metadata after message creation to preserve mail.thread flow.
-        message.sudo().write(msg_kwargs)
+        # Wrap in a savepoint to handle concurrent upserts that hit the unique constraint.
+        try:
+            with self.env.cr.savepoint():
+                message.sudo().write(msg_kwargs)
+        except IntegrityError:
+            existing = self._find_existing_message(gateway, dto, message_key=message_key)
+            if existing:
+                # Best effort cleanup of the duplicate message created in this txn.
+                if message and message.id != existing.id:
+                    try:
+                        message.sudo().unlink()
+                    except Exception:
+                        pass
+                return {"status": "duplicate", "message_id": existing.id}
+            raise
         self._apply_message_timestamp(message, dto)
 
         return {
@@ -1191,7 +1205,14 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
                 (dto.sender_participant_jid or "").strip(),
                 (dto.sender_jid or "").strip(),
             ]
-            return [token for token in candidates if token]
+            tokens = [token for token in candidates if token]
+            has_phone_jid = any(
+                token.endswith("@s.whatsapp.net") or token.endswith("@c.us")
+                for token in tokens
+            )
+            if has_phone_jid:
+                tokens = [token for token in tokens if not token.endswith("@lid")]
+            return tokens
         if dto.contact_jid:
             return [(dto.contact_jid or "").strip()]
         if dto.chat_id:
@@ -1358,11 +1379,34 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         """Download and convert images to base64 for channel avatars."""
         if not url:
             return False
+        max_bytes = 2 * 1024 * 1024  # 2 MB hard limit for avatars
+        allowed_mime = {"image/jpeg", "image/png", "image/webp", "image/gif"}
         try:
-            response = requests.get(url, timeout=10)
-            if response.status_code != 200 or not response.content:
+            response = requests.get(url, stream=True, timeout=10)
+            if response.status_code != 200:
                 return False
-            return base64.b64encode(response.content).decode("ascii")
+            content_type = (response.headers.get("Content-Type") or "").split(";", 1)[0].strip().lower()
+            if content_type and content_type not in allowed_mime:
+                return False
+            length = response.headers.get("Content-Length")
+            if length:
+                try:
+                    if int(length) > max_bytes:
+                        return False
+                except ValueError:
+                    pass
+            chunks = []
+            total = 0
+            for chunk in response.iter_content(chunk_size=64 * 1024):
+                if not chunk:
+                    continue
+                total += len(chunk)
+                if total > max_bytes:
+                    return False
+                chunks.append(chunk)
+            if not chunks:
+                return False
+            return base64.b64encode(b"".join(chunks)).decode("ascii")
         except Exception as exc:
             self._logger.warning("Failed to fetch group image: %s", exc)
             return False
