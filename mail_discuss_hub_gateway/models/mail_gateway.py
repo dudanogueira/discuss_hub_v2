@@ -1,6 +1,8 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-from odoo import api, fields, models
+from markupsafe import Markup
+
+from odoo import _, api, fields, models
 
 
 class MailGateway(models.Model):
@@ -92,6 +94,25 @@ class MailGateway(models.Model):
         ).write({"access_group_id": group.id})
         return group
 
+    def _ensure_inbox(self):
+        Inbox = self.env["discuss.hub.inbox"].sudo()
+        for gateway in self:
+            inbox = Inbox.search(
+                [("inbox_type", "=", "gateway"), ("gateway_id", "=", gateway.id)],
+                limit=1,
+            )
+            if inbox:
+                if inbox.name != gateway.name:
+                    inbox.write({"name": gateway.name})
+                continue
+            Inbox.create(
+                {
+                    "inbox_type": "gateway",
+                    "gateway_id": gateway.id,
+                    "name": gateway.name,
+                }
+            )
+
     def _get_auto_assign_users(self):
         self.ensure_one()
         users = self.member_ids
@@ -121,6 +142,27 @@ class MailGateway(models.Model):
         if normalized_body.startswith(prefix):
             return body
         return f"{prefix}{body or ''}"
+
+    def _should_reopen_archived(self):
+        self.ensure_one()
+        return bool(self.reopen_archived_conversations)
+
+    def _reopen_channel_if_needed(self, channel, reopened_by=None):
+        self.ensure_one()
+        if not channel or channel.active or not self._should_reopen_archived():
+            return channel
+        channel.sudo().action_unarchive()
+        if reopened_by:
+            notification = Markup('<div class="o_mail_notification">%s</div>') % _(
+                "reopened the conversation"
+            )
+            channel.sudo().message_post(
+                author_id=reopened_by.id,
+                body=notification,
+                message_type="notification",
+                subtype_xmlid="mail.mt_comment",
+            )
+        return channel
 
     def _sync_access_group(self):
         for gateway in self:
@@ -227,6 +269,7 @@ class MailGateway(models.Model):
         gateways._sync_access_group_implied_groups()
         gateways._sync_access_group_agents()
         gateways._sync_channels_access_group()
+        gateways._ensure_inbox()
         return gateways
 
     def write(self, vals):
@@ -238,6 +281,7 @@ class MailGateway(models.Model):
         if not self.env.context.get("mail_discuss_hub_gateway_skip_group_sync"):
             if "name" in vals:
                 self._sync_access_group()
+                self._ensure_inbox()
             self._sync_access_group_implied_groups()
             if "discuss_agent_ids" in vals or "access_group_id" in vals:
                 self._sync_access_group_agents(previous_agent_ids)

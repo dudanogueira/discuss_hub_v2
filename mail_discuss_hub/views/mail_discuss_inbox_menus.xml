@@ -6,7 +6,8 @@
             name="Caixas de entrada"
             parent="mail.menu_configuration"
             sequence="20"
-            groups="base.group_system"
+            groups="base.group_system,mail_discuss_hub.group_discuss_hub_manager"
+            action="mail_discuss_hub.discuss_hub_inbox_action"
         />
     </data>
 </odoo>

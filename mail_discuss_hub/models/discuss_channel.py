@@ -10,8 +10,8 @@ class DiscussChannel(models.Model):
     _sql_constraints = [
         (
             "group_public_id_check",
-            "CHECK (channel_type in ('channel', 'gateway') OR group_public_id IS NULL)",
-            "Group authorization is only supported on channels and gateway channels.",
+            "CHECK (group_public_id IS NULL OR channel_type IS NOT NULL)",
+            "Group authorization restrictions are managed by add-ons.",
         ),
     ]
 
@@ -29,14 +29,6 @@ class DiscussChannel(models.Model):
         if auto_subscribe_blocked:
             raise ValidationError(
                 _("Group auto-subscription is only supported on channels.")
-            )
-        unauthorized_channels = self.sudo().filtered(
-            lambda channel: channel.channel_type not in ("channel", "gateway")
-            and channel.group_public_id
-        )
-        if unauthorized_channels:
-            raise ValidationError(
-                _("Group authorization is only supported on channels and gateway channels.")
             )
 
     def _channel_basic_info(self):

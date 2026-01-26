@@ -3,6 +3,7 @@
 from markupsafe import Markup
 
 from odoo import _, api, fields, models
+from odoo.exceptions import ValidationError
 
 
 class DiscussChannel(models.Model):
@@ -21,6 +22,17 @@ class DiscussChannel(models.Model):
             "Gateway channel token must be unique per gateway.",
         ),
     ]
+
+    @api.constrains("group_public_id", "group_ids")
+    def _constraint_group_id_channel_gateway(self):
+        unauthorized_channels = self.sudo().filtered(
+            lambda channel: channel.channel_type not in ("channel", "gateway")
+            and channel.group_public_id
+        )
+        if unauthorized_channels:
+            raise ValidationError(
+                _("Group authorization is only supported on channels and gateway channels.")
+            )
 
     @api.model_create_multi
     def create(self, vals_list):

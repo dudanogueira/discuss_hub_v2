@@ -401,6 +401,17 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
         provider = provider or self._get_outbound_provider(gateway)
         if provider is False:
             return {"status": "ignored", "reason": "provider_not_supported"}
+        if hasattr(gateway, "_reopen_channel_if_needed") and hasattr(
+            record, "gateway_channel_id"
+        ):
+            channel = record.gateway_channel_id
+            if channel:
+                reopened_by = getattr(record, "author_id", False)
+                if not reopened_by and hasattr(record, "mail_message_id"):
+                    reopened_by = record.mail_message_id.author_id
+                if not reopened_by:
+                    reopened_by = self.env.user.partner_id
+                gateway._reopen_channel_if_needed(channel, reopened_by=reopened_by)
         dto = self._build_outbound_dto(gateway, record)
         if not dto:
             return self._handle_outbound_failure(
@@ -481,7 +492,7 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
             return False
         body = html2plaintext(message.body or "")
         author_name = message.author_id.name or message.author_guest_id.name or False
-        return OutboundPayload(
+        dto = OutboundPayload(
             provider=gateway.gateway_type,
             gateway_type=gateway.gateway_type,
             notification_id=record.id,
@@ -491,6 +502,14 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
             author_name=author_name,
             attachments=self._prepare_outbound_attachments(message),
         )
+        if (
+            dto
+            and dto.text
+            and gateway
+            and hasattr(gateway, "_apply_outgoing_signature")
+        ):
+            dto.text = gateway._apply_outgoing_signature(dto.author_name, dto.text)
+        return dto
 
     def _prepare_outbound_attachments(self, message):
         attachments = []
@@ -1204,7 +1223,17 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
             return False
         channel_id = gateway._get_channel_id(chat_id)
         if channel_id:
-            return self.env["discuss.channel"].browse(channel_id)
+            channel = self.env["discuss.channel"].browse(channel_id)
+            if gateway and hasattr(gateway, "_reopen_channel_if_needed"):
+                reopened_by = (
+                    gateway.webhook_user_id.partner_id
+                    if gateway.webhook_user_id
+                    else self.env.user.partner_id
+                )
+                channel = gateway._reopen_channel_if_needed(
+                    channel, reopened_by=reopened_by
+                )
+            return channel
         channel_name = self._get_channel_name(dto)
         members = self._build_channel_members(gateway, author)
         channel_env = self.env["discuss.channel"].sudo()
@@ -1230,12 +1259,26 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
                 raise
             channel = self.env["discuss.channel"].browse(channel_id)
         channel._broadcast(channel.channel_member_ids.mapped("partner_id").ids)
+        if gateway and hasattr(gateway, "_reopen_channel_if_needed"):
+            reopened_by = (
+                gateway.webhook_user_id.partner_id
+                if gateway.webhook_user_id
+                else self.env.user.partner_id
+            )
+            channel = gateway._reopen_channel_if_needed(
+                channel, reopened_by=reopened_by
+            )
         return channel
 
     def _build_channel_members(self, gateway, author):
         """Add gateway members and the author to the channel."""
         members = []
-        for user in gateway.member_ids:
+        auto_users = (
+            gateway._get_auto_assign_users()
+            if hasattr(gateway, "_get_auto_assign_users")
+            else gateway.member_ids
+        )
+        for user in auto_users:
             if user.partner_id:
                 members.append(
                     Command.create(
@@ -1246,9 +1289,15 @@ class MailGatewayWhatsappCommon(models.AbstractModel):
                     )
                 )
         if author and author._name == "res.partner":
-            members.append(
-                Command.create({"partner_id": author.id, "unpin_dt": False})
+            webhook_partner = (
+                gateway.webhook_user_id.partner_id
+                if gateway and gateway.webhook_user_id
+                else False
             )
+            if not webhook_partner or author.id != webhook_partner.id:
+                members.append(
+                    Command.create({"partner_id": author.id, "unpin_dt": False})
+                )
         elif author and author._name == "mail.guest":
             member_model = self.env["discuss.channel.member"]
             if "guest_id" in member_model._fields:

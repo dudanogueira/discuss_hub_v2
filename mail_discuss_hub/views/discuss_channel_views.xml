@@ -6,7 +6,7 @@
         <field name="inherit_id" ref="mail.discuss_channel_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//page[@name='privacy']//field[@name='group_public_id']" position="attributes">
-                <attribute name="invisible">channel_type != 'channel' and channel_type != 'gateway' or parent_channel_id</attribute>
+                <attribute name="invisible">channel_type != 'channel' or parent_channel_id</attribute>
             </xpath>
             <xpath expr="//notebook" position="inside">
                 <page string="Mensagens" name="messages">

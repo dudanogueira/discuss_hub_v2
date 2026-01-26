@@ -10,6 +10,9 @@
                 <field name="gateway_id" invisible="channel_type != 'gateway'" readonly="1"/>
                 <field name="gateway_display_name" invisible="channel_type != 'gateway'" readonly="1"/>
             </xpath>
+            <xpath expr="//page[@name='privacy']//field[@name='group_public_id']" position="attributes">
+                <attribute name="invisible">channel_type != 'channel' and channel_type != 'gateway' or parent_channel_id</attribute>
+            </xpath>
         </field>
     </record>
 </odoo>

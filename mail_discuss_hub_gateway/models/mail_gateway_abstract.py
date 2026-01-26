@@ -6,6 +6,24 @@ from odoo import Command, models
 class MailGatewayAbstract(models.AbstractModel):
     _inherit = "mail.gateway.abstract"
 
+    def _get_channel(self, gateway, token, update, force_create=False):
+        channel = super()._get_channel(gateway, token, update, force_create=force_create)
+        if (
+            channel
+            and gateway
+            and hasattr(gateway, "_reopen_channel_if_needed")
+            and hasattr(gateway, "webhook_user_id")
+        ):
+            reopened_by = (
+                gateway.webhook_user_id.partner_id
+                if gateway.webhook_user_id
+                else self.env.user.partner_id
+            )
+            channel = gateway._reopen_channel_if_needed(
+                channel, reopened_by=reopened_by
+            )
+        return channel
+
     def _get_channel_vals(self, gateway, token, update):
         author = self._get_author(gateway, update)
         members = []

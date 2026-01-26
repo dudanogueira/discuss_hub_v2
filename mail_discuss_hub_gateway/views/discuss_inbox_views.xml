@@ -1,55 +1,72 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <record id="mail_discuss_hub_gateway_inbox_view_list" model="ir.ui.view">
-        <field name="name">mail.gateway.list.inbox</field>
-        <field name="model">mail.gateway</field>
+        <field name="name">discuss.hub.inbox.list.gateway</field>
+        <field name="model">discuss.hub.inbox</field>
+        <field name="inherit_id" ref="mail_discuss_hub.discuss_hub_inbox_view_list" />
         <field name="arch" type="xml">
-            <list string="Caixas de entrada">
-                <field name="name" />
+            <xpath expr="//field[@name='inbox_type']" position="after">
                 <field name="gateway_type" />
                 <field name="discuss_team_ids" widget="many2many_tags" />
                 <field name="integrated_webhook_state" />
-                <field name="company_id" groups="base.group_multi_company" />
-            </list>
+            </xpath>
         </field>
     </record>
 
     <record id="mail_discuss_hub_gateway_inbox_view_search" model="ir.ui.view">
-        <field name="name">mail.gateway.search.inbox</field>
-        <field name="model">mail.gateway</field>
+        <field name="name">discuss.hub.inbox.search.gateway</field>
+        <field name="model">discuss.hub.inbox</field>
+        <field name="inherit_id" ref="mail_discuss_hub.discuss_hub_inbox_view_search" />
         <field name="arch" type="xml">
-            <search string="Caixas de entrada">
-                <field name="name" />
+            <xpath expr="//field[@name='inbox_type']" position="after">
                 <field name="gateway_type" />
                 <field name="discuss_team_ids" />
-                <field name="company_id" />
-                <filter string="Integrated" name="integrated" domain="[('integrated_webhook_state', '=', 'integrated')]"/>
-            </search>
+            </xpath>
+            <xpath expr="//search" position="inside">
+                <filter
+                    string="Integrated"
+                    name="integrated"
+                    domain="[('integrated_webhook_state', '=', 'integrated')]"
+                />
+            </xpath>
         </field>
     </record>
 
     <record id="mail_discuss_hub_gateway_inbox_view_form" model="ir.ui.view">
-        <field name="name">mail.gateway.form.inbox</field>
-        <field name="model">mail.gateway</field>
-        <field name="inherit_id" ref="mail_gateway.mail_gateway_form_view" />
+        <field name="name">discuss.hub.inbox.form.gateway</field>
+        <field name="model">discuss.hub.inbox</field>
+        <field name="inherit_id" ref="mail_discuss_hub.discuss_hub_inbox_view_form" />
         <field name="priority" eval="90" />
-        <field name="mode">primary</field>
         <field name="arch" type="xml">
-            <xpath expr="//sheet/div[hasclass('oe_button_box')]" position="after">
-                <div class="oe_title" name="inbox_title">
-                    <label for="name" string="Caixa de entrada" />
-                    <h1 />
+            <xpath expr="//sheet" position="before">
+                <div class="oe_button_box" name="button_box">
+                    <button
+                        type="object"
+                        string="Integrate Webhook"
+                        icon="fa-plug"
+                        name="action_set_webhook"
+                        invisible="not can_set_webhook or integrated_webhook_state"
+                    />
+                    <button
+                        type="object"
+                        string="Update Webhook"
+                        name="action_update_webhook"
+                        icon="fa-refresh"
+                        invisible="not can_set_webhook or integrated_webhook_state != 'integrated'"
+                    />
+                    <button
+                        type="object"
+                        string="Remove Webhook"
+                        name="action_remove_webhook"
+                        icon="fa-remove"
+                        invisible="not integrated_webhook_state"
+                    />
                 </div>
-                <group name="inbox_primary" />
-            </xpath>
-            <xpath expr="//div[@name='inbox_title']/h1" position="inside">
-                <xpath expr="//field[@name='name']" position="move" />
             </xpath>
             <xpath expr="//group[@name='inbox_primary']" position="inside">
-                <xpath expr="//field[@name='discuss_team_ids']" position="move" />
-                <xpath expr="//field[@name='discuss_agent_ids']" position="move" />
-            </xpath>
-            <xpath expr="//group[@name='inbox_primary']/field[@name='discuss_agent_ids']" position="after">
+                <field name="gateway_id" options="{'no_create': False}" />
+                <field name="discuss_team_ids" widget="many2many_tags" />
+                <field name="discuss_agent_ids" widget="many2many_tags" domain="[('share', '=', False)]" />
                 <field
                     name="member_ids"
                     string="Auto Assign"
@@ -63,48 +80,58 @@
                     invisible="not outgoing_signature"
                 />
             </xpath>
-            <xpath expr="//notebook" position="inside">
-                <page string="Gateway" name="gateway" />
-            </xpath>
-            <xpath expr="//page[@name='gateway']" position="inside">
-                <xpath expr="//sheet/group[field[@name='token']]" position="move" />
-            </xpath>
-            <xpath expr="//page[@name='member']" position="attributes">
-                <attribute name="invisible">1</attribute>
+            <xpath expr="//notebook[@name='inbox_notebook']" position="inside">
+                <page string="Gateway" name="gateway">
+                    <group>
+                        <group>
+                            <field name="gateway_type" />
+                            <field name="token" password="True" />
+                            <field name="integrated_webhook_state" />
+                            <field name="webhook_key" />
+                            <field name="webhook_secret" password="True" />
+                        </group>
+                        <group>
+                            <field name="webhook_user_id" />
+                            <field name="has_new_channel_security" />
+                            <field name="webhook_url" groups="base.group_no_one" />
+                            <field name="company_id" groups="base.group_multi_company" />
+                        </group>
+                    </group>
+                </page>
             </xpath>
         </field>
     </record>
 
     <record id="mail_discuss_hub_gateway_inbox_action" model="ir.actions.act_window">
         <field name="name">Caixas de entrada</field>
-        <field name="res_model">mail.gateway</field>
+        <field name="res_model">discuss.hub.inbox</field>
         <field name="view_mode">list,form</field>
-        <field name="view_id" ref="mail_discuss_hub_gateway_inbox_view_list" />
-        <field name="search_view_id" ref="mail_discuss_hub_gateway_inbox_view_search" />
-        <field name="context">{'discuss_hub_inbox_view': 1}</field>
-        <field name="domain">[]</field>
+        <field name="view_id" ref="mail_discuss_hub.discuss_hub_inbox_view_list" />
+        <field name="search_view_id" ref="mail_discuss_hub.discuss_hub_inbox_view_search" />
+        <field name="context">{'default_inbox_type': 'gateway'}</field>
+        <field name="domain">[('inbox_type', '=', 'gateway')]</field>
     </record>
 
     <record id="mail_discuss_hub_gateway_inbox_action_view_list" model="ir.actions.act_window.view">
         <field name="sequence" eval="10"/>
         <field name="view_mode">list</field>
-        <field name="view_id" ref="mail_discuss_hub_gateway_inbox_view_list" />
+        <field name="view_id" ref="mail_discuss_hub.discuss_hub_inbox_view_list" />
         <field name="act_window_id" ref="mail_discuss_hub_gateway_inbox_action"/>
     </record>
 
     <record id="mail_discuss_hub_gateway_inbox_action_view_form" model="ir.actions.act_window.view">
         <field name="sequence" eval="20"/>
         <field name="view_mode">form</field>
-        <field name="view_id" ref="mail_discuss_hub_gateway_inbox_view_form" />
+        <field name="view_id" ref="mail_discuss_hub.discuss_hub_inbox_view_form" />
         <field name="act_window_id" ref="mail_discuss_hub_gateway_inbox_action"/>
     </record>
 
     <menuitem
-        id="mail_discuss_hub_gateway_inbox_menu"
-        name="Gateways"
-        parent="mail_discuss_hub.mail_discuss_hub_inbox_menu_root"
+        id="mail_discuss_hub_inbox_menu_root"
+        name="Caixas de entrada"
+        parent="mail.menu_configuration"
         action="mail_discuss_hub_gateway.mail_discuss_hub_gateway_inbox_action"
         sequence="10"
-        groups="base.group_system"
+        groups="base.group_system,mail_discuss_hub.group_discuss_hub_manager"
     />
 </odoo>

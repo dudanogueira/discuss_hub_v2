@@ -11,7 +11,6 @@ Integrações Discuss + mail_gateway (UI e regras comuns de canais gateway).
 ## Dependencias
 
 - `mail_gateway`
-- `mail_gateway_whatsapp_common`
 - `mail_discuss_hub`
 
 ## Arquivos principais
@@ -21,7 +20,6 @@ Integrações Discuss + mail_gateway (UI e regras comuns de canais gateway).
 - `models/discuss_channel.py` (propaga time do gateway para o canal)
 - `models/mail_gateway.py` (campo discuss_team_id no gateway)
 - `models/mail_gateway_abstract.py` (cria canal sem membros em massa)
-- `models/mail_gateway_whatsapp_common.py` (cria canal sem membros em massa)
 - `views/mail_gateway_views.xml` (campo do time no form do gateway)
 - `static/src/js/thread_actions.esm.js` (acao placeholder no Discuss para canal gateway)
 

@@ -15,6 +15,7 @@
         "data/discuss_hub_groups.xml",
         "data/discuss_hub_roles.xml",
         "security/ir.model.access.csv",
+        "views/discuss_hub_inbox_views.xml",
         "views/res_config_settings_views.xml",
         "views/discuss_channel_views.xml",
         "views/res_users_views.xml",

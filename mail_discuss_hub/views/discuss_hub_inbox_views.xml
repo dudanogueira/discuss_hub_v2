@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="discuss_hub_inbox_view_list" model="ir.ui.view">
+        <field name="name">discuss.hub.inbox.list</field>
+        <field name="model">discuss.hub.inbox</field>
+        <field name="arch" type="xml">
+            <list string="Caixas de entrada">
+                <field name="name" />
+                <field name="inbox_type" />
+                <field name="company_id" groups="base.group_multi_company" />
+            </list>
+        </field>
+    </record>
+
+    <record id="discuss_hub_inbox_view_search" model="ir.ui.view">
+        <field name="name">discuss.hub.inbox.search</field>
+        <field name="model">discuss.hub.inbox</field>
+        <field name="arch" type="xml">
+            <search string="Caixas de entrada">
+                <field name="name" />
+                <field name="inbox_type" />
+                <field name="company_id" />
+            </search>
+        </field>
+    </record>
+
+    <record id="discuss_hub_inbox_view_form" model="ir.ui.view">
+        <field name="name">discuss.hub.inbox.form</field>
+        <field name="model">discuss.hub.inbox</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Caixa de entrada" />
+                        <h1>
+                            <field name="name" />
+                        </h1>
+                    </div>
+                    <group name="inbox_primary">
+                        <field name="inbox_type" invisible="1" />
+                        <field name="active" invisible="1" />
+                        <field name="company_id" groups="base.group_multi_company" />
+                    </group>
+                    <notebook name="inbox_notebook">
+                        <page string="Settings" name="settings">
+                            <group name="settings_group" />
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="discuss_hub_inbox_action" model="ir.actions.act_window">
+        <field name="name">Caixas de entrada</field>
+        <field name="res_model">discuss.hub.inbox</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="mail_discuss_hub.discuss_hub_inbox_view_list" />
+        <field name="search_view_id" ref="mail_discuss_hub.discuss_hub_inbox_view_search" />
+        <field name="context">{}</field>
+    </record>
+
+    <record id="discuss_hub_inbox_action_view_list" model="ir.actions.act_window.view">
+        <field name="sequence" eval="10"/>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="mail_discuss_hub.discuss_hub_inbox_view_list" />
+        <field name="act_window_id" ref="mail_discuss_hub.discuss_hub_inbox_action"/>
+    </record>
+
+    <record id="discuss_hub_inbox_action_view_form" model="ir.actions.act_window.view">
+        <field name="sequence" eval="20"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="mail_discuss_hub.discuss_hub_inbox_view_form" />
+        <field name="act_window_id" ref="mail_discuss_hub.discuss_hub_inbox_action"/>
+    </record>
+</odoo>
